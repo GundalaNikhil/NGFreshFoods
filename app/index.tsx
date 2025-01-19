@@ -6,6 +6,7 @@ import AccountScreen from '../components/bottomNavScreens/AccountScreen';
 import CartScreen from '../components/bottomNavScreens/CartScreen';
 import HomeScreen from '../components/bottomNavScreens/HomeScreen';
 import ProductsScreen from '../components/bottomNavScreens/ProductsScreen';
+import "../global.css";
 
 const Tab = createBottomTabNavigator();
 
