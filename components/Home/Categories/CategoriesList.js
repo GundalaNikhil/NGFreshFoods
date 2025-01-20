@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Dimensions, ScrollView, Text, View } from "react-native";
 import CategoryItem from "./CategoryItem";
 
 const categories = [
@@ -24,6 +24,9 @@ const categories = [
 ];
 
 const CategoriesList = () => {
+  const screenWidth = Dimensions.get("window").width;
+  const itemSize = screenWidth / 3 - 20; // Calculate item size dynamically
+
   return (
     <View className="px-4">
       <Text className="text-2xl font-bold mb-6 text-gray-800 text-center">
@@ -33,9 +36,8 @@ const CategoriesList = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{
-          justifyContent: "space-between",
-          alignItems: "center",
           paddingHorizontal: 8,
+          justifyContent: "space-around",
         }}
       >
         {categories.map((category) => (
@@ -43,6 +45,7 @@ const CategoriesList = () => {
             key={category.id}
             title={category.title}
             image={category.image}
+            itemSize={itemSize}
           />
         ))}
       </ScrollView>

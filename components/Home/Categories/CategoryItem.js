@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Animated, Image, Text, View } from "react-native";
 
-const CategoryItem = ({ title, image }) => {
+const CategoryItem = ({ title, image, itemSize }) => {
   const scaleAnim = new Animated.Value(0.9);
   const opacityAnim = new Animated.Value(0);
 
@@ -46,10 +46,9 @@ const CategoryItem = ({ title, image }) => {
       style={{
         opacity: opacityAnim,
         transform: [{ scale: scaleAnim }, { scale: pressAnim }],
-        width: 100,
+        width: itemSize,
         alignItems: "center",
         justifyContent: "center",
-        marginHorizontal: 8,
       }}
       onTouchStart={handlePressIn}
       onTouchEnd={handlePressOut}
@@ -58,8 +57,8 @@ const CategoryItem = ({ title, image }) => {
       <View
         className="rounded-full overflow-hidden bg-gray-100 shadow-sm"
         style={{
-          width: 80,
-          height: 80,
+          width: itemSize - 20,
+          height: itemSize - 20,
           borderWidth: 2,
           borderColor: "#f3f4f6",
         }}
