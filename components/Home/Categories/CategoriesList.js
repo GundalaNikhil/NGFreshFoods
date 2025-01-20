@@ -25,22 +25,24 @@ const categories = [
 
 const CategoriesList = () => {
   return (
-    <View className="items-center ">
-      <Text className="text-2xl font-bold mt-6 mb-4 text-center text-gray-800">
+    <View className="px-4">
+      <Text className="text-2xl font-bold mb-6 text-gray-800 text-center">
         Explore Categories
       </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="py-2"
+        contentContainerStyle={{
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: 8,
+        }}
       >
-        {categories.map((category, index) => (
+        {categories.map((category) => (
           <CategoryItem
             key={category.id}
             title={category.title}
             image={category.image}
-            isFirst={index === 0}
-            isLast={index === categories.length - 1}
           />
         ))}
       </ScrollView>
