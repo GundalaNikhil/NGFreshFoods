@@ -55,7 +55,8 @@
     "react-native-webview": "13.12.5",
     "recoil": "^0.7.7",
     "tailwindcss": "^3.4.17",
-    "tailwindcss-react-native": "^1.7.10"
+    "tailwindcss-react-native": "^1.7.10",
+    "expo-linear-gradient": "~14.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

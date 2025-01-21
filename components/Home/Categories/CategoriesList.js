@@ -19,7 +19,7 @@ const categories = [
     id: 3,
     title: "Eggs",
     image:
-      "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513888/ffw/Farm%20Fresh%20Eggs%20%28Pack%20of%2012%29/sdpexnfwbawpkdo2ad8b.jpg",
+      "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513888/ffw/Farm%20Fresh%20Eggs%20%28Pack%20of%2012%29/g8hwht5nvy5vytuhbomy.jpg",
   },
 ];
 

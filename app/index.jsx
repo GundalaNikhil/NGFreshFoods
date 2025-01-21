@@ -64,7 +64,6 @@ export default function Index() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          // Licious-style bottom navigation styling
           tabBarStyle: {
             backgroundColor: 'white',
             height: isSmallScreen ? 60 : 65,
@@ -83,6 +82,7 @@ export default function Index() {
           tabBarInactiveTintColor: '#4a4a4a',
           tabBarShowLabel: true,
           tabBarButton: (props) => <TabButton {...props} />,
+          tabBarSafeAreaInset: { bottom: 0 },
         }}
       >
         <Tab.Screen 
