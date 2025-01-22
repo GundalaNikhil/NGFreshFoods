@@ -1,7 +1,7 @@
 import { ShoppingCart } from "lucide-react-native";
 import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import ProductQuantityModal from "./ProductQuantityModal";
+import ProductQuantityModal from "./ChickenCustomizationModal";
 
 const ProductCard = ({ product, onAddToCart }) => {
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
