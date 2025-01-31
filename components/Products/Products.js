@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { View } from "react-native";
+import { useProducts } from "../../hooks/useProducts";
 import { productsData } from "../data/ProductsData";
+import ProductFilter from "./ProductFilter";
 import ProductList from "./ProductList";
 import ProductModal from "./ProductModal";
 
 const Products = () => {
+  const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -15,6 +18,7 @@ const Products = () => {
 
   return (
     <View className="flex-1 bg-gray-50">
+      <ProductFilter />
       <ProductList products={productsData} onAddToCart={handleAddToCart} />
       <ProductModal
         visible={modalVisible}

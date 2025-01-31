@@ -1,17 +1,23 @@
 import { ShoppingCart } from "lucide-react-native";
 import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import ProductQuantityModal from "./ChickenCustomizationModal";
+import { useCart } from "../../hooks/useCart";
+import ChickenCustomizationModal from "./ChickenCustomizationModal";
 
 const ProductCard = ({ product, onAddToCart }) => {
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
+  const { addToCart } = useCart();
 
   const discountPercentage = Math.round(
     ((product.mrp - product.price) / product.mrp) * 100
   );
 
   const handleAddToCartClick = () => {
-    setQuantityModalVisible(true);
+    if (product.category_id === "CAT_DAIRY_EGGS") {
+      addToCart(product);
+    } else {
+      setQuantityModalVisible(true);
+    }
   };
 
   return (
@@ -73,12 +79,17 @@ const ProductCard = ({ product, onAddToCart }) => {
           </View>
         </View>
       </TouchableOpacity>
-      <ProductQuantityModal
-        visible={quantityModalVisible}
-        product={product}
-        onClose={() => setQuantityModalVisible(false)}
-        onAddToCart={onAddToCart}
-      />
+      {product.category_id === "CAT_CHICKEN" && (
+        <ChickenCustomizationModal
+          visible={quantityModalVisible}
+          product={product}
+          onClose={() => setQuantityModalVisible(false)}
+          onAddToCart={(customizedProduct) => {
+            addToCart(product, customizedProduct.customizations);
+            setQuantityModalVisible(false);
+          }}
+        />
+      )}
     </>
   );
 };
