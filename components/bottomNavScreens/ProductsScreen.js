@@ -1,12 +1,13 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import React from "react";
+import { View } from "react-native";
+import Products from "../Products/Products";
 
 const ProductsScreen = () => {
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Text className="text-xl font-semibold text-gray-800">Products Screen</Text>
+    <View className="flex-1 bg-gray-50">
+      <Products />
     </View>
-  )
-}
+  );
+};
 
-export default ProductsScreen
+export default ProductsScreen;
