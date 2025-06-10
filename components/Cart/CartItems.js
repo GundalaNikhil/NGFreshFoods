@@ -40,7 +40,9 @@ const CartItems = () => {
 
             <View className="flex-row justify-between items-center mt-2">
               <View>
-                <Text className="text-lg font-bold">₹{item.price}</Text>
+                <Text className="text-lg font-bold">
+                  ₹{item.customizations ? item.itemPrice : item.price}
+                </Text>
                 <Text className="text-sm text-gray-500 line-through">
                   ₹{item.mrp}
                 </Text>
@@ -48,9 +50,13 @@ const CartItems = () => {
 
               <View className="flex-row items-center">
                 <TouchableOpacity
-                  onPress={() =>
-                    updateQuantity(item.productId, item.quantity - 1)
-                  }
+                  onPress={() => {
+                    if (item.quantity === 1) {
+                      removeFromCart(item.productId);
+                    } else {
+                      updateQuantity(item.productId, item.quantity - 1);
+                    }
+                  }}
                   className="bg-gray-100 p-2 rounded-lg"
                 >
                   <Minus size={16} color="#000" />

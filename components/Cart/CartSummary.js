@@ -3,7 +3,7 @@ import React from "react";
 import { Text, View } from "react-native";
 
 const CartSummary = ({ subtotal, discount, promoDiscount }) => {
-  const total = subtotal - discount - promoDiscount;
+  const total = subtotal - promoDiscount;
 
   return (
     <View className="bg-white p-4 mb-4">
@@ -15,12 +15,14 @@ const CartSummary = ({ subtotal, discount, promoDiscount }) => {
           <Text className="font-bold">₹{subtotal.toFixed(2)}</Text>
         </View>
 
-        <View className="flex-row justify-between">
-          <Text className="text-gray-600">Product Discount</Text>
-          <Text className="font-bold text-green-500">
-            -₹{discount.toFixed(2)}
-          </Text>
-        </View>
+        {promoDiscount > 0 && (
+          <View className="flex-row justify-between">
+            <Text className="text-gray-600">Product Discount</Text>
+            <Text className="font-bold text-green-500">
+              -₹{discount.toFixed(2)}
+            </Text>
+          </View>
+        )}
 
         {promoDiscount > 0 && (
           <View className="flex-row justify-between">
