@@ -19,7 +19,7 @@ const Products = () => {
   return (
     <View className="flex-1 bg-gray-50">
       <ProductFilter />
-      <ProductList products={productsData} onAddToCart={handleAddToCart} />
+      <ProductList products={products} onAddToCart={handleAddToCart} />
       <ProductModal
         visible={modalVisible}
         product={selectedProduct}
