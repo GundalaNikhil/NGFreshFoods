@@ -14,10 +14,24 @@ const ProductCard = ({ product, onAddToCart }) => {
 
   const handleAddToCartClick = () => {
     if (product.category_id === "CAT_DAIRY_EGGS") {
+      console.log("Adding dairy/eggs product:", product.name);
       addToCart(product);
     } else {
+      console.log("Opening customization modal for:", product.name);
       setQuantityModalVisible(true);
     }
+  };
+
+  const handleCustomizedAddToCart = (customizedProduct) => {
+    console.log("Adding customized product:", {
+      productName: product.name,
+      customizations: customizedProduct.customizations,
+      calculatedPrice: customizedProduct.price,
+    });
+
+    // Pass the original product and customizations separately
+    addToCart(product, customizedProduct.customizations);
+    setQuantityModalVisible(false);
   };
 
   return (
@@ -79,15 +93,17 @@ const ProductCard = ({ product, onAddToCart }) => {
           </View>
         </View>
       </TouchableOpacity>
+
+      {/* Customization Modal */}
       {product.category_id === "CAT_CHICKEN" && (
         <ChickenCustomizationModal
           visible={quantityModalVisible}
           product={product}
-          onClose={() => setQuantityModalVisible(false)}
-          onAddToCart={(customizedProduct) => {
-            addToCart(product, customizedProduct.customizations);
+          onClose={() => {
+            console.log("Closing customization modal");
             setQuantityModalVisible(false);
           }}
+          onAddToCart={handleCustomizedAddToCart}
         />
       )}
     </>

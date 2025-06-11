@@ -1,42 +1,59 @@
-// components/Cart/CartSummary.jsx
 import React from "react";
 import { Text, View } from "react-native";
+import { Receipt, Tag, Gift } from "lucide-react-native";
 
 const CartSummary = ({ subtotal, discount, promoDiscount }) => {
-  const total = subtotal - discount - promoDiscount;
+  const total = subtotal - promoDiscount;
 
   return (
-    <View className="bg-white p-4 mb-4">
-      <Text className="font-bold text-lg mb-4">Price Details</Text>
-
-      <View className="space-y-3">
-        <View className="flex-row justify-between">
-          <Text className="text-gray-600">Subtotal</Text>
-          <Text className="font-bold">₹{subtotal.toFixed(2)}</Text>
+    <View className="p-4">
+      <View className="bg-white rounded-2xl p-5 shadow-lg shadow-gray-200/50">
+        <View className="flex-row items-center mb-4">
+          <Receipt size={20} color="#059669" />
+          <Text className="text-lg font-bold text-gray-900 ml-2">
+            Price Details
+          </Text>
         </View>
 
-        <View className="flex-row justify-between">
-          <Text className="text-gray-600">Product Discount</Text>
-          <Text className="font-bold text-green-500">
-            -₹{discount.toFixed(2)}
+        <View className="h-px bg-gray-200 my-3" />
+
+        <View className="flex-row justify-between items-center mb-3">
+          <Text className="text-base text-gray-600 font-medium">Subtotal</Text>
+          <Text className="text-base text-gray-900 font-semibold">
+            ₹{subtotal.toFixed(2)}
           </Text>
         </View>
 
         {promoDiscount > 0 && (
-          <View className="flex-row justify-between">
-            <Text className="text-gray-600">Promo Discount</Text>
-            <Text className="font-bold text-green-500">
+          <View className="flex-row justify-between items-center mb-3">
+            <View className="flex-row items-center">
+              <Gift size={16} color="#8b5cf6" />
+              <Text className="text-base text-purple-500 font-medium ml-1.5">
+                Promo Discount
+              </Text>
+            </View>
+            <Text className="text-base text-purple-500 font-semibold">
               -₹{promoDiscount.toFixed(2)}
             </Text>
           </View>
         )}
 
-        <View className="pt-3 border-t border-gray-200">
-          <View className="flex-row justify-between">
-            <Text className="font-bold text-lg">Total</Text>
-            <Text className="font-bold text-lg">₹{total.toFixed(2)}</Text>
-          </View>
+        <View className="h-px bg-gray-200 my-3" />
+
+        <View className="flex-row justify-between items-center mt-2">
+          <Text className="text-lg font-bold text-gray-900">Total</Text>
+          <Text className="text-xl font-black text-emerald-600">
+            ₹{total.toFixed(2)}
+          </Text>
         </View>
+
+        {(discount > 0 || promoDiscount > 0) && (
+          <View className="bg-emerald-50 p-3 rounded-lg mt-4 items-center">
+            <Text className="text-sm text-emerald-600 font-semibold">
+              You saved ₹{(discount + promoDiscount).toFixed(2)} on this order!
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
