@@ -12,6 +12,9 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.nick.ngfreshfoods",
+      "versionCode": 1,
+      "permissions": [],
       "adaptiveIcon": {
         "foregroundImage": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737377776/logo_ppjvcb.png",
         "backgroundColor": "#ffffff"
@@ -41,6 +44,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "9bcd6544-2221-42d1-bf0a-58cb225a525c"
+      }
     }
   }
 }
