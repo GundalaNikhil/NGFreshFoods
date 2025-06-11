@@ -1,4 +1,3 @@
-// components/Cart/Cart.jsx
 import React, { useState } from "react";
 import { View, ScrollView } from "react-native";
 import CartHeader from "./CartHeader";
@@ -13,14 +12,18 @@ const Cart = () => {
   const [promoDiscount, setPromoDiscount] = useState(0);
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <CartHeader itemCount={cart.length} />
-
-      <ScrollView className="flex-1">
+    <View className="flex-1 bg-gradient-to-b from-slate-50 to-slate-100">
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         <CartItems />
+
         <CartPromoCode
           onApplyPromo={(discount) => setPromoDiscount(discount)}
         />
+
         <CartSummary
           subtotal={cartTotal}
           discount={cartDiscount}
