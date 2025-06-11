@@ -6,7 +6,8 @@ export const cartTotalSelector = selector({
   key: "cartTotalSelector",
   get: ({ get }) => {
     const cart = get(cartState);
-    return cart.reduce((total, item) => {
+    const items = cart.items || [];
+    return items.reduce((total, item) => {
       let itemTotal;
 
       if (item.custPrice !== undefined) {
@@ -28,7 +29,8 @@ export const cartItemsCountSelector = selector({
   key: "cartItemsCountSelector",
   get: ({ get }) => {
     const cart = get(cartState);
-    return cart.reduce((count, item) => {
+    const items = cart.items || [];
+    return items.reduce((count, item) => {
       const quantity = item.custQuantity || item.quantity;
       return count + quantity;
     }, 0);
@@ -40,18 +42,31 @@ export const cartDiscountSelector = selector({
   get: ({ get }) => {
     const cart = get(cartState);
     const promoCode = get(promoCodeState);
-    const subtotal = get(cartTotalSelector);
+    const cartTotal = get(cartTotalSelector);
 
-    // Calculate base discount (MRP - Price savings)
-    const baseDiscount = cart.reduce((discount, item) => {
-      const itemMrp = item.mrp || item.price;
-      const itemPrice = item.itemPrice || item.price;
-      return discount + (itemMrp - itemPrice) * item.quantity;
-    }, 0);
+    if (!promoCode.offerDetails) return 0;
 
-    // Add promo code discount
-    const promoDiscount = promoCode.discount || 0;
+    const offer = promoCode.offerDetails;
 
-    return baseDiscount + promoDiscount;
+    switch (offer.discountType) {
+      case "WELCOM50":
+        return Math.min(offer.discountValue, cartTotal);
+      case "FRESH20":
+        const percentDiscount = (cartTotal * offer.discountValue) / 100;
+        return offer.maxDiscount
+          ? Math.min(percentDiscount, offer.maxDiscount)
+          : percentDiscount;
+      default:
+        return promoCode.discount;
+    }
+  },
+});
+
+export const finalTotalSelector = selector({
+  key: "finalTotalSelector",
+  get: ({ get }) => {
+    const cartTotal = get(cartTotalSelector);
+    const discount = get(cartDiscountSelector);
+    return Math.max(0, cartTotal - discount);
   },
 });
