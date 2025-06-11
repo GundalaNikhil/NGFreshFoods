@@ -18,6 +18,9 @@ export const useCart = () => {
   const itemCount = useRecoilValue(cartItemsCountSelector);
   const { updateStock } = useProducts();
 
+  // Ensure cart has the proper structure
+  const cartItems = cart?.items || [];
+
   const calculateCustomPrice = (product, customizations) => {
     if (!customizations) return product.price;
 
@@ -59,7 +62,10 @@ export const useCart = () => {
     let shouldUpdateStock = false;
 
     setCart((currentCart) => {
-      const existingItem = currentCart.find(
+      // Ensure currentCart has proper structure
+      const currentItems = currentCart?.items || [];
+
+      const existingItem = currentItems.find(
         (item) => item.productId === productId
       );
 
@@ -69,18 +75,20 @@ export const useCart = () => {
           custQuantity: existingItem.custQuantity + 1,
           quantity: existingItem.quantity + 1,
           totalPrice: itemPrice * (existingItem.quantity + 1),
-          custPrice: itemPrice * (existingItem.custQuantity + 1), // Updated custom price
+          custPrice: itemPrice * (existingItem.custQuantity + 1),
         };
 
-        // Console log for debugging
         console.log("Updated existing item:", updatedItem);
-
-        // Set flag to update stock after state update
         shouldUpdateStock = true;
 
-        return currentCart.map((item) =>
+        const updatedItems = currentItems.map((item) =>
           item.productId === productId ? updatedItem : item
         );
+
+        return {
+          ...currentCart,
+          items: updatedItems,
+        };
       }
 
       const newItem = {
@@ -89,19 +97,19 @@ export const useCart = () => {
         ...product,
         customizations,
         quantity: 1,
-        custQuantity: 1, // Custom quantity
+        custQuantity: 1,
         itemPrice: itemPrice,
-        custPrice: itemPrice, // Custom price
+        custPrice: itemPrice,
         totalPrice: itemPrice,
       };
 
-      // Console log for debugging
       console.log("Added new item:", newItem);
-
-      // Set flag to update stock after state update
       shouldUpdateStock = true;
 
-      return [...currentCart, newItem];
+      return {
+        ...currentCart,
+        items: [...currentItems, newItem],
+      };
     });
 
     // Only update stock for products that have stock management - AFTER state update
@@ -111,13 +119,21 @@ export const useCart = () => {
   };
 
   const removeFromCart = (productId) => {
-    const item = cart.find((item) => item.productId === productId);
+    const item = cartItems.find((item) => item.productId === productId);
     if (item) {
       console.log("Removing item:", item);
 
-      setCart((current) =>
-        current.filter((item) => item.productId !== productId)
-      );
+      setCart((current) => {
+        const currentItems = current?.items || [];
+        const updatedItems = currentItems.filter(
+          (item) => item.productId !== productId
+        );
+
+        return {
+          ...current,
+          items: updatedItems,
+        };
+      });
 
       // Only update stock if the product has stock management - AFTER state update
       if (item.stock_quantity !== undefined) {
@@ -133,13 +149,15 @@ export const useCart = () => {
     }
 
     // Find the item and calculate quantity difference before state update
-    const currentItem = cart.find((item) => item.productId === productId);
+    const currentItem = cartItems.find((item) => item.productId === productId);
     if (!currentItem) return;
 
     const quantityDiff = newQuantity - currentItem.quantity;
 
-    setCart((current) =>
-      current.map((item) => {
+    setCart((current) => {
+      const currentItems = current?.items || [];
+
+      const updatedItems = currentItems.map((item) => {
         if (item.productId === productId) {
           // Recalculate total price based on new quantity
           const itemPrice = item.customizations
@@ -149,19 +167,23 @@ export const useCart = () => {
           const updatedItem = {
             ...item,
             quantity: newQuantity,
-            custQuantity: newQuantity, // Update custom quantity as well
+            custQuantity: newQuantity,
             itemPrice: itemPrice,
-            custPrice: itemPrice * newQuantity, // Update custom price
+            custPrice: itemPrice * newQuantity,
             totalPrice: itemPrice * newQuantity,
           };
 
           console.log("Updated quantity for item:", updatedItem);
-
           return updatedItem;
         }
         return item;
-      })
-    );
+      });
+
+      return {
+        ...current,
+        items: updatedItems,
+      };
+    });
 
     // Only update stock if the product has stock management - AFTER state update
     if (currentItem.stock_quantity !== undefined) {
@@ -181,11 +203,18 @@ export const useCart = () => {
     console.log("Clearing cart. Current cart:", cart);
 
     // Store items that need stock updates before clearing
-    const itemsToUpdateStock = cart.filter(
+    const itemsToUpdateStock = cartItems.filter(
       (item) => item.stock_quantity !== undefined
     );
 
-    setCart([]);
+    setCart({
+      items: [],
+      appliedOffer: false,
+      promoCode: null,
+      offer: null,
+      discountAmount: 0,
+    });
+
     clearPromoCode();
 
     // Update stock for all items AFTER state update
@@ -199,11 +228,12 @@ export const useCart = () => {
   // Console log current cart state whenever it changes
   React.useEffect(() => {
     console.log("Current Cart State:", cart);
+    console.log("Cart Items:", cartItems);
     console.log("Cart Total Items:", itemCount);
     console.log("Cart Total Amount:", cartTotal);
 
     // Detailed breakdown of each item
-    cart.forEach((item, index) => {
+    cartItems.forEach((item, index) => {
       console.log(`Item ${index + 1}:`, {
         productName: item.name,
         productId: item.productId,
@@ -216,10 +246,11 @@ export const useCart = () => {
         totalPrice: item.totalPrice,
       });
     });
-  }, [cart, itemCount, cartTotal]);
+  }, [cart, cartItems, itemCount, cartTotal]);
 
   return {
-    cart,
+    cart: cartItems, // Return items array for backward compatibility
+    cartData: cart, // Return full cart object
     cartTotal,
     cartDiscount,
     itemCount,

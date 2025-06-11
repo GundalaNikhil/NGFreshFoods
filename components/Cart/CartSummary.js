@@ -2,7 +2,7 @@ import React from "react";
 import { Text, View } from "react-native";
 import { Receipt, Tag, Gift } from "lucide-react-native";
 
-const CartSummary = ({ subtotal, discount, promoDiscount }) => {
+const CartSummary = ({ subtotal, discount, promoDiscount, selectedOffer }) => {
   const total = subtotal - promoDiscount;
 
   return (
@@ -29,7 +29,7 @@ const CartSummary = ({ subtotal, discount, promoDiscount }) => {
             <View className="flex-row items-center">
               <Gift size={16} color="#8b5cf6" />
               <Text className="text-base text-purple-500 font-medium ml-1.5">
-                Promo Discount
+                {selectedOffer ? selectedOffer.title : "Promo Discount"}
               </Text>
             </View>
             <Text className="text-base text-purple-500 font-semibold">
