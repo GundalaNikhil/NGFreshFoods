@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, Text } from "react-native";
+import { Text, View, ScrollView } from "react-native";
 import CartItems from "./CartItems";
 import CartPromoCode from "./CartPromoCode";
 import CartSummary from "./CartSummary";
@@ -7,6 +7,7 @@ import CartFooter from "./CartFooter";
 import OffersModal from "./Offers/OffersModal";
 import { useCart } from "../../hooks/useCart";
 import { useOffers } from "../../hooks/useOffers";
+import { debugCartAnalysis } from "../../utils/promoHelper";
 import { ShoppingBag } from "lucide-react-native";
 
 const Cart = () => {
@@ -19,6 +20,23 @@ const Cart = () => {
   const promoDiscount = cartData?.discountAmount || 0;
   const promoCode = cartData?.promoCode || "";
 
+  // Extract cart items for validation
+  const cartItems = cart || cartData || {};
+
+  // Mock user profile - you should replace this with actual user data
+  const userProfile = {
+    isFirstTime: true, // Set based on actual user data
+    isFirstTimeUser: true, // Alternative property name
+    // Add other user properties as needed
+  };
+
+  // Debug cart analysis (remove in production)
+  React.useEffect(() => {
+    if (Object.keys(cartItems).length > 0) {
+      debugCartAnalysis(cartItems, userProfile);
+    }
+  }, [cartItems, userProfile]);
+
   const handleOfferSelect = (offer) => {
     const discount = calculateOfferDiscount(offer, cartTotal);
     applyOffer(offer, cartTotal);
@@ -26,13 +44,16 @@ const Cart = () => {
   };
 
   const handlePromoCodeApply = (promoData) => {
-    // Create a mock offer object for promo codes
+    // Create a promo offer object with the validated data
     const promoOffer = {
       id: `promo_${promoData.promoCode}`,
-      title: `Promo Code: ${promoData.promoCode}`,
+      title: promoData.promo?.title || `Promo Code: ${promoData.promoCode}`,
       promoCode: promoData.promoCode,
-      description: `Flat ₹${promoData.discount} off`,
+      description:
+        promoData.promo?.description || `Flat ₹${promoData.discount} off`,
       isPromoCode: true,
+      discount: promoData.discount,
+      type: promoData.promo?.type || "fixed",
     };
 
     applyOffer(promoOffer, cartTotal);
@@ -44,6 +65,25 @@ const Cart = () => {
 
   const handleShowOffers = () => {
     setIsOffersModalVisible(true);
+  };
+
+  // Calculate item count properly
+  const getItemCount = () => {
+    if (Array.isArray(cart)) {
+      return cart.length;
+    }
+
+    if (typeof cartItems === "object" && cartItems !== null) {
+      return Object.keys(cartItems).filter(
+        (key) =>
+          cartItems[key] &&
+          typeof cartItems[key] === "object" &&
+          (cartItems[key].productId || cartItems[key].id) &&
+          (cartItems[key].quantity > 0 || cartItems[key].custQuantity > 0)
+      ).length;
+    }
+
+    return 0;
   };
 
   return (
@@ -64,6 +104,9 @@ const Cart = () => {
               promoCode={promoCode}
               discountAmount={promoDiscount}
               onRemovePromo={handleRemovePromo}
+              cartItems={cartItems}
+              userProfile={userProfile}
+              cartTotal={cartTotal}
             />
 
             <CartSummary
@@ -76,7 +119,7 @@ const Cart = () => {
 
           <CartFooter
             total={cartTotal - promoDiscount}
-            itemCount={cart?.length || 0}
+            itemCount={getItemCount()}
           />
 
           <OffersModal
@@ -85,6 +128,8 @@ const Cart = () => {
             onSelectOffer={handleOfferSelect}
             selectedOffer={selectedOffer}
             cartTotal={cartTotal}
+            cartItems={cartItems}
+            userProfile={userProfile}
           />
         </>
       ) : (
