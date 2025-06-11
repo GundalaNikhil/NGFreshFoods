@@ -5,13 +5,21 @@ import { cartState } from "../recoil/atoms/cartAtom";
 
 export const useOffers = () => {
   const [cart, setCart] = useRecoilState(cartState);
-  const [offerApplied, setOfferApplied] = useState(false);
-  const [promocode, setPromocode] = useState("");
-  const [discountAmount, setDiscountAmount] = useState(0);
 
   const calculateOfferDiscount = useCallback((offer, cartTotal) => {
     if (!offer) return 0;
 
+    // Handle manual promo codes
+    if (offer.isPromoCode) {
+      const PROMO_CODES = {
+        WELCOME50: 50,
+        SAVE100: 100,
+        FRESH20: 20,
+      };
+      return PROMO_CODES[offer.promoCode] || 0;
+    }
+
+    // Handle offers from modal
     switch (offer.promoCode) {
       case "WELCOME50":
         return Math.min(cartTotal * 0.5, 500);
@@ -30,15 +38,14 @@ export const useOffers = () => {
 
   const applyOffer = useCallback(
     (offer, cartTotal) => {
+      if (!offer) return 0;
+
       const discount = calculateOfferDiscount(offer, cartTotal);
-      setPromocode(offer);
-      setDiscountAmount(discount);
-      setOfferApplied(true);
 
       setCart((prevCart) => ({
         ...prevCart,
         appliedOffer: true,
-        promoCode: offer?.promoCode || null,
+        promoCode: offer.promoCode,
         offer: offer,
         discountAmount: discount,
       }));
@@ -49,12 +56,11 @@ export const useOffers = () => {
   );
 
   const removeOffer = useCallback(() => {
-    setSelectedOffer(null);
-    setAppliedDiscount(0);
     setCart((prevCart) => ({
       ...prevCart,
       appliedOffer: false,
       promoCode: null,
+      offer: null,
       discountAmount: 0,
     }));
   }, [setCart]);
@@ -63,11 +69,9 @@ export const useOffers = () => {
     return OffersData.filter((offer) => offer.flag === true);
   }, []);
 
+  // Debug logging
   React.useEffect(() => {
-    console.log("Offer Applied:", offerApplied);
-    console.log("Applied Discount:", discountAmount);
-    console.log("Promocode:", promocode);
-    console.log("CArt :", cart);
+    console.log("Cart State:", cart);
   }, [cart]);
 
   return {

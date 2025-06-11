@@ -13,14 +13,36 @@ const Cart = () => {
   const { applyOffer, removeOffer, calculateOfferDiscount } = useOffers();
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
 
-  // Get offer data from the cart state
+  // Get current promo/offer state from cart
   const selectedOffer = cartData?.offer || null;
   const promoDiscount = cartData?.discountAmount || 0;
   const promoCode = cartData?.promoCode || "";
 
   const handleOfferSelect = (offer) => {
+    const discount = calculateOfferDiscount(offer, cartTotal);
     applyOffer(offer, cartTotal);
     setIsOffersModalVisible(false);
+  };
+
+  const handlePromoCodeApply = (promoData) => {
+    // Create a mock offer object for promo codes
+    const promoOffer = {
+      id: `promo_${promoData.promoCode}`,
+      title: `Promo Code: ${promoData.promoCode}`,
+      promoCode: promoData.promoCode,
+      description: `Flat ₹${promoData.discount} off`,
+      isPromoCode: true,
+    };
+
+    applyOffer(promoOffer, cartTotal);
+  };
+
+  const handleRemovePromo = () => {
+    removeOffer();
+  };
+
+  const handleShowOffers = () => {
+    setIsOffersModalVisible(true);
   };
 
   return (
@@ -31,13 +53,16 @@ const Cart = () => {
         contentContainerStyle={{ paddingBottom: 20 }}
       >
         <CartItems />
+
         <CartPromoCode
-          onApplyPromo={handleOfferSelect}
-          onShowOffers={() => setIsOffersModalVisible(true)}
+          onApplyPromo={handlePromoCodeApply}
+          onShowOffers={handleShowOffers}
           selectedOffer={selectedOffer}
           promoCode={promoCode}
           discountAmount={promoDiscount}
+          onRemovePromo={handleRemovePromo}
         />
+
         <CartSummary
           subtotal={cartTotal}
           discount={cartDiscount}
@@ -45,6 +70,7 @@ const Cart = () => {
           selectedOffer={selectedOffer}
         />
       </ScrollView>
+
       <CartFooter
         total={cartTotal - promoDiscount}
         itemCount={cart?.length || 0}
