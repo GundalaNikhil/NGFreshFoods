@@ -6,7 +6,14 @@ import {
   View,
   ScrollView,
 } from "react-native";
-import { Tag, Gift, X, Info, CheckCircle } from "lucide-react-native";
+import {
+  Tag,
+  Gift,
+  X,
+  Info,
+  CheckCircle,
+  AlertTriangle,
+} from "lucide-react-native";
 import {
   validatePromoCode,
   getAvailablePromoCodes,
@@ -20,13 +27,14 @@ const CartPromoCode = ({
   promoCode: appliedPromoCode,
   discountAmount,
   onRemovePromo,
-  cartItems, 
-  userProfile, 
+  cartItems,
+  userProfile,
   cartTotal,
 }) => {
   const [promoCode, setPromoCode] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [warning, setWarning] = useState("");
   const [availablePromoCodes, setAvailablePromoCodes] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -36,11 +44,41 @@ const CartPromoCode = ({
     setAvailablePromoCodes(available);
   }, [cartItems, userProfile]);
 
+  // **NEW: Check if current applied promo is still valid**
+  useEffect(() => {
+    if (
+      (selectedOffer?.promoCode || appliedPromoCode) &&
+      Object.keys(cartItems).length > 0
+    ) {
+      const currentPromoCode = selectedOffer?.promoCode || appliedPromoCode;
+      const validation = validatePromoCode(
+        currentPromoCode,
+        cartItems,
+        userProfile,
+        cartTotal
+      );
+
+      if (!validation.isValid) {
+        setWarning(
+          `${currentPromoCode} may be removed as cart conditions changed`
+        );
+        // Clear other messages
+        setError("");
+        setSuccess("");
+      } else {
+        setWarning("");
+      }
+    } else {
+      setWarning("");
+    }
+  }, [cartItems, cartTotal, selectedOffer, appliedPromoCode, userProfile]);
+
   // Clear messages when promo code input changes
   useEffect(() => {
     if (promoCode) {
       setError("");
       setSuccess("");
+      setWarning("");
     }
   }, [promoCode]);
 
@@ -73,6 +111,16 @@ const CartPromoCode = ({
     }
   }, [error]);
 
+  // Auto-clear warning message after 6 seconds
+  useEffect(() => {
+    if (warning) {
+      const timer = setTimeout(() => {
+        setWarning("");
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [warning]);
+
   const hasActivePromo = !!(selectedOffer || appliedPromoCode);
 
   const handleApplyPromo = () => {
@@ -90,6 +138,7 @@ const CartPromoCode = ({
 
     if (validation.isValid) {
       setError("");
+      setWarning("");
       setSuccess(
         `${validation.promo.title} applied successfully! You saved ₹${validation.discount}`
       );
@@ -103,6 +152,7 @@ const CartPromoCode = ({
     } else {
       setError(validation.errorMessage);
       setSuccess("");
+      setWarning("");
     }
   };
 
@@ -110,6 +160,7 @@ const CartPromoCode = ({
     setPromoCode("");
     setError("");
     setSuccess("");
+    setWarning("");
     setShowSuggestions(false);
     onRemovePromo();
   };
@@ -194,6 +245,18 @@ const CartPromoCode = ({
               Eligible for premium chicken offers!
             </Text>
           )}
+        </View>
+      )}
+
+      {/* **NEW: Warning for potentially invalid promo** */}
+      {warning && (
+        <View className="bg-yellow-50 p-3 rounded-lg mb-4 border border-yellow-200">
+          <View className="flex-row items-center">
+            <AlertTriangle size={16} color="#d97706" />
+            <Text className="text-yellow-700 font-medium ml-2 text-sm">
+              {warning}
+            </Text>
+          </View>
         </View>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Text, View, ScrollView } from "react-native";
 import CartItems from "./CartItems";
 import CartPromoCode from "./CartPromoCode";
@@ -7,7 +7,7 @@ import CartFooter from "./CartFooter";
 import OffersModal from "./Offers/OffersModal";
 import { useCart } from "../../hooks/useCart";
 import { useOffers } from "../../hooks/useOffers";
-import { debugCartAnalysis } from "../../utils/promoHelper";
+import { debugCartAnalysis, validatePromoCode } from "../../utils/promoHelper";
 import { ShoppingBag } from "lucide-react-native";
 
 const Cart = () => {
@@ -36,6 +36,51 @@ const Cart = () => {
       debugCartAnalysis(cartItems, userProfile);
     }
   }, [cartItems, userProfile]);
+
+  // **NEW: Auto-validate active promo when cart changes**
+  useEffect(() => {
+    // Only validate if there's an active promo/offer
+    if ((selectedOffer || promoCode) && Object.keys(cartItems).length > 0) {
+      let isCurrentPromoValid = true;
+      let currentPromoCode = "";
+
+      // Determine the promo code to validate
+      if (selectedOffer?.promoCode) {
+        currentPromoCode = selectedOffer.promoCode;
+      } else if (promoCode) {
+        currentPromoCode = promoCode;
+      }
+
+      if (currentPromoCode) {
+        const validation = validatePromoCode(
+          currentPromoCode,
+          cartItems,
+          userProfile,
+          cartTotal
+        );
+
+        isCurrentPromoValid = validation.isValid;
+
+        // If current promo is no longer valid, remove it automatically
+        if (!isCurrentPromoValid) {
+          console.log(`Auto-removing invalid promo: ${currentPromoCode}`);
+          removeOffer();
+          
+          // Optional: Show a notification to user about promo removal
+          // You can implement a toast/alert here
+          // showToast(`${currentPromoCode} was removed as it no longer applies to your cart`);
+        }
+      }
+    }
+  }, [cartItems, cartTotal, selectedOffer, promoCode, userProfile, removeOffer]);
+
+  // **NEW: Auto-validate when cart becomes empty**
+  useEffect(() => {
+    if (Object.keys(cartItems).length === 0 && (selectedOffer || promoCode)) {
+      console.log("Cart is empty, removing active promo");
+      removeOffer();
+    }
+  }, [cartItems, selectedOffer, promoCode, removeOffer]);
 
   const handleOfferSelect = (offer) => {
     const discount = calculateOfferDiscount(offer, cartTotal);
