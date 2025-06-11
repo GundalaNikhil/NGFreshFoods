@@ -89,20 +89,6 @@ const CartItems = () => {
     });
   };
 
-  if (cart.length === 0) {
-    return (
-      <View className="items-center justify-center py-16">
-        <ShoppingBag size={64} color="#cbd5e1" />
-        <Text className="text-lg font-semibold text-gray-500 mt-4">
-          Your cart is empty
-        </Text>
-        <Text className="text-sm text-gray-400 mt-1">
-          Add some delicious items to get started
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <View className="p-4">
       <Text className="text-xl font-bold text-gray-900 mb-4">Cart Items</Text>
