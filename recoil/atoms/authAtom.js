@@ -1,4 +1,5 @@
 import { atom } from "recoil";
+import { persistAtom } from "./persistAtom";
 
 export const authAtom = atom({
   key: "authState",
@@ -6,4 +7,5 @@ export const authAtom = atom({
     isLoggedIn: false,
     user: null,
   },
+  ...persistAtom("auth"),
 });

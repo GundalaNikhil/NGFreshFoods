@@ -12,3 +12,4 @@ export const cartState = atom({
   },
   ...persistAtom("cart"),
 });
+ 
