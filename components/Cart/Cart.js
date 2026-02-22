@@ -99,11 +99,11 @@ const Cart = () => {
               Home
             </Text>
             <ChevronDown size={16} color="#E23744" strokeWidth={3} />
-          </View>
+            </View>
           <Text className="text-[12px] text-gray-500 font-medium tracking-tight" numberOfLines={1}>
             123, Fresh Farms Street, NG Layout...
           </Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
 
         <TouchableOpacity className="w-10 h-10 rounded-full bg-red-50 items-center justify-center border border-red-100 ml-2">
           <MapPin size={18} color="#E23744" strokeWidth={2.5} />
@@ -200,14 +200,14 @@ const Cart = () => {
         </>
       ) : (
         <View className="flex-1 items-center justify-center p-8">
-          <View className="w-24 h-24 bg-red-50 rounded-full items-center justify-center mb-6">
-            <ShoppingBag size={48} color="#E23744" />
+          <View className="w-24 h-24 bg-green-50 rounded-full items-center justify-center mb-6">
+            <ShoppingBag size={48} color="#16A34A" />
           </View>
           <Text className="text-xl font-bold text-gray-900">Your cart is empty</Text>
           <Text className="text-gray-500 text-center mt-2 leading-relaxed">
             Good food is always cooking! Go ahead, order some yummy items from the menu.
           </Text>
-          <TouchableOpacity className="mt-8 bg-red-600 px-8 py-3 rounded-xl">
+          <TouchableOpacity className="mt-8 bg-green-600 px-8 py-3 rounded-xl">
             <Text className="text-white font-bold text-base">Browse Menu</Text>
           </TouchableOpacity>
         </View>

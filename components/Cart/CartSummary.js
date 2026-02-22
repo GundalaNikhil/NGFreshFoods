@@ -46,8 +46,8 @@ const CartSummary = ({
 
         {promoDiscount > 0 && (
           <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-[14px] text-red-600 font-bold uppercase">Coupon Savings</Text>
-            <Text className="text-[14px] text-red-600 font-bold">
+            <Text className="text-[14px] text-green-600 font-bold uppercase">Coupon Savings</Text>
+            <Text className="text-[14px] text-green-600 font-bold">
               -₹{promoDiscount.toFixed(2)}
             </Text>
           </View>
@@ -62,8 +62,8 @@ const CartSummary = ({
       </View>
 
       {(discount > 0 || promoDiscount > 0) && (
-        <View className="mx-1 mt-4 flex-row items-center border border-red-100 bg-red-50/30 p-3 rounded-xl">
-          <Text className="text-[12px] text-red-700 font-bold tracking-tight">
+        <View className="mx-1 mt-4 flex-row items-center border border-green-100 bg-green-50/30 p-3 rounded-xl">
+          <Text className="text-[12px] text-green-700 font-bold tracking-tight">
             SAVED ₹{(discount + promoDiscount).toFixed(2)} WITH COUPONS & OFFERS
           </Text>
         </View>

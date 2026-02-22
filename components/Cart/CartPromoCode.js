@@ -212,26 +212,26 @@ const CartPromoCode = ({
         className="flex-row items-center justify-between bg-white border border-gray-100 p-4 rounded-xl shadow-sm"
       >
         <View className="flex-row items-center">
-          <Tag size={20} color="#E23744" />
+          <Tag size={20} color="#16A34A" />
           <Text className="font-bold text-[15px] ml-3 text-gray-800">
             Use coupons to save more
           </Text>
         </View>
-        <ChevronRight size={20} color="#E23744" />
+        <ChevronRight size={20} color="#16A34A" />
       </TouchableOpacity>
 
       {/* Active Offer Banner */}
       {selectedOffer && (
-        <View className="bg-red-50 p-4 rounded-xl mt-3 border border-red-100">
+        <View className="bg-green-50 p-4 rounded-xl mt-3 border border-green-100">
           <View className="flex-row items-center justify-between mb-1">
             <View className="flex-row items-center flex-1">
-              <Gift size={18} color="#E23744" />
-              <Text className="text-red-700 font-bold ml-2 text-sm">
+              <Gift size={18} color="#16A34A" />
+              <Text className="text-green-700 font-bold ml-2 text-sm">
                 '{selectedOffer.promoCode}' applied!
               </Text>
             </View>
             <TouchableOpacity onPress={handleRemovePromo}>
-              <Text className="text-red-600 font-bold text-xs uppercase">Remove</Text>
+              <Text className="text-green-600 font-bold text-xs uppercase">Remove</Text>
             </TouchableOpacity>
           </View>
           <Text className="text-gray-600 text-[11px] ml-7">
@@ -256,7 +256,7 @@ const CartPromoCode = ({
             disabled={!promoCode.trim()}
             className="ml-3"
           >
-            <Text className={`font-bold text-[14px] ${promoCode.trim() ? "text-red-600" : "text-gray-300"}`}>
+            <Text className={`font-bold text-[14px] ${promoCode.trim() ? "text-green-600" : "text-gray-300"}`}>
               APPLY
             </Text>
           </TouchableOpacity>

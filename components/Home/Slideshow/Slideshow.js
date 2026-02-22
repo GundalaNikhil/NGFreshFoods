@@ -33,9 +33,9 @@ const Slideshow = () => {
   }, []);
 
   return (
-    <View className="h-48 px-4 py-2">
+    <View className="h-48 py-2">
       <Animated.View
-        className="w-full h-full rounded-lg overflow-hidden"
+        className="w-full h-full overflow-hidden"
         style={{ opacity: fadeAnim }}
       >
         <Image

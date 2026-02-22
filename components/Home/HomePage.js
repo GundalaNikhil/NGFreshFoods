@@ -14,22 +14,23 @@ const HomePage = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 80 }}
       >
-        <View className="px-4">
-          <View className="mt-1">
-            <AddressHeader />
-          </View>
-          <View className="mt-2">
-            <SearchBar />
-          </View>
-          <View className="mt-3">
-            <Slideshow />
-          </View>
-          <View className="mt-5">
-            <CategoriesList />
-          </View>
-          <View className="mt-5">
-            <HomePageBanner />
-          </View>
+        <View className="px-4 mt-1">
+          <AddressHeader />
+        </View>
+        <View className="px-4 mt-2">
+          <SearchBar />
+        </View>
+        
+        {/* Full-width Carousel */}
+        <View className="mt-3">
+          <Slideshow />
+        </View>
+        
+        <View className="px-4 mt-5">
+          <CategoriesList />
+        </View>
+        <View className="px-4 mt-5">
+          <HomePageBanner />
         </View>
       </ScrollView>
     </SafeAreaView>

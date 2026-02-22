@@ -57,15 +57,15 @@ const CartItems = () => {
 
           {/* Right: Quantity & Price */}
           <View className="items-end">
-            <View className="bg-white border border-red-200 rounded-lg h-7 flex-row items-center shadow-sm shadow-black/5 min-w-[70px] justify-between mb-2">
+            <View className="bg-white border border-gray-200 rounded-lg h-7 flex-row items-center shadow-sm shadow-black/5 min-w-[70px] justify-between mb-2">
               <TouchableOpacity
                 onPress={() => handleQuantityChange(item, item.custQuantity - 1)}
                 className="w-6 items-center justify-center h-full"
               >
-                <Minus size={12} color="#E23744" strokeWidth={4} />
+                <Minus size={12} color="#1C1C1C" strokeWidth={4} />
               </TouchableOpacity>
               
-              <Text className="text-[12px] font-black text-red-600">
+              <Text className="text-[12px] font-black text-gray-900">
                 {item.custQuantity}
               </Text>
 
@@ -73,7 +73,7 @@ const CartItems = () => {
                 onPress={() => handleQuantityChange(item, item.custQuantity + 1)}
                 className="w-6 items-center justify-center h-full"
               >
-                <Plus size={12} color="#E23744" strokeWidth={4} />
+                <Plus size={12} color="#1C1C1C" strokeWidth={4} />
               </TouchableOpacity>
             </View>
             

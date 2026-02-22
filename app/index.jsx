@@ -45,7 +45,7 @@ const TabButton = ({
     <Pressable
       onPress={onPress}
       className={`flex-1 items-center justify-center ${
-        isSmallScreen ? "py-1.5" : "py-2"
+        isSmallScreen ? "py-1" : "py-1.5"
       }`}
     >
       <Reanimated.View
@@ -70,11 +70,11 @@ export default function Index() {
           headerShown: false,
           tabBarStyle: {
             backgroundColor: "white",
-            height: isSmallScreen ? 60 : 65,
+            height: isSmallScreen ? 50 : 54, // Adjusted height for labels and icons
             borderTopWidth: 1,
             borderTopColor: "#f1f1f1",
-            paddingBottom: isSmallScreen ? 8 : 10,
-            paddingTop: 8,
+            paddingBottom: isSmallScreen ? 4 : 6,
+            paddingTop: 6,
             position: "absolute",
             left: 0,
             right: 0,
@@ -82,8 +82,8 @@ export default function Index() {
             elevation: 0, // Removing default shadow
             shadowOpacity: 0, // Removing iOS shadow
           },
-          tabBarActiveTintColor: "#d11243", // Licious red color
-          tabBarInactiveTintColor: "#4a4a4a",
+          tabBarActiveTintColor: "#d11243", // Restored Red active color
+          tabBarInactiveTintColor: "#666666",
           tabBarShowLabel: true,
           tabBarButton: (props) => <TabButton {...props} />,
           tabBarSafeAreaInset: { bottom: 0 },
@@ -97,14 +97,14 @@ export default function Index() {
               <Icon
                 type="material-community"
                 name={focused ? "home" : "home-outline"}
-                size={isSmallScreen ? 22 : 24}
+                size={22}
                 color={color}
               />
             ),
             tabBarLabel: ({ focused }) => (
               <Text
-                className={`text-[11px] mt-0.5 font-medium ${
-                  focused ? "text-[#d11243]" : "text-gray-600"
+                className={`text-[10px] mt-0.5 font-bold ${
+                  focused ? "text-[#d11243]" : "text-gray-500"
                 }`}
               >
                 Home
@@ -120,14 +120,14 @@ export default function Index() {
               <Icon
                 type="material-community"
                 name={focused ? "food-drumstick" : "food-drumstick-outline"}
-                size={isSmallScreen ? 22 : 24}
+                size={22}
                 color={color}
               />
             ),
             tabBarLabel: ({ focused }) => (
               <Text
-                className={`text-[11px] mt-0.5 font-medium ${
-                  focused ? "text-[#d11243]" : "text-gray-600"
+                className={`text-[10px] mt-0.5 font-bold ${
+                  focused ? "text-[#d11243]" : "text-gray-500"
                 }`}
               >
                 Products
@@ -143,14 +143,14 @@ export default function Index() {
               <Icon
                 type="material-community"
                 name={focused ? "account" : "account-outline"}
-                size={isSmallScreen ? 22 : 24}
+                size={22}
                 color={color}
               />
             ),
             tabBarLabel: ({ focused }) => (
               <Text
-                className={`text-[11px] mt-0.5 font-medium ${
-                  focused ? "text-[#d11243]" : "text-gray-600"
+                className={`text-[10px] mt-0.5 font-bold ${
+                  focused ? "text-[#d11243]" : "text-gray-500"
                 }`}
               >
                 Account
@@ -167,19 +167,16 @@ export default function Index() {
                 <Icon
                   type="material-community"
                   name={focused ? "cart" : "cart-outline"}
-                  size={isSmallScreen ? 22 : 24}
+                  size={22}
                   color={color}
                 />
-                {/* Cart badge - uncomment and connect to your cart state */}
-                {/* <View className="absolute -top-1 -right-2 bg-red-500 rounded-full w-4 h-4 items-center justify-center">
-                  <Text className="text-[10px] text-white font-bold">2</Text>
-                </View> */}
+                {/* Cart badge */}
               </View>
             ),
             tabBarLabel: ({ focused }) => (
               <Text
-                className={`text-[11px] mt-0.5 font-medium ${
-                  focused ? "text-[#d11243]" : "text-gray-600"
+                className={`text-[10px] mt-0.5 font-bold ${
+                  focused ? "text-[#d11243]" : "text-gray-500"
                 }`}
               >
                 Cart

@@ -8,10 +8,10 @@ const CartFooter = ({ totalPayable, itemCount }) => {
   return (
     <View className="bg-white border-t border-gray-100">
       {/* Main CTA */}
-      <View className="px-4 py-4 pb-24">
+      <View className="px-4 py-4 pb-[80px]">
         <TouchableOpacity
           activeOpacity={0.9}
-          className="bg-[#E23744] rounded-xl h-14 flex-row items-center px-5 justify-between shadow-lg shadow-red-200"
+          className="bg-[#16A34A] rounded-xl h-14 flex-row items-center px-5 justify-between shadow-lg shadow-green-200"
         >
           <View>
             <Text className="text-white font-black text-[18px]">
