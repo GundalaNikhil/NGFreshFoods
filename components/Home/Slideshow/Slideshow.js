@@ -9,11 +9,10 @@ const images = [
 
 const Slideshow = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const timer = globalThis.setInterval(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 500,
@@ -29,13 +28,13 @@ const Slideshow = () => {
       });
     }, 5000); // Change image every 5 seconds
 
-    return () => clearInterval(timer);
-  }, []);
+    return () => globalThis.clearInterval(timer);
+  }, [fadeAnim]);
 
   return (
-    <View className="h-48 py-2">
+    <View className="h-52 px-4">
       <Animated.View
-        className="w-full h-full overflow-hidden"
+        className="w-full h-full overflow-hidden rounded-3xl border border-[#d6e2cb]"
         style={{ opacity: fadeAnim }}
       >
         <Image
@@ -45,13 +44,12 @@ const Slideshow = () => {
         />
       </Animated.View>
 
-      {/* Adding dot indicators to show current slide position */}
-      <View className="flex-row justify-center mt-2 absolute bottom-4 w-full">
+      <View className="flex-row justify-center absolute bottom-4 w-full">
         {images.map((_, index) => (
           <View
             key={index}
             className={`h-2 w-2 rounded-full mx-1 ${
-              currentIndex === index ? "bg-white" : "bg-white/50"
+              currentIndex === index ? "bg-[#f8fafc]" : "bg-white/45"
             }`}
           />
         ))}

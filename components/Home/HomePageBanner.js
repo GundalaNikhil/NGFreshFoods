@@ -1,5 +1,5 @@
-import { ArrowRight } from "lucide-react-native";
-import React, { useEffect } from "react";
+import { ArrowRight, BadgeCheck, Leaf, ShieldCheck, Truck } from "lucide-react-native";
+import React, { useEffect, useRef } from "react";
 import {
   Animated,
   ImageBackground,
@@ -11,52 +11,59 @@ import {
 
 const HomePageBanner = () => {
   const { width } = useWindowDimensions();
-  const fadeAnim = new Animated.Value(0);
-  const slideAnim = new Animated.Value(50);
-
-  const isSmallScreen = width < 360;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
+        duration: 900,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 800,
+        duration: 700,
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
-  // Dynamic text styles based on screen width
   const getTextStyles = () => {
     if (width < 360) {
-      return "text-xs leading-3"; // Smallest screens
+      return "text-[11px] leading-4";
     } else if (width > 360 && width < 450) {
-      return "text-sm leading-6"; // Medium screens
+      return "text-xs leading-5";
     }
-    return "text-base leading-8"; // Large screens (original size)
+    return "text-sm leading-6";
   };
 
   const getHeaderTextStyles = () => {
     if (width < 400) {
-      return "text-xl";
+      return "text-[22px]";
     } else if (width >= 400 && width < 450) {
-      return "text-2xl";
+      return "text-[25px]";
     }
-    return "text-3xl";
+    return "text-[28px]";
   };
 
   return (
-    <View className="mt-6">
-      <Text
-        className={`text-center  font-bold ${getHeaderTextStyles()} text-gray-800 mb-4`}
-      >
-        From Nature's Heart to Your Table
-      </Text>
+    <View className="mt-1">
+      <View className="items-center mb-4 px-2">
+        <View className="bg-[#e9f2df] rounded-full px-3 py-1 mb-2.5">
+          <Text className="text-[10px] tracking-[1px] font-semibold text-[#365314]">
+            HANDPICKED QUALITY
+          </Text>
+        </View>
+        <Text
+          className={`text-center font-extrabold italic ${getHeaderTextStyles()} text-[#1f2937] leading-8`}
+        >
+          Sustainably Raised. Honestly Delivered.
+        </Text>
+        <Text className="text-center text-[#475569] text-xs mt-2 px-6 leading-5">
+          Organic-first sourcing with transparent quality standards.
+        </Text>
+      </View>
       <View className="rounded-2xl overflow-hidden h-80">
         <ImageBackground
           source={{
@@ -65,36 +72,53 @@ const HomePageBanner = () => {
           className="w-full h-full"
           resizeMode="cover"
         >
-          <View className="flex-1 bg-black/30 p-6 justify-between">
+          <View className="flex-1 bg-[#1f2937]/55 p-5 justify-between">
             <Animated.View
               style={{
                 opacity: fadeAnim,
                 transform: [{ translateY: slideAnim }],
               }}
             >
-              <Text
-                className={`text-white ${getHeaderTextStyles()} font-extrabold mb-2`}
-              >
-                Farm-Fresh Goodness
+              <View className="self-start rounded-full px-3 py-1 bg-[#d9f99d] mb-3 flex-row items-center">
+                <Leaf size={12} color="#365314" />
+                <Text className="ml-1 text-[10px] font-bold text-[#365314]">
+                  100% traceable farms
+                </Text>
+              </View>
+              <Text className={`text-white ${getHeaderTextStyles()} font-extrabold mb-2`}>
+                Better Meat, Better Mornings
               </Text>
               <Text className={`text-white ${getTextStyles()} mb-6 w-1/2`}>
-                Discover the pure taste of naturally raised poultry and
-                farm-fresh eggs, carefully sourced from local farms that share
-                our commitment to quality and sustainability.
+                Naturally raised poultry and farm-fresh eggs from vetted
+                partners focused on welfare, freshness, and clean handling.
               </Text>
+              <View className="flex-row items-center">
+                <View className="flex-row items-center mr-3">
+                  <BadgeCheck size={14} color="#bef264" />
+                  <Text className="text-[10px] text-white ml-1">No antibiotics</Text>
+                </View>
+                <View className="flex-row items-center mr-3">
+                  <Truck size={14} color="#bef264" />
+                  <Text className="text-[10px] text-white ml-1">Same-day slots</Text>
+                </View>
+                <View className="flex-row items-center">
+                  <ShieldCheck size={14} color="#bef264" />
+                  <Text className="text-[10px] text-white ml-1">Quality checked</Text>
+                </View>
+              </View>
             </Animated.View>
             <Pressable
-              className="bg-white/90 py-3 px-6 rounded-full flex-row items-center justify-center space-x-2 self-start"
+              className="bg-[#f8fafc] py-3 px-5 rounded-full flex-row items-center justify-center self-start"
               style={({ pressed }) => [
                 {
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                  transform: [{ scale: pressed ? 0.985 : 1 }],
                 },
               ]}
             >
-              <Text className="text-black font-semibold">
-                Browse Our Selection
+              <Text className="text-[#1f2937] font-semibold mr-1">
+                Browse Collection
               </Text>
-              <ArrowRight size={18} color="black" />
+              <ArrowRight size={18} color="#1f2937" />
             </Pressable>
           </View>
         </ImageBackground>

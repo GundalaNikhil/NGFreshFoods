@@ -7,9 +7,12 @@ const CategoryItem = ({ title, image, itemSize, onPress }) => {
       activeOpacity={0.85}
       onPress={onPress}
       style={{ width: itemSize }}
-      className="bg-white border border-gray-200 rounded-2xl p-2 mr-3"
+      className="bg-white border border-[#dce6d2] rounded-2xl p-2.5 mr-3"
     >
-      <View className="rounded-xl overflow-hidden bg-gray-100" style={{ height: itemSize - 16 }}>
+      <View
+        className="rounded-xl overflow-hidden bg-[#eef4e7]"
+        style={{ height: itemSize - 12 }}
+      >
         <Image
           source={{ uri: image }}
           style={{
@@ -19,11 +22,16 @@ const CategoryItem = ({ title, image, itemSize, onPress }) => {
           className="rounded-xl"
         />
       </View>
-      <Text className="mt-2 text-center font-semibold text-gray-900 text-xs" numberOfLines={1}>
+      <Text
+        className="mt-2.5 text-center font-bold text-[#334155] text-xs"
+        numberOfLines={1}
+      >
         {title}
       </Text>
       <View className="mt-1 items-center">
-        <Text className="text-[10px] text-emerald-600 font-semibold">Shop now</Text>
+        <Text className="text-[10px] text-[#3f6212] font-semibold">
+          View collection
+        </Text>
       </View>
     </TouchableOpacity>
   );

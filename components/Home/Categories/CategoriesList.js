@@ -20,7 +20,7 @@ const CategoriesList = () => {
   const navigation = useNavigation();
   const { categories, setSelectedCategory } = useProducts();
   const screenWidth = Dimensions.get("window").width;
-  const itemSize = Math.min(108, screenWidth / 3.3);
+  const itemSize = Math.min(116, screenWidth / 3.15);
 
   const handleCategoryPress = (categoryId) => {
     setSelectedCategory(categoryId);
@@ -30,26 +30,28 @@ const CategoriesList = () => {
   return (
     <View>
       <View className="flex-row items-center justify-between px-1 mb-4">
-        <Text className="text-xl font-bold text-gray-900">
+        <Text className="text-[23px] font-extrabold text-[#1f2937]">
           Shop By Category
         </Text>
-        <Text className="text-xs font-semibold text-gray-500">
-          Fresh picks
+        <Text className="text-[11px] font-semibold text-[#3f6212]">
+          Curated fresh picks
         </Text>
       </View>
-      <Text className="text-xs text-gray-500 px-1 mb-3">
-        Quick commerce style browsing, fresh delivery slots
+      <Text className="text-xs text-[#64748b] px-1 mb-4">
+        Farm-sourced essentials delivered with trusted cold-chain handling.
       </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingLeft: 2, paddingRight: 8 }}
+        contentContainerStyle={{ paddingLeft: 2, paddingRight: 10 }}
       >
         {categories.map((category, index) => (
           <CategoryItem
             key={category.category_id || index}
             title={category.name}
-            image={CATEGORY_IMAGE_MAP[category.category_id] || FALLBACK_CATEGORY_IMAGE}
+            image={
+              CATEGORY_IMAGE_MAP[category.category_id] || FALLBACK_CATEGORY_IMAGE
+            }
             itemSize={itemSize}
             onPress={() => handleCategoryPress(category.category_id)}
           />
