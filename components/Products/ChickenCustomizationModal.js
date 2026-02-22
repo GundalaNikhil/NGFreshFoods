@@ -242,7 +242,7 @@ const ChickenCustomizationModal = ({
 
             <TouchableOpacity
               onPress={handleAddToCart}
-              className="bg-black p-4 rounded-lg"
+              className="bg-red-600 p-4 rounded-lg"
             >
               <Text className="text-white text-center font-semibold text-lg">
                 Add To Cart

@@ -1,5 +1,6 @@
 import React from "react";
 import { SafeAreaView, ScrollView, View } from "react-native";
+import AddressHeader from "./AddressHeader";
 import CategoriesList from "./Categories/CategoriesList";
 import HomePageBanner from "./HomePageBanner";
 import SearchBar from "./SearchBar/SearchBar";
@@ -14,16 +15,19 @@ const HomePage = () => {
         contentContainerStyle={{ paddingBottom: 80 }}
       >
         <View className="px-4">
-          <View className="mt-4">
+          <View className="mt-1">
+            <AddressHeader />
+          </View>
+          <View className="mt-2">
             <SearchBar />
           </View>
-          <View className="mt-4">
+          <View className="mt-3">
             <Slideshow />
           </View>
-          <View className="mt-6">
+          <View className="mt-5">
             <CategoriesList />
           </View>
-          <View>
+          <View className="mt-5">
             <HomePageBanner />
           </View>
         </View>

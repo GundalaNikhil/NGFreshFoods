@@ -284,6 +284,82 @@ export const productsData = [
       calories: "165 per 100g",
     },
   },
+  {
+    product_id: "PRD_MUT_30001",
+    category_id: "CAT_MUTTON",
+    name: "Fresh Mutton Curry Cut",
+    description:
+      "Tender fresh mutton curry cut, ideal for rich gravies and slow-cooked curries.",
+    price: 860,
+    mrp: 980,
+    stock_quantity: 22,
+    perQuantity: "1 Kg",
+    image:
+      "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737391536/goat-rann-cut_1_fuxtwn.jpg",
+    tags: ["🐐 Mutton", "🍛 Curry", "🔥 Slow Cook"],
+    nutritional_info: {
+      protein: "25g",
+      fat: "16g",
+      calories: "294 per 100g",
+    },
+  },
+  {
+    product_id: "PRD_MUT_30002",
+    category_id: "CAT_MUTTON",
+    name: "Mutton Boneless",
+    description:
+      "Premium boneless mutton pieces for kebabs, stir-fry, and quick cooking recipes.",
+    price: 980,
+    mrp: 1120,
+    stock_quantity: 18,
+    perQuantity: "1 Kg",
+    image:
+      "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737391536/goat-rann-cut_1_fuxtwn.jpg",
+    tags: ["🐐 Mutton", "🍢 Kebab", "🍽️ Premium"],
+    nutritional_info: {
+      protein: "26g",
+      fat: "15g",
+      calories: "286 per 100g",
+    },
+  },
+  {
+    product_id: "PRD_MUT_30003",
+    category_id: "CAT_MUTTON",
+    name: "Mutton Keema",
+    description:
+      "Freshly minced mutton keema, perfect for kheema curry, samosa filling, and cutlets.",
+    price: 920,
+    mrp: 1040,
+    stock_quantity: 16,
+    perQuantity: "1 Kg",
+    image:
+      "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737391536/goat-rann-cut_1_fuxtwn.jpg",
+    tags: ["🐐 Mutton", "🥟 Keema", "🍲 Versatile"],
+    nutritional_info: {
+      protein: "24g",
+      fat: "17g",
+      calories: "301 per 100g",
+    },
+  },
+  {
+    product_id: "PRD_MUT_30004",
+    category_id: "CAT_MUTTON",
+    name: "Mutton Ribs & Chops",
+    description:
+      "Flavorful mutton ribs and chops, excellent for grilling, roasting, and tandoori recipes.",
+    price: 1020,
+    mrp: 1180,
+    stock_quantity: 14,
+    perQuantity: "1 Kg",
+    image:
+      "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737391536/goat-rann-cut_1_fuxtwn.jpg",
+    tags: ["🐐 Mutton", "🔥 Grill", "🍖 Chops"],
+    nutritional_info: {
+      protein: "23g",
+      fat: "20g",
+      calories: "325 per 100g",
+    },
+  },
 ];
 
 export const productCategories = [
@@ -297,5 +373,10 @@ export const productCategories = [
     category_id: "CAT_DAIRY_EGGS",
     name: "Dairy & Eggs",
     description: "Fresh dairy products and eggs from free-range hens.",
+  },
+  {
+    category_id: "CAT_MUTTON",
+    name: "Mutton",
+    description: "Fresh mutton cuts for curries, keema, grills, and premium dishes.",
   },
 ];

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View } from "react-native";
+import { SafeAreaView, View } from "react-native";
 import { useProducts } from "../../hooks/useProducts";
-import { productsData } from "../data/ProductsData";
+import AddressHeader from "../Home/AddressHeader";
+import SearchBar from "../Home/SearchBar/SearchBar";
 import ProductFilter from "./ProductFilter";
 import ProductList from "./ProductList";
 import ProductModal from "./ProductModal";
@@ -17,9 +18,19 @@ const Products = () => {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <ProductFilter />
-      <ProductList products={products} onAddToCart={handleAddToCart} />
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="px-4">
+        <View className="mt-1">
+          <AddressHeader />
+        </View>
+        <View className="mt-2">
+          <SearchBar />
+        </View>
+      </View>
+      <View className="flex-1 bg-gray-50 mt-3">
+        <ProductFilter />
+        <ProductList products={products} onAddToCart={handleAddToCart} />
+      </View>
       <ProductModal
         visible={modalVisible}
         product={selectedProduct}
@@ -29,7 +40,7 @@ const Products = () => {
           setModalVisible(false);
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

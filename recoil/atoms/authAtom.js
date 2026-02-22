@@ -4,8 +4,8 @@ import { persistAtom } from "./persistAtom";
 export const authAtom = atom({
   key: "authState",
   default: {
-    isLoggedIn: false,
-    user: null,
+    isAuthenticated: false,
+    token: null,
   },
   ...persistAtom("auth"),
 });

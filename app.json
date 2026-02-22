@@ -4,20 +4,29 @@
     "slug": "NGFreshFoods",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737377776/logo_ppjvcb.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "splash": {
+        "image": "./assets/images/user_splash_v9.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#d9dcb9"
+      }
     },
     "android": {
       "package": "com.nick.ngfreshfoods",
       "versionCode": 1,
       "permissions": [],
+      "splash": {
+        "image": "./assets/images/user_splash_v9.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#d9dcb9"
+      },
       "adaptiveIcon": {
-        "foregroundImage": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737377776/logo_ppjvcb.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/transparent_1x1.png",
+        "backgroundColor": "#d9dcb9"
       }
     },
     "web": {
@@ -26,18 +35,18 @@
       "favicon": "https://res.cloudinary.com/djv3mrzk2/image/upload/c_crop,ar_9:16/v1737137430/SS7_pkphek.jpg"
     },
     "splash": {
-      "image": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737377776/logo_ppjvcb.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#e6d819"
+      "image": "./assets/images/user_splash_v9.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#d9dcb9"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737377776/logo_ppjvcb.png",
+          "image": "./assets/images/user_splash_v9.png",
           "resizeMode": "cover",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#d9dcb9"
         }
       ],
       "expo-font"

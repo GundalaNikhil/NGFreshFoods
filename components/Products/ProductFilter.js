@@ -9,38 +9,40 @@ const ProductFilter = () => {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      className="py-4"
+      className="py-3 border-b border-gray-100 bg-white"
     >
       <TouchableOpacity
         onPress={() => setSelectedCategory("ALL")}
-        className={`mx-2 px-4 py-2 rounded-full ${
-          selectedCategory === "ALL" ? "bg-black" : "bg-gray-200"
+        className={`ml-4 mr-2 px-4 py-1.5 rounded-lg border ${
+          selectedCategory === "ALL" 
+            ? "bg-red-50 border-red-200" 
+            : "bg-white border-gray-200"
         }`}
       >
         <Text
-          className={`font-medium ${
-            selectedCategory === "ALL" ? "text-white" : "text-gray-800"
+          className={`text-[13px] font-semibold ${
+            selectedCategory === "ALL" ? "text-red-600" : "text-gray-600"
           }`}
         >
           All
         </Text>
       </TouchableOpacity>
 
-      {categories.map((category) => (
+      {categories.map((category, index) => (
         <TouchableOpacity
           key={category.category_id}
           onPress={() => setSelectedCategory(category.category_id)}
-          className={`mx-2 px-4 py-2 rounded-full ${
+          className={`mr-2 px-4 py-1.5 rounded-lg border ${
             selectedCategory === category.category_id
-              ? "bg-black"
-              : "bg-gray-200"
-          }`}
+              ? "bg-red-50 border-red-200"
+              : "bg-white border-gray-200"
+          } ${index === categories.length - 1 ? "mr-4" : ""}`}
         >
           <Text
-            className={`font-medium ${
+            className={`text-[13px] font-semibold ${
               selectedCategory === category.category_id
-                ? "text-white"
-                : "text-gray-800"
+                ? "text-red-600"
+                : "text-gray-600"
             }`}
           >
             {category.name}

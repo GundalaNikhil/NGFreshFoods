@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Icon } from "@rneui/themed";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Dimensions, Pressable, Text, View } from "react-native";
 import Reanimated, {
   useAnimatedStyle,
@@ -35,7 +35,7 @@ const TabButton = ({
       damping: 15,
       stiffness: 150,
     });
-  }, [focused]);
+  }, [focused, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { Text, View, ScrollView } from "react-native";
-import CartItems from "./CartItems";
-import CartPromoCode from "./CartPromoCode";
-import CartSummary from "./CartSummary";
-import CartFooter from "./CartFooter";
-import OffersModal from "./Offers/OffersModal";
+import { ChevronDown, ChevronLeft, MapPin } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import { Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useCart } from "../../hooks/useCart";
 import { useOffers } from "../../hooks/useOffers";
 import { debugCartAnalysis, validatePromoCode } from "../../utils/promoHelper";
-import { ShoppingBag } from "lucide-react-native";
+import AddressHeader from "../Home/AddressHeader";
+import CartFooter from "./CartFooter";
+import CartItems from "./CartItems";
+import CartPromoCode from "./CartPromoCode";
+import CartSummary from "./CartSummary";
+import OffersModal from "./Offers/OffersModal";
 
 const Cart = () => {
-  const { cart, cartData, cartTotal, cartDiscount } = useCart();
+  const { cart, cartData, cartTotal, cartDiscount, clearCart } = useCart();
   const { applyOffer, removeOffer, calculateOfferDiscount } = useOffers();
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
 
@@ -23,34 +24,16 @@ const Cart = () => {
   // Extract cart items for validation
   const cartItems = cart || cartData || {};
 
-  // Mock user profile - you should replace this with actual user data
+  // Mock user profile
   const userProfile = {
-    isFirstTime: true, // Set based on actual user data
-    isFirstTimeUser: true, // Alternative property name
-    // Add other user properties as needed
+    isFirstTime: true,
+    isFirstTimeUser: true,
   };
 
-  // Debug cart analysis (remove in production)
-  React.useEffect(() => {
-    if (Object.keys(cartItems).length > 0) {
-      debugCartAnalysis(cartItems, userProfile);
-    }
-  }, [cartItems, userProfile]);
-
-  // **NEW: Auto-validate active promo when cart changes**
   useEffect(() => {
-    // Only validate if there's an active promo/offer
     if ((selectedOffer || promoCode) && Object.keys(cartItems).length > 0) {
-      let isCurrentPromoValid = true;
-      let currentPromoCode = "";
-
-      // Determine the promo code to validate
-      if (selectedOffer?.promoCode) {
-        currentPromoCode = selectedOffer.promoCode;
-      } else if (promoCode) {
-        currentPromoCode = promoCode;
-      }
-
+      let currentPromoCode = selectedOffer?.promoCode || promoCode;
+      
       if (currentPromoCode) {
         const validation = validatePromoCode(
           currentPromoCode,
@@ -59,112 +42,150 @@ const Cart = () => {
           cartTotal
         );
 
-        isCurrentPromoValid = validation.isValid;
-
-        // If current promo is no longer valid, remove it automatically
-        if (!isCurrentPromoValid) {
-          console.log(`Auto-removing invalid promo: ${currentPromoCode}`);
+        if (!validation.isValid) {
           removeOffer();
-          
-          // Optional: Show a notification to user about promo removal
-          // You can implement a toast/alert here
-          // showToast(`${currentPromoCode} was removed as it no longer applies to your cart`);
         }
       }
     }
   }, [cartItems, cartTotal, selectedOffer, promoCode, userProfile, removeOffer]);
 
-  // **NEW: Auto-validate when cart becomes empty**
   useEffect(() => {
     if (Object.keys(cartItems).length === 0 && (selectedOffer || promoCode)) {
-      console.log("Cart is empty, removing active promo");
       removeOffer();
     }
   }, [cartItems, selectedOffer, promoCode, removeOffer]);
 
   const handleOfferSelect = (offer) => {
-    const discount = calculateOfferDiscount(offer, cartTotal);
     applyOffer(offer, cartTotal);
     setIsOffersModalVisible(false);
   };
 
   const handlePromoCodeApply = (promoData) => {
-    // Create a promo offer object with the validated data
     const promoOffer = {
       id: `promo_${promoData.promoCode}`,
       title: promoData.promo?.title || `Promo Code: ${promoData.promoCode}`,
       promoCode: promoData.promoCode,
-      description:
-        promoData.promo?.description || `Flat ₹${promoData.discount} off`,
+      description: promoData.promo?.description || `Flat ₹${promoData.discount} off`,
       isPromoCode: true,
       discount: promoData.discount,
       type: promoData.promo?.type || "fixed",
     };
-
     applyOffer(promoOffer, cartTotal);
   };
 
-  const handleRemovePromo = () => {
-    removeOffer();
-  };
-
-  const handleShowOffers = () => {
-    setIsOffersModalVisible(true);
-  };
-
-  // Calculate item count properly
   const getItemCount = () => {
-    if (Array.isArray(cart)) {
-      return cart.length;
-    }
-
-    if (typeof cartItems === "object" && cartItems !== null) {
-      return Object.keys(cartItems).filter(
-        (key) =>
-          cartItems[key] &&
-          typeof cartItems[key] === "object" &&
-          (cartItems[key].productId || cartItems[key].id) &&
-          (cartItems[key].quantity > 0 || cartItems[key].custQuantity > 0)
-      ).length;
-    }
-
-    return 0;
+    return cart.length;
   };
+
+  const itemCount = getItemCount();
+  const DELIVERY_FEE = 25.0;
+  const TAX_RATE = 0.05;
+  const grandTotal = (cartTotal - promoDiscount + DELIVERY_FEE) * (1 + TAX_RATE);
 
   return (
-    <View className="flex-1 bg-gradient-to-b from-slate-50 to-slate-100">
+    <SafeAreaView className="flex-1 bg-white">
+      {/* Stylish Address Header */}
+      <View className="px-4 py-3 flex-row items-center border-b border-gray-100 bg-white shadow-sm z-10">
+        <TouchableOpacity 
+          onPress={() => console.log("Go Back")} 
+          className="w-10 h-10 items-center justify-center rounded-full bg-gray-50 mr-3 border border-gray-100"
+        >
+          <ChevronLeft size={22} color="#1C1C1C" strokeWidth={2.5} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity className="flex-1 justify-center">
+          <View className="flex-row items-center mb-0.5">
+            <Text className="text-[14px] font-black text-gray-900 mr-1 tracking-tight">
+              Home
+            </Text>
+            <ChevronDown size={16} color="#E23744" strokeWidth={3} />
+          </View>
+          <Text className="text-[12px] text-gray-500 font-medium tracking-tight" numberOfLines={1}>
+            123, Fresh Farms Street, NG Layout...
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity className="w-10 h-10 rounded-full bg-red-50 items-center justify-center border border-red-100 ml-2">
+          <MapPin size={18} color="#E23744" strokeWidth={2.5} />
+        </TouchableOpacity>
+      </View>
+
       {cart.length > 0 ? (
         <>
           <ScrollView
-            className="flex-1"
+            className="flex-1 bg-gray-50"
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: 120 }}
           >
-            <CartItems />
 
-            <CartPromoCode
-              onApplyPromo={handlePromoCodeApply}
-              onShowOffers={handleShowOffers}
-              selectedOffer={selectedOffer}
-              promoCode={promoCode}
-              discountAmount={promoDiscount}
-              onRemovePromo={handleRemovePromo}
-              cartItems={cartItems}
-              userProfile={userProfile}
-              cartTotal={cartTotal}
-            />
 
-            <CartSummary
-              subtotal={cartTotal}
-              discount={cartDiscount}
-              promoDiscount={promoDiscount}
-              selectedOffer={selectedOffer}
-            />
+            <View className="bg-white mb-2">
+              <CartItems />
+            </View>
+
+            <View className="bg-white mb-2">
+              <CartPromoCode
+                onApplyPromo={handlePromoCodeApply}
+                onShowOffers={() => setIsOffersModalVisible(true)}
+                selectedOffer={selectedOffer}
+                promoCode={promoCode}
+                discountAmount={promoDiscount}
+                onRemovePromo={removeOffer}
+                cartItems={cartItems}
+                userProfile={userProfile}
+                cartTotal={cartTotal}
+              />
+            </View>
+
+            <View className="bg-white mb-4">
+              <CartSummary
+                subtotal={cartTotal}
+                discount={cartDiscount}
+                promoDiscount={promoDiscount}
+                selectedOffer={selectedOffer}
+                deliveryFee={DELIVERY_FEE}
+                taxRate={TAX_RATE}
+              />
+              
+              {/* High-Fidelity Delivery Speed Highlight */}
+              <View className="px-5 py-8 items-center flex-row justify-between border-t border-gray-50">
+                <View className="flex-1 pr-4">
+                  <View className="bg-green-50 self-start px-2 py-0.5 rounded-full mb-2">
+                    <Text className="text-[10px] text-green-700 font-black uppercase tracking-widest">
+                      Super Fast
+                    </Text>
+                  </View>
+                  <Text className="text-[20px] font-black text-gray-900 mb-1">
+                    Delivery in 30 mins
+                  </Text>
+                  <Text className="text-[13px] text-gray-500 font-medium leading-relaxed">
+                    Quick as a flash! Our delivery partner is ready to bring your fresh farm foods.
+                  </Text>
+                </View>
+                <Image 
+                  source={require("../../assets/images/delivery_character.png")} 
+                  className="w-28 h-28"
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+            
+            {/* Cancellation Policy */}
+            <View className="px-4 pb-8">
+              <View className="bg-white p-4 rounded-xl border border-gray-100">
+                <Text className="text-[14px] font-bold text-gray-800 mb-1">
+                  Cancellation Policy
+                </Text>
+                <Text className="text-[12px] text-gray-500 leading-relaxed">
+                  Help us reduce food waste. Avoid cancellations after placing your order. A 100% cancellation fee may apply.
+                </Text>
+              </View>
+            </View>
           </ScrollView>
 
           <CartFooter
-            total={cartTotal - promoDiscount}
-            itemCount={getItemCount()}
+            totalPayable={grandTotal}
+            itemCount={itemCount}
           />
 
           <OffersModal
@@ -178,17 +199,20 @@ const Cart = () => {
           />
         </>
       ) : (
-        <View className="items-center justify-center py-16">
-          <ShoppingBag size={64} color="#cbd5e1" />
-          <Text className="text-lg font-semibold text-gray-500 mt-4">
-            Your cart is empty
+        <View className="flex-1 items-center justify-center p-8">
+          <View className="w-24 h-24 bg-red-50 rounded-full items-center justify-center mb-6">
+            <ShoppingBag size={48} color="#E23744" />
+          </View>
+          <Text className="text-xl font-bold text-gray-900">Your cart is empty</Text>
+          <Text className="text-gray-500 text-center mt-2 leading-relaxed">
+            Good food is always cooking! Go ahead, order some yummy items from the menu.
           </Text>
-          <Text className="text-sm text-gray-400 mt-1">
-            Add some delicious items to get started
-          </Text>
+          <TouchableOpacity className="mt-8 bg-red-600 px-8 py-3 rounded-xl">
+            <Text className="text-white font-bold text-base">Browse Menu</Text>
+          </TouchableOpacity>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -14,99 +14,87 @@ const ProductCard = ({ product, onAddToCart }) => {
 
   const handleAddToCartClick = () => {
     if (product.category_id === "CAT_DAIRY_EGGS") {
-      console.log("Adding dairy/eggs product:", product.name);
       addToCart(product);
     } else {
-      console.log("Opening customization modal for:", product.name);
       setQuantityModalVisible(true);
     }
   };
 
   const handleCustomizedAddToCart = (customizedProduct) => {
-    console.log("Adding customized product:", {
-      productName: product.name,
-      customizations: customizedProduct.customizations,
-      calculatedPrice: customizedProduct.price,
-    });
-
-    // Pass the original product and customizations separately
     addToCart(product, customizedProduct.customizations);
     setQuantityModalVisible(false);
   };
 
   return (
-    <>
-      <TouchableOpacity
-        className="w-full bg-white rounded-lg shadow-sm mb-4"
-        onPress={handleAddToCartClick}
-      >
-        <View className="p-4">
-          {/* Image */}
-          <Image
-            source={{ uri: product.image }}
-            className="w-full h-48 rounded-lg"
-            resizeMode="cover"
-          />
+    <View className="bg-white border-b border-gray-100 p-4">
+      <View className="flex-row">
+        {/* Left Info Section */}
+        <View className="flex-1 pr-4">
+          <View className="flex-row items-center mb-1">
+            <View className="w-4 h-4 border border-green-600 items-center justify-center mr-2">
+              <View className="w-2 h-2 rounded-full bg-green-600" />
+            </View>
+            {product.tags?.[0] && (
+              <Text className="text-[11px] font-bold text-orange-500 uppercase">
+                {product.tags[0]}
+              </Text>
+            )}
+          </View>
+          
+          <Text className="text-[17px] font-bold text-gray-900 leading-tight">
+            {product.name}
+          </Text>
+          
+          <View className="flex-row items-center mt-1.5">
+            <Text className="text-[15px] font-bold text-gray-900">₹{product.price}</Text>
+            <Text className="text-[13px] text-gray-500 line-through ml-2">₹{product.mrp}</Text>
+          </View>
 
-          {/* Title */}
-          <Text className="text-xl font-bold mt-3">{product.name}</Text>
-
-          {/* Description */}
-          <Text className="text-gray-600 mt-2" numberOfLines={2}>
-            {product.description}
+          <Text className="text-[12px] text-gray-500 mt-1 font-medium italic">
+            {product.perQuantity}
           </Text>
 
-          {/* Tags */}
-          <View className="flex-row flex-wrap mt-3">
-            {product.tags.map((tag, index) => (
-              <View
-                key={index}
-                className="bg-gray-100 rounded-full px-3 py-1 mr-2 mb-2"
-              >
-                <Text className="text-sm text-gray-600">{tag}</Text>
-              </View>
-            ))}
-          </View>
+          <Text className="text-[13px] text-gray-500 mt-2 leading-relaxed" numberOfLines={2}>
+            {product.description}
+          </Text>
+        </View>
 
-          {/* Price and Discount Section */}
-          <View className="flex-row items-center mt-3">
-            <Text className="text-xl font-bold">₹{product.price}</Text>
-            <Text className="text-sm text-gray-500 line-through ml-2">
-              ₹{product.mrp}
-            </Text>
-            <Text className="text-sm text-green-600 ml-2">
-              {discountPercentage}% off
-            </Text>
-          </View>
-
-          {/* Bottom Section */}
-          <View className="flex-row justify-between items-center mt-3">
-            <Text className="text-sm text-gray-500">{product.perQuantity}</Text>
+        {/* Right Image Section */}
+        <View className="items-center">
+          <View className="relative">
+            <Image
+              source={{ uri: product.image }}
+              className="w-32 h-32 rounded-xl"
+              resizeMode="cover"
+            />
+            {/* Swiggy-style ADD Button */}
             <TouchableOpacity
               onPress={handleAddToCartClick}
-              className="bg-red-500 px-4 py-2 rounded-lg flex-row items-center"
+              className="absolute -bottom-3 self-center bg-white border border-gray-200 rounded-lg shadow-sm px-6 py-2"
               activeOpacity={0.8}
             >
-              <ShoppingCart size={16} color="white" />
-              <Text className="text-white ml-2 font-medium">ADD</Text>
+              <Text className="text-red-600 font-bold text-[14px]">ADD</Text>
+              <View className="absolute top-1 right-2">
+                <Text className="text-[10px] text-red-600 font-bold">+</Text>
+              </View>
             </TouchableOpacity>
           </View>
+          <Text className="text-[10px] text-gray-400 mt-4 text-center">
+            Customizable
+          </Text>
         </View>
-      </TouchableOpacity>
+      </View>
 
       {/* Customization Modal */}
       {product.category_id === "CAT_CHICKEN" && (
         <ChickenCustomizationModal
           visible={quantityModalVisible}
           product={product}
-          onClose={() => {
-            console.log("Closing customization modal");
-            setQuantityModalVisible(false);
-          }}
+          onClose={() => setQuantityModalVisible(false)}
           onAddToCart={handleCustomizedAddToCart}
         />
       )}
-    </>
+    </View>
   );
 };
 

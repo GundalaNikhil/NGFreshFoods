@@ -1,4 +1,6 @@
+import { useEffect, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
+import { productsData } from "../components/data/ProductsData";
 import {
   categoriesState,
   productsState,
@@ -8,11 +10,50 @@ import { filteredProductsSelector } from "../recoil/selectors/productSelector";
 
 export const useProducts = () => {
   const [products, setProducts] = useRecoilState(productsState);
-  const [categories] = useRecoilState(categoriesState);
+  const [categories, setCategories] = useRecoilState(categoriesState);
   const [selectedCategory, setSelectedCategory] = useRecoilState(
     selectedCategoryState
   );
   const filteredProducts = useRecoilValue(filteredProductsSelector);
+
+  const catalogCategories = useMemo(() => {
+    const CATEGORY_NAME_MAP = {
+      CAT_CHICKEN: "Chicken",
+      CAT_DAIRY_EGGS: "Eggs",
+      CAT_MUTTON: "Mutton",
+    };
+
+    return Array.from(new Set(products.map((p) => p.category_id))).map(
+      (categoryId) => ({
+        category_id: categoryId,
+        name: CATEGORY_NAME_MAP[categoryId] || categoryId.replace("CAT_", ""),
+      })
+    );
+  }, [products]);
+
+  useEffect(() => {
+    const persistedProductIds = new Set(products.map((p) => p.product_id));
+    const missingProducts = productsData.filter(
+      (p) => !persistedProductIds.has(p.product_id)
+    );
+
+    if (missingProducts.length > 0) {
+      setProducts((current) => [...current, ...missingProducts]);
+    }
+  }, [products, setProducts]);
+
+  useEffect(() => {
+    const currentCategoryIds = new Set(
+      categories.map((category) => category.category_id)
+    );
+    const missingCategories = catalogCategories.filter(
+      (category) => !currentCategoryIds.has(category.category_id)
+    );
+
+    if (missingCategories.length > 0) {
+      setCategories((current) => [...current, ...missingCategories]);
+    }
+  }, [categories, catalogCategories, setCategories]);
 
   const updateProduct = (productId, updates) => {
     setProducts((current) =>
@@ -44,7 +85,7 @@ export const useProducts = () => {
   return {
     products: filteredProducts,
     allProducts: products,
-    categories,
+    categories: catalogCategories,
     selectedCategory,
     setSelectedCategory,
     updateProduct,

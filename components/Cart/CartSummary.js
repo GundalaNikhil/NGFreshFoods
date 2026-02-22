@@ -1,60 +1,73 @@
+import { ReceiptText } from "lucide-react-native";
 import React from "react";
 import { Text, View } from "react-native";
-import { Receipt, Tag, Gift } from "lucide-react-native";
 
-const CartSummary = ({ subtotal, discount, promoDiscount, selectedOffer }) => {
-  const total = subtotal - promoDiscount;
+const CartSummary = ({
+  subtotal,
+  discount,
+  promoDiscount,
+  selectedOffer,
+  deliveryFee = 0,
+  taxRate = 0,
+}) => {
+  const netAmount = subtotal - promoDiscount + deliveryFee;
+  const taxes = netAmount * taxRate;
+  const grandTotal = netAmount + taxes;
 
   return (
-    <View className="p-4">
-      <View className="bg-white rounded-2xl p-5 shadow-lg shadow-gray-200/50">
-        <View className="flex-row items-center mb-4">
-          <Receipt size={20} color="#059669" />
-          <Text className="text-lg font-bold text-gray-900 ml-2">
-            Price Details
-          </Text>
-        </View>
-
-        <View className="h-px bg-gray-200 my-3" />
-
+    <View className="p-4 pt-6">
+      <Text className="text-[16px] font-bold text-gray-900 mb-4 px-1">
+        Bill Details
+      </Text>
+      
+      <View className="bg-white rounded-2xl border border-gray-100 p-4">
         <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-base text-gray-600 font-medium">Subtotal</Text>
-          <Text className="text-base text-gray-900 font-semibold">
+          <Text className="text-[14px] text-gray-600 font-medium">Item Total</Text>
+          <Text className="text-[14px] text-gray-800 font-semibold">
             ₹{subtotal.toFixed(2)}
           </Text>
         </View>
 
+        <View className="flex-row justify-between items-center mb-3">
+          <Text className="text-[14px] text-gray-600 font-medium">Delivery Partner Fee</Text>
+          <Text className="text-[14px] text-gray-800 font-semibold">
+            ₹{deliveryFee.toFixed(2)}
+          </Text>
+        </View>
+
+        <View className="flex-row justify-between items-center mb-3">
+          <Text className="text-[14px] text-gray-600 font-medium">Taxes and Charges</Text>
+          <Text className="text-[14px] text-gray-800 font-semibold">
+            ₹{taxes.toFixed(2)}
+          </Text>
+        </View>
+
+        <View className="h-[1px] bg-gray-50 my-2" />
+
         {promoDiscount > 0 && (
           <View className="flex-row justify-between items-center mb-3">
-            <View className="flex-row items-center">
-              <Gift size={16} color="#8b5cf6" />
-              <Text className="text-base text-purple-500 font-medium ml-1.5">
-                {selectedOffer ? selectedOffer.title : "Promo Discount"}
-              </Text>
-            </View>
-            <Text className="text-base text-purple-500 font-semibold">
+            <Text className="text-[14px] text-red-600 font-bold uppercase">Coupon Savings</Text>
+            <Text className="text-[14px] text-red-600 font-bold">
               -₹{promoDiscount.toFixed(2)}
             </Text>
           </View>
         )}
 
-        <View className="h-px bg-gray-200 my-3" />
-
         <View className="flex-row justify-between items-center mt-2">
-          <Text className="text-lg font-bold text-gray-900">Total</Text>
-          <Text className="text-xl font-black text-emerald-600">
-            ₹{total.toFixed(2)}
+          <Text className="text-[16px] font-black text-gray-900">Grand Total</Text>
+          <Text className="text-[16px] font-black text-gray-900">
+            ₹{grandTotal.toFixed(2)}
           </Text>
         </View>
-
-        {(discount > 0 || promoDiscount > 0) && (
-          <View className="bg-emerald-50 p-3 rounded-lg mt-4 items-center">
-            <Text className="text-sm text-emerald-600 font-semibold">
-              You saved ₹{(discount + promoDiscount).toFixed(2)} on this order!
-            </Text>
-          </View>
-        )}
       </View>
+
+      {(discount > 0 || promoDiscount > 0) && (
+        <View className="mx-1 mt-4 flex-row items-center border border-red-100 bg-red-50/30 p-3 rounded-xl">
+          <Text className="text-[12px] text-red-700 font-bold tracking-tight">
+            SAVED ₹{(discount + promoDiscount).toFixed(2)} WITH COUPONS & OFFERS
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

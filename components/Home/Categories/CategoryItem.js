@@ -1,81 +1,31 @@
-import React, { useEffect } from "react";
-import { Animated, Image, Text, View } from "react-native";
+import React from "react";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
-const CategoryItem = ({ title, image, itemSize }) => {
-  const scaleAnim = new Animated.Value(0.9);
-  const opacityAnim = new Animated.Value(0);
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const pressAnim = new Animated.Value(1);
-
-  const handlePressIn = () => {
-    Animated.spring(pressAnim, {
-      toValue: 0.95,
-      tension: 40,
-      friction: 7,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(pressAnim, {
-      toValue: 1,
-      tension: 40,
-      friction: 7,
-      useNativeDriver: true,
-    }).start();
-  };
-
+const CategoryItem = ({ title, image, itemSize, onPress }) => {
   return (
-    <Animated.View
-      style={{
-        opacity: opacityAnim,
-        transform: [{ scale: scaleAnim }, { scale: pressAnim }],
-        width: itemSize,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-      onTouchStart={handlePressIn}
-      onTouchEnd={handlePressOut}
-      onTouchCancel={handlePressOut}
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      style={{ width: itemSize }}
+      className="bg-white border border-gray-200 rounded-2xl p-2 mr-3"
     >
-      <View
-        className="rounded-full overflow-hidden bg-gray-100 shadow-sm"
-        style={{
-          width: itemSize - 20,
-          height: itemSize - 20,
-          borderWidth: 2,
-          borderColor: "#f3f4f6",
-        }}
-      >
+      <View className="rounded-xl overflow-hidden bg-gray-100" style={{ height: itemSize - 16 }}>
         <Image
           source={{ uri: image }}
           style={{
             width: "100%",
             height: "100%",
           }}
-          className="rounded-full"
+          className="rounded-xl"
         />
       </View>
-      <Text className="mt-3 text-center font-medium text-gray-800 text-sm">
+      <Text className="mt-2 text-center font-semibold text-gray-900 text-xs" numberOfLines={1}>
         {title}
       </Text>
-    </Animated.View>
+      <View className="mt-1 items-center">
+        <Text className="text-[10px] text-emerald-600 font-semibold">Shop now</Text>
+      </View>
+    </TouchableOpacity>
   );
 };
 
