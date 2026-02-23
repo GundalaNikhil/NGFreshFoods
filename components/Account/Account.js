@@ -1,5 +1,6 @@
 import React from "react";
 import { View, ImageBackground, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useRecoilValue } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import Login from "../Login/Login";
@@ -7,6 +8,7 @@ import Signup from "../Signup/Signup";
 import Profile from "./Profile";
 
 const Account = () => {
+  const navigation = useNavigation();
   const auth = useRecoilValue(authAtom);
   const [authMode, setAuthMode] = React.useState("login");
 
@@ -35,7 +37,10 @@ const Account = () => {
           {authMode === "login" ? (
             <Login onSwitchToSignup={() => setAuthMode("signup")} />
           ) : (
-            <Signup onSwitchToLogin={() => setAuthMode("login")} />
+            <Signup
+              onSwitchToLogin={() => setAuthMode("login")}
+              onAuthSuccess={() => navigation.navigate("Home")}
+            />
           )}
         </View>
       </ImageBackground>

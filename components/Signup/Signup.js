@@ -1,17 +1,13 @@
 import React, { useState } from "react";
-import { ActivityIndicator, Text, TextInput, TouchableOpacity, View, Image, StyleSheet } from "react-native";
-import { Lock, Mail, Phone, Sprout, User } from "lucide-react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import auth from "@react-native-firebase/auth";
+import { Lock, Mail, Phone, ShieldCheck, Sprout, User } from "lucide-react-native";
 import { useSetRecoilState } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
-import { signupWithBff } from "../../services/bff/authBff";
-import { useFonts, PlayfairDisplay_800ExtraBold } from '@expo-google-fonts/playfair-display';
+import { signupWithFirebaseOtpBff } from "../../services/bff/authBff";
 
-const Signup = ({ onSwitchToLogin }) => {
-  const [fontsLoaded] = useFonts({
-    PlayfairDisplay_800ExtraBold,
-  });
-
+const Signup = ({ onSwitchToLogin, onAuthSuccess }) => {
   const setAuth = useSetRecoilState(authAtom);
   const setProfile = useSetRecoilState(profileAtom);
 
@@ -22,6 +18,9 @@ const Signup = ({ onSwitchToLogin }) => {
     phoneNumber: "",
     password: "",
   });
+  const [otpCode, setOtpCode] = useState("");
+  const [otpStep, setOtpStep] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -29,7 +28,14 @@ const Signup = ({ onSwitchToLogin }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSignup = async () => {
+  const getE164Phone = (raw) => {
+    const cleaned = (raw || "").replace(/[^\d+]/g, "");
+    if (!cleaned) return "";
+    if (cleaned.startsWith("+")) return cleaned;
+    return `+91${cleaned}`;
+  };
+
+  const validateSignupFields = () => {
     if (
       !formData.firstName.trim() ||
       !formData.lastName.trim() ||
@@ -38,107 +44,205 @@ const Signup = ({ onSwitchToLogin }) => {
       !formData.password.trim()
     ) {
       setError("All fields are required.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSendOtp = async () => {
+    if (!validateSignupFields()) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const confirmResult = await auth().signInWithPhoneNumber(getE164Phone(formData.phoneNumber));
+      setConfirmation(confirmResult);
+      setOtpStep(true);
+    } catch (e) {
+      setError(e?.message || "Unable to send OTP. Please try again.");
+    }
+
+    setLoading(false);
+  };
+
+  const handleVerifyOtpAndSignup = async () => {
+    if (otpCode.length < 6) {
+      setError("Please enter a valid 6-digit OTP.");
+      return;
+    }
+
+    if (!confirmation) {
+      setError("Please request OTP again.");
       return;
     }
 
     setLoading(true);
     setError("");
 
-    const response = await signupWithBff(formData);
+    try {
+      const firebaseUserCredential = await confirmation.confirm(otpCode.trim());
+      const idToken = await firebaseUserCredential.user.getIdToken(true);
 
-    if (response.success) {
-      setAuth({
-        isAuthenticated: true,
-        token: response.data.token,
+      const response = await signupWithFirebaseOtpBff({
+        ...formData,
+        idToken,
       });
-      setProfile(response.data.profile);
-    } else {
-      setError(response.error.message);
+
+      if (response.success) {
+        setAuth({
+          isAuthenticated: true,
+          token: response.data.token,
+        });
+        setProfile(response.data.profile);
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
+      } else {
+        setError(response.error.message);
+      }
+
+      await auth().signOut();
+    } catch (e) {
+      setError(e?.message || "OTP verification failed.");
     }
 
     setLoading(false);
   };
 
+  const maskedPhone = formData.phoneNumber
+    ? `${formData.phoneNumber.slice(0, 2)}******${formData.phoneNumber.slice(-2)}`
+    : "your number";
+
   return (
-    <View className="w-full rounded-[34px] px-6 pt-12 pb-7 mt-14 relative" style={styles.card}>
+    <View style={styles.card}>
       <View style={styles.softBlobOne} />
       <View style={styles.softBlobTwo} />
 
-      <View className="absolute -top-20 left-0 right-0 items-center justify-center z-10 w-full">
-        <View className="w-40 h-40 rounded-[46px] items-center justify-center overflow-hidden" style={styles.avatarFrame}>
-          <Image source={require("../../assets/images/signup_character.png")} style={{ width: "86%", height: "86%" }} resizeMode="contain" />
+      <View style={styles.avatarWrap}>
+        <View style={styles.avatarFrame}>
+          <Image source={require("../../assets/images/signup_character.png")} style={styles.avatarImage} resizeMode="contain" />
         </View>
       </View>
 
-      <View className="items-center mb-7 mt-6">
-        <View className="flex-row items-center rounded-full px-4 py-2 mb-4" style={styles.badge}>
+      <View style={styles.header}>
+        <View style={styles.badge}>
           <Sprout size={14} color="#1F7A4A" />
-          <Text className="ml-2 text-[11px] font-extrabold tracking-[2px] uppercase text-emerald-800">Organic Family Circle</Text>
+          <Text style={styles.badgeText}>Organic Family Circle</Text>
         </View>
-        {fontsLoaded ? (
-          <Text className="text-[38px] text-stone-900 tracking-tight mb-1" style={{ fontFamily: 'PlayfairDisplay_800ExtraBold' }}>Create Account</Text>
-        ) : (
-          <Text className="text-[35px] font-extrabold text-stone-900 tracking-tight mb-1">Create Account</Text>
-        )}
-        <Text className="text-[13px] text-stone-600 font-semibold tracking-wide mt-1">Fresh ingredients. Zero compromises.</Text>
+        <Text style={styles.title}>{otpStep ? "Verify OTP" : "Create Account"}</Text>
+        <Text style={styles.subtitle}>
+          {otpStep ? `Code sent to ${maskedPhone}` : "Fresh ingredients. Zero compromises."}
+        </Text>
       </View>
 
       {error ? (
-        <View className="rounded-2xl p-4 mb-5" style={styles.errorBox}>
-          <Text className="text-red-700 text-center font-semibold text-[14px]">{error}</Text>
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : null}
 
-      <View className="mb-2 w-full mt-4">
-        <View className="flex-row justify-between mb-4">
-          <View className="flex-1 mr-3">
-            <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2" style={styles.inputWrap}>
+      {!otpStep ? (
+        <>
+          <View style={styles.row}>
+            <View style={[styles.fieldWrap, styles.halfField, styles.halfFieldLeft]}>
               <User size={16} color="#78857A" />
-              <TextInput value={formData.firstName} onChangeText={(text) => onChange("firstName", text)} placeholder="First Name" placeholderTextColor="#A9B3AB" className="flex-1 ml-2 px-1 text-[16px] font-medium text-stone-800" />
+              <TextInput
+                value={formData.firstName}
+                onChangeText={(text) => onChange("firstName", text)}
+                placeholder="First name"
+                placeholderTextColor="#A9B3AB"
+                style={styles.input}
+              />
+            </View>
+            <View style={[styles.fieldWrap, styles.halfField]}>
+              <User size={16} color="#78857A" />
+              <TextInput
+                value={formData.lastName}
+                onChangeText={(text) => onChange("lastName", text)}
+                placeholder="Last name"
+                placeholderTextColor="#A9B3AB"
+                style={styles.input}
+              />
             </View>
           </View>
-          <View className="flex-1 ml-3">
-            <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2" style={styles.inputWrap}>
-              <User size={16} color="#78857A" />
-              <TextInput value={formData.lastName} onChangeText={(text) => onChange("lastName", text)} placeholder="Last Name" placeholderTextColor="#A9B3AB" className="flex-1 ml-2 px-1 text-[16px] font-medium text-stone-800" />
-            </View>
+
+          <View style={styles.fieldWrap}>
+            <Mail size={16} color="#78857A" />
+            <TextInput
+              value={formData.email}
+              onChangeText={(text) => onChange("email", text)}
+              placeholder="Email address"
+              placeholderTextColor="#A9B3AB"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={styles.input}
+            />
           </View>
-        </View>
 
-        <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2 mb-4" style={styles.inputWrap}>
-          <Mail size={16} color="#78857A" />
-          <TextInput value={formData.email} onChangeText={(text) => onChange("email", text)} placeholder="Email Address" placeholderTextColor="#A9B3AB" keyboardType="email-address" autoCapitalize="none" className="flex-1 ml-3 px-1 text-[16px] font-medium text-stone-800" />
-        </View>
+          <View style={styles.fieldWrap}>
+            <Phone size={16} color="#78857A" />
+            <TextInput
+              value={formData.phoneNumber}
+              onChangeText={(text) => onChange("phoneNumber", text)}
+              placeholder="Phone number"
+              placeholderTextColor="#A9B3AB"
+              keyboardType="phone-pad"
+              style={styles.input}
+            />
+          </View>
 
-        <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2 mb-4" style={styles.inputWrap}>
-          <Phone size={16} color="#78857A" />
-          <TextInput value={formData.phoneNumber} onChangeText={(text) => onChange("phoneNumber", text)} placeholder="Phone Number" placeholderTextColor="#A9B3AB" keyboardType="phone-pad" className="flex-1 ml-3 px-1 text-[16px] font-medium text-stone-800" />
+          <View style={[styles.fieldWrap, styles.fieldGapBottom]}>
+            <Lock size={16} color="#78857A" />
+            <TextInput
+              value={formData.password}
+              onChangeText={(text) => onChange("password", text)}
+              placeholder="Password"
+              placeholderTextColor="#A9B3AB"
+              secureTextEntry
+              style={styles.input}
+            />
+          </View>
+        </>
+      ) : (
+        <View style={styles.otpContainer}>
+          <View style={styles.otpIconWrap}>
+            <ShieldCheck size={24} color="#5E3B10" />
+          </View>
+          <Text style={styles.otpHelpText}>Enter the 6-digit OTP</Text>
+          <TextInput
+            value={otpCode}
+            onChangeText={(text) => setOtpCode((text || "").replace(/[^0-9]/g, "").slice(0, 6))}
+            placeholder="- - - - - -"
+            placeholderTextColor="#D2C4AF"
+            keyboardType="number-pad"
+            maxLength={6}
+            autoFocus
+            style={styles.otpInput}
+          />
+          <TouchableOpacity onPress={() => setOtpStep(false)} activeOpacity={0.85}>
+            <Text style={styles.changePhoneText}>Edit details</Text>
+          </TouchableOpacity>
         </View>
-
-        <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2 mb-6" style={styles.inputWrap}>
-          <Lock size={16} color="#78857A" />
-          <TextInput value={formData.password} onChangeText={(text) => onChange("password", text)} placeholder="Secure Password" placeholderTextColor="#A9B3AB" secureTextEntry className="flex-1 ml-3 px-1 text-[16px] font-medium text-stone-800" />
-        </View>
-      </View>
+      )}
 
       <TouchableOpacity
-        className="rounded-full py-4 items-center overflow-hidden"
-        onPress={handleSignup}
+        style={[styles.actionButton, loading ? styles.buttonDisabled : null]}
+        onPress={otpStep ? handleVerifyOtpAndSignup : handleSendOtp}
         disabled={loading}
         activeOpacity={0.85}
-        style={[styles.actionButton, loading ? styles.buttonDisabled : null]}
       >
-        <View className="absolute inset-0 bg-black/10" />
+        <View style={styles.buttonOverlay} />
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text className="text-white font-black text-[14px] uppercase tracking-[3.5px] z-10">Get Started</Text>
+          <Text style={styles.actionText}>{otpStep ? "Verify & Continue" : "Send OTP"}</Text>
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity className="mt-7 flex-row justify-center items-center" onPress={onSwitchToLogin}>
-        <Text className="text-[14px] text-stone-600 font-semibold">Already have an account? </Text>
-        <Text className="text-[14px] text-emerald-700 font-black uppercase tracking-wider">Log in</Text>
+      <TouchableOpacity style={styles.switchAuthCta} onPress={onSwitchToLogin} activeOpacity={0.85}>
+        <Text style={styles.switchAuthText}>Already have an account? </Text>
+        <Text style={styles.switchAuthLink}>Log in</Text>
       </TouchableOpacity>
     </View>
   );
@@ -146,6 +250,13 @@ const Signup = ({ onSwitchToLogin }) => {
 
 const styles = StyleSheet.create({
   card: {
+    width: "100%",
+    marginTop: 56,
+    borderRadius: 34,
+    paddingHorizontal: 24,
+    paddingTop: 48,
+    paddingBottom: 28,
+    position: "relative",
     backgroundColor: "rgba(255, 251, 244, 0.95)",
     borderWidth: 1,
     borderColor: "#F1E8D9",
@@ -155,7 +266,21 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
+  avatarWrap: {
+    position: "absolute",
+    top: -86,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 10,
+  },
   avatarFrame: {
+    width: 156,
+    height: 156,
+    borderRadius: 46,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
     backgroundColor: "#FFF7EC",
     borderWidth: 4,
     borderColor: "#FFFFFF",
@@ -165,21 +290,138 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 9 },
     elevation: 12,
   },
+  avatarImage: {
+    width: "86%",
+    height: "86%",
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 20,
+    marginTop: 24,
+  },
   badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 16,
     backgroundColor: "rgba(207, 244, 219, 0.78)",
     borderWidth: 1,
     borderColor: "#B6E2C5",
   },
+  badgeText: {
+    marginLeft: 8,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    color: "#1F7A4A",
+  },
+  title: {
+    fontSize: 39,
+    fontWeight: "800",
+    color: "#1C1917",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: "#57534E",
+    fontWeight: "600",
+    letterSpacing: 0.2,
+  },
   errorBox: {
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 14,
     backgroundColor: "#FFF4F3",
     borderWidth: 1,
     borderColor: "#F7CDC8",
   },
-  inputWrap: {
+  errorText: {
+    color: "#B91C1C",
+    textAlign: "center",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  row: {
+    flexDirection: "row",
+  },
+  halfField: {
+    flex: 1,
+  },
+  halfFieldLeft: {
+    marginRight: 12,
+  },
+  fieldWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: "#D9E6D8",
+    paddingBottom: 6,
+    marginBottom: 14,
     backgroundColor: "transparent",
   },
+  fieldGapBottom: {
+    marginBottom: 18,
+  },
+  input: {
+    flex: 1,
+    marginLeft: 10,
+    paddingVertical: 4,
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#1C1917",
+  },
+  otpContainer: {
+    alignItems: "center",
+    marginBottom: 18,
+    marginTop: 10,
+  },
+  otpIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F6E7D2",
+    borderWidth: 1,
+    borderColor: "#E4CC9E",
+    marginBottom: 10,
+  },
+  otpHelpText: {
+    fontSize: 12,
+    color: "#6B7280",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 1.4,
+    marginBottom: 10,
+  },
+  otpInput: {
+    width: "100%",
+    textAlign: "center",
+    fontSize: 32,
+    fontWeight: "800",
+    letterSpacing: 9,
+    color: "#1F2937",
+    borderBottomWidth: 2,
+    borderBottomColor: "#D9E6D8",
+    paddingBottom: 8,
+    marginBottom: 12,
+  },
+  changePhoneText: {
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    fontWeight: "700",
+    color: "#047857",
+  },
   actionButton: {
-    backgroundColor: "#2E1C0A", // Premium deep charcoal brown for butcher theme
+    borderRadius: 999,
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2E1C0A",
     borderWidth: 1,
     borderColor: "#5F4225",
     shadowColor: "#190F05",
@@ -187,10 +429,45 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 12 },
     elevation: 8,
+    overflow: "hidden",
+  },
+  buttonOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.12)",
+  },
+  actionText: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    fontSize: 14,
+    textTransform: "uppercase",
+    letterSpacing: 2.3,
+    zIndex: 1,
   },
   buttonDisabled: {
     backgroundColor: "#8C715A",
     borderColor: "#BCA38C",
+  },
+  switchAuthCta: {
+    marginTop: 24,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  switchAuthText: {
+    fontSize: 14,
+    color: "#57534E",
+    fontWeight: "600",
+  },
+  switchAuthLink: {
+    fontSize: 14,
+    color: "#047857",
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   softBlobOne: {
     position: "absolute",

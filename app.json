@@ -13,10 +13,12 @@
         "image": "./assets/images/user_splash_v9.png",
         "resizeMode": "cover",
         "backgroundColor": "#d9dcb9"
-      }
+      },
+      "bundleIdentifier": "com.nick.ngfreshfoods"
     },
     "android": {
       "package": "com.nick.ngfreshfoods",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "permissions": [],
       "splash": {
@@ -41,6 +43,7 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-firebase/app",
       [
         "expo-splash-screen",
         {
