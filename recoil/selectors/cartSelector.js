@@ -15,7 +15,7 @@ export const cartTotalSelector = selector({
       } else if (item.totalPrice !== undefined) {
         itemTotal = item.totalPrice;
       } else {
-        const basePrice = item.itemPrice || item.price;
+        const basePrice = item.itemPrice || item.base_price;
         const quantity = item.custQuantity || item.quantity;
         itemTotal = basePrice * quantity;
       }

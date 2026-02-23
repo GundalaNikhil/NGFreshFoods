@@ -24,7 +24,7 @@ const CartItems = () => {
           {/* Left: Image */}
           <View className="mr-3">
             <Image
-              source={{ uri: item.image }}
+              source={{ uri: item.image_url }}
               className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-100"
               resizeMode="cover"
             />

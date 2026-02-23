@@ -57,7 +57,7 @@ const ChickenCustomizationModal = ({
   const calculateTotalPrice = useMemo(() => {
     if (customPriceCalculator) {
       return customPriceCalculator({
-        basePrice: product.price,
+        basePrice: product.base_price,
         weight: selectedWeight,
         skin: selectedSkin,
         flavour: selectedFlavour,
@@ -73,7 +73,7 @@ const ChickenCustomizationModal = ({
     };
 
     const weightAdjustedPrice =
-      product.price * (weightMultipliers[selectedWeight] || 0.25);
+      product.base_price * (weightMultipliers[selectedWeight] || 0.25);
     const skinExtra = selectedSkin === "Skinless" ? 100 : 0;
     const flavourExtra = selectedFlavour === "Smoked & Turmeric" ? 10 : 0;
 
@@ -96,7 +96,7 @@ const ChickenCustomizationModal = ({
         flavour: selectedFlavour,
         cutSize: selectedCut,
       },
-      price: calculateTotalPrice,
+      base_price: calculateTotalPrice,
     };
 
     onAddToCart(customizedProduct);

@@ -52,11 +52,11 @@ export const useOffers = () => {
 
             if (chickenItems.length > 0) {
               const cheapestItem = chickenItems.reduce((min, item) =>
-                (item.price || item.itemPrice) < (min.price || min.itemPrice)
+                (item.base_price || item.itemPrice) < (min.base_price || min.itemPrice)
                   ? item
                   : min
               );
-              return cheapestItem.price || cheapestItem.itemPrice || 0;
+              return cheapestItem.base_price || cheapestItem.itemPrice || 0;
             }
           }
           return 0;

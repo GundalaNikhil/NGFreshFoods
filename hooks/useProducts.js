@@ -32,9 +32,9 @@ export const useProducts = () => {
   }, [products]);
 
   useEffect(() => {
-    const persistedProductIds = new Set(products.map((p) => p.product_id));
+    const persistedProductIds = new Set(products.map((p) => p.id));
     const missingProducts = productsData.filter(
-      (p) => !persistedProductIds.has(p.product_id)
+      (p) => !persistedProductIds.has(p.id)
     );
 
     if (missingProducts.length > 0) {
@@ -58,7 +58,7 @@ export const useProducts = () => {
   const updateProduct = (productId, updates) => {
     setProducts((current) =>
       current.map((product) =>
-        product.product_id === productId ? { ...product, ...updates } : product
+        product.id === productId ? { ...product, ...updates } : product
       )
     );
   };
@@ -66,7 +66,7 @@ export const useProducts = () => {
   const updateStock = (productId, quantity) => {
     setProducts((current) =>
       current.map((product) => {
-        if (product.product_id === productId) {
+        if (product.id === productId) {
           // Check if product has stock_quantity property and it's a valid number
           if (typeof product.stock_quantity === "number") {
             const newStock = product.stock_quantity - quantity;

@@ -65,7 +65,7 @@ export const calculateChickenWeight = (cartItems) => {
       if (weightPerUnit === 0) {
         const weightSources = [
           item.weight,
-          item.perQuantity,
+          item.unit,
           item.unitWeight,
           item.name,
           item.productName,
@@ -125,8 +125,8 @@ const getCheapestChickenItem = (cartItems) => {
   if (chickenItems.length === 0) return null;
 
   return chickenItems.reduce((min, item) => {
-    const currentPrice = item.price || item.itemPrice || item.totalPrice || 0;
-    const minPrice = min.price || min.itemPrice || min.totalPrice || 0;
+    const currentPrice = item.base_price || item.itemPrice || item.totalPrice || 0;
+    const minPrice = min.base_price || min.itemPrice || min.totalPrice || 0;
     return currentPrice < minPrice ? item : min;
   });
 };
@@ -162,7 +162,7 @@ export const PROMO_CODES = {
     calculateDiscount: (cartItems) => {
       const cheapestItem = getCheapestChickenItem(cartItems);
       return cheapestItem
-        ? cheapestItem.price ||
+        ? cheapestItem.base_price ||
             cheapestItem.itemPrice ||
             cheapestItem.totalPrice ||
             0

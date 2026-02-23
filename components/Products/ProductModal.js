@@ -31,7 +31,7 @@ const ProductModal = ({ visible, product, onClose, onAddToCart }) => {
           <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
             <View className="p-4">
               <Image
-                source={{ uri: product.image }}
+                source={{ uri: product.image_url }}
                 className="w-full h-64 rounded-lg"
                 resizeMode="cover"
               />
@@ -79,7 +79,7 @@ const ProductModal = ({ visible, product, onClose, onAddToCart }) => {
           <View className="p-4 border-t border-gray-200">
             <View className="flex-row justify-between items-center">
               <View>
-                <Text className="text-2xl font-bold">₹{product.price}</Text>
+                <Text className="text-2xl font-bold">₹{product.base_price}</Text>
                 <Text className="text-gray-500 line-through">
                   ₹{product.mrp}
                 </Text>

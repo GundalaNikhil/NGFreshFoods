@@ -22,7 +22,7 @@ export const useCart = () => {
   const cartItems = cart?.items || [];
 
   const calculateCustomPrice = (product, customizations) => {
-    if (!customizations) return product.price;
+    if (!customizations) return product.base_price;
 
     const weightMultipliers = {
       "250gms": 0.25,
@@ -32,7 +32,7 @@ export const useCart = () => {
     };
 
     const weightAdjustedPrice =
-      product.price * (weightMultipliers[customizations.netWeight] || 0.25);
+      product.base_price * (weightMultipliers[customizations.netWeight] || 0.25);
     const skinExtra = customizations.skinType === "Skinless" ? 100 : 0;
     const flavourExtra =
       customizations.flavour === "Smoked & Turmeric" ? 10 : 0;
@@ -46,7 +46,7 @@ export const useCart = () => {
   const generateCustomizationId = (product, customizations) => {
     if (!customizations) return null;
 
-    const customString = `${product.product_id}_${customizations.netWeight}_${customizations.skinType}_${customizations.flavour}_${customizations.cutSize}`;
+    const customString = `${product.id}_${customizations.netWeight}_${customizations.skinType}_${customizations.flavour}_${customizations.cutSize}`;
     return customString.replace(/\s+/g, "_").toLowerCase();
   };
 
@@ -54,7 +54,7 @@ export const useCart = () => {
     const productId = generateCustomProductId(product, customizations);
     const itemPrice = customizations
       ? calculateCustomPrice(product, customizations)
-      : product.price;
+      : product.base_price;
 
     const customizationId = generateCustomizationId(product, customizations);
 
@@ -114,7 +114,7 @@ export const useCart = () => {
 
     // Only update stock for products that have stock management - AFTER state update
     if (product.stock_quantity !== undefined && shouldUpdateStock) {
-      updateStock(product.product_id, 1);
+      updateStock(product.id, 1);
     }
   };
 
@@ -137,7 +137,7 @@ export const useCart = () => {
 
       // Only update stock if the product has stock management - AFTER state update
       if (item.stock_quantity !== undefined) {
-        updateStock(item.product_id, -item.quantity);
+        updateStock(item.id, -item.quantity);
       }
     }
   };
@@ -162,7 +162,7 @@ export const useCart = () => {
           // Recalculate total price based on new quantity
           const itemPrice = item.customizations
             ? calculateCustomPrice(item, item.customizations)
-            : item.price;
+            : item.base_price;
 
           const updatedItem = {
             ...item,
@@ -187,7 +187,7 @@ export const useCart = () => {
 
     // Only update stock if the product has stock management - AFTER state update
     if (currentItem.stock_quantity !== undefined) {
-      updateStock(currentItem.product_id, quantityDiff);
+      updateStock(currentItem.id, quantityDiff);
     }
   };
 
@@ -219,7 +219,7 @@ export const useCart = () => {
 
     // Update stock for all items AFTER state update
     itemsToUpdateStock.forEach((item) => {
-      updateStock(item.product_id, -item.quantity);
+      updateStock(item.id, -item.quantity);
     });
 
     console.log("Cart cleared");

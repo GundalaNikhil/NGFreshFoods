@@ -9,7 +9,7 @@ const ProductCard = ({ product, onAddToCart }) => {
   const { addToCart } = useCart();
 
   const discountPercentage = Math.round(
-    ((product.mrp - product.price) / product.mrp) * 100
+    ((product.mrp - product.base_price) / product.mrp) * 100
   );
 
   const handleAddToCartClick = () => {
@@ -46,12 +46,12 @@ const ProductCard = ({ product, onAddToCart }) => {
           </Text>
           
           <View className="flex-row items-center mt-1.5">
-            <Text className="text-[15px] font-bold text-gray-900">₹{product.price}</Text>
+            <Text className="text-[15px] font-bold text-gray-900">₹{product.base_price}</Text>
             <Text className="text-[13px] text-gray-500 line-through ml-2">₹{product.mrp}</Text>
           </View>
 
           <Text className="text-[12px] text-gray-500 mt-1 font-medium italic">
-            {product.perQuantity}
+            {product.unit}
           </Text>
 
           <Text className="text-[13px] text-gray-500 mt-2 leading-relaxed" numberOfLines={2}>
@@ -63,7 +63,7 @@ const ProductCard = ({ product, onAddToCart }) => {
         <View className="items-center">
           <View className="relative">
             <Image
-              source={{ uri: product.image }}
+              source={{ uri: product.image_url }}
               className="w-32 h-32 rounded-xl"
               resizeMode="cover"
             />
