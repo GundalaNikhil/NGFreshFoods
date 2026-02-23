@@ -5,8 +5,13 @@ import { useSetRecoilState } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
 import { signupWithBff } from "../../services/bff/authBff";
+import { useFonts, PlayfairDisplay_800ExtraBold } from '@expo-google-fonts/playfair-display';
 
 const Signup = ({ onSwitchToLogin }) => {
+  const [fontsLoaded] = useFonts({
+    PlayfairDisplay_800ExtraBold,
+  });
+
   const setAuth = useSetRecoilState(authAtom);
   const setProfile = useSetRecoilState(profileAtom);
 
@@ -70,8 +75,12 @@ const Signup = ({ onSwitchToLogin }) => {
           <Sprout size={14} color="#1F7A4A" />
           <Text className="ml-2 text-[11px] font-extrabold tracking-[2px] uppercase text-emerald-800">Organic Family Circle</Text>
         </View>
-        <Text className="text-[35px] font-extrabold text-stone-900 tracking-tight mb-1">Create Account</Text>
-        <Text className="text-[13px] text-stone-600 font-semibold tracking-wide">Fresh ingredients. Zero compromises.</Text>
+        {fontsLoaded ? (
+          <Text className="text-[38px] text-stone-900 tracking-tight mb-1" style={{ fontFamily: 'PlayfairDisplay_800ExtraBold' }}>Create Account</Text>
+        ) : (
+          <Text className="text-[35px] font-extrabold text-stone-900 tracking-tight mb-1">Create Account</Text>
+        )}
+        <Text className="text-[13px] text-stone-600 font-semibold tracking-wide mt-1">Fresh ingredients. Zero compromises.</Text>
       </View>
 
       {error ? (
@@ -80,87 +89,50 @@ const Signup = ({ onSwitchToLogin }) => {
         </View>
       ) : null}
 
-      <View className="flex-row justify-between mb-3">
-        <View className="flex-1 mr-2">
-          <View className="flex-row items-center rounded-2xl px-4 py-1" style={styles.inputWrap}>
-            <User size={16} color="#3f4b43" />
-            <TextInput
-              value={formData.firstName}
-              onChangeText={(text) => onChange("firstName", text)}
-              placeholder="First name"
-              placeholderTextColor="#8f9a90"
-              className="flex-1 ml-2 py-3 text-[15px] font-semibold text-stone-900"
-            />
+      <View className="mb-2 w-full mt-4">
+        <View className="flex-row justify-between mb-4">
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2" style={styles.inputWrap}>
+              <User size={16} color="#78857A" />
+              <TextInput value={formData.firstName} onChangeText={(text) => onChange("firstName", text)} placeholder="First Name" placeholderTextColor="#A9B3AB" className="flex-1 ml-2 px-1 text-[16px] font-medium text-stone-800" />
+            </View>
+          </View>
+          <View className="flex-1 ml-3">
+            <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2" style={styles.inputWrap}>
+              <User size={16} color="#78857A" />
+              <TextInput value={formData.lastName} onChangeText={(text) => onChange("lastName", text)} placeholder="Last Name" placeholderTextColor="#A9B3AB" className="flex-1 ml-2 px-1 text-[16px] font-medium text-stone-800" />
+            </View>
           </View>
         </View>
-        <View className="flex-1 ml-2">
-          <View className="flex-row items-center rounded-2xl px-4 py-1" style={styles.inputWrap}>
-            <User size={16} color="#3f4b43" />
-            <TextInput
-              value={formData.lastName}
-              onChangeText={(text) => onChange("lastName", text)}
-              placeholder="Last name"
-              placeholderTextColor="#8f9a90"
-              className="flex-1 ml-2 py-3 text-[15px] font-semibold text-stone-900"
-            />
-          </View>
-        </View>
-      </View>
 
-      <View className="mb-3">
-        <View className="flex-row items-center rounded-2xl px-4 py-1" style={styles.inputWrap}>
-          <Mail size={18} color="#3f4b43" />
-          <TextInput
-            value={formData.email}
-            onChangeText={(text) => onChange("email", text)}
-            placeholder="Email address"
-            placeholderTextColor="#8f9a90"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            className="flex-1 ml-3 py-3 text-[15px] font-semibold text-stone-900"
-          />
+        <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2 mb-4" style={styles.inputWrap}>
+          <Mail size={16} color="#78857A" />
+          <TextInput value={formData.email} onChangeText={(text) => onChange("email", text)} placeholder="Email Address" placeholderTextColor="#A9B3AB" keyboardType="email-address" autoCapitalize="none" className="flex-1 ml-3 px-1 text-[16px] font-medium text-stone-800" />
         </View>
-      </View>
 
-      <View className="mb-3">
-        <View className="flex-row items-center rounded-2xl px-4 py-1" style={styles.inputWrap}>
-          <Phone size={18} color="#3f4b43" />
-          <TextInput
-            value={formData.phoneNumber}
-            onChangeText={(text) => onChange("phoneNumber", text)}
-            placeholder="Phone number"
-            placeholderTextColor="#8f9a90"
-            keyboardType="phone-pad"
-            className="flex-1 ml-3 py-3 text-[15px] font-semibold text-stone-900"
-          />
+        <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2 mb-4" style={styles.inputWrap}>
+          <Phone size={16} color="#78857A" />
+          <TextInput value={formData.phoneNumber} onChangeText={(text) => onChange("phoneNumber", text)} placeholder="Phone Number" placeholderTextColor="#A9B3AB" keyboardType="phone-pad" className="flex-1 ml-3 px-1 text-[16px] font-medium text-stone-800" />
         </View>
-      </View>
 
-      <View className="mb-6">
-        <View className="flex-row items-center rounded-2xl px-4 py-1" style={styles.inputWrap}>
-          <Lock size={18} color="#3f4b43" />
-          <TextInput
-            value={formData.password}
-            onChangeText={(text) => onChange("password", text)}
-            placeholder="Password"
-            placeholderTextColor="#8f9a90"
-            secureTextEntry
-            className="flex-1 ml-3 py-3 text-[15px] font-semibold text-stone-900"
-          />
+        <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-2 mb-6" style={styles.inputWrap}>
+          <Lock size={16} color="#78857A" />
+          <TextInput value={formData.password} onChangeText={(text) => onChange("password", text)} placeholder="Secure Password" placeholderTextColor="#A9B3AB" secureTextEntry className="flex-1 ml-3 px-1 text-[16px] font-medium text-stone-800" />
         </View>
       </View>
 
       <TouchableOpacity
-        className="rounded-2xl py-4 items-center"
+        className="rounded-full py-4 items-center overflow-hidden"
         onPress={handleSignup}
         disabled={loading}
         activeOpacity={0.85}
         style={[styles.actionButton, loading ? styles.buttonDisabled : null]}
       >
+        <View className="absolute inset-0 bg-black/10" />
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text className="text-white font-black text-[15px] uppercase tracking-[2px]">Get Started</Text>
+          <Text className="text-white font-black text-[14px] uppercase tracking-[3.5px] z-10">Get Started</Text>
         )}
       </TouchableOpacity>
 
@@ -204,23 +176,21 @@ const styles = StyleSheet.create({
     borderColor: "#F7CDC8",
   },
   inputWrap: {
-    backgroundColor: "rgba(255, 255, 255, 0.88)",
-    borderWidth: 1,
-    borderColor: "#D9E6D8",
+    backgroundColor: "transparent",
   },
   actionButton: {
-    backgroundColor: "#8A5A1F",
+    backgroundColor: "#2E1C0A", // Premium deep charcoal brown for butcher theme
     borderWidth: 1,
-    borderColor: "#E7C98A",
-    shadowColor: "#5E3B10",
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 9 },
+    borderColor: "#5F4225",
+    shadowColor: "#190F05",
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
     elevation: 8,
   },
   buttonDisabled: {
-    backgroundColor: "#9C7A4B",
-    borderColor: "#DDC799",
+    backgroundColor: "#8C715A",
+    borderColor: "#BCA38C",
   },
   softBlobOne: {
     position: "absolute",

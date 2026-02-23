@@ -5,8 +5,13 @@ import { useSetRecoilState } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
 import { loginWithBff } from "../../services/bff/authBff";
+import { useFonts, PlayfairDisplay_800ExtraBold } from '@expo-google-fonts/playfair-display';
 
 const Login = ({ onSwitchToSignup }) => {
+  const [fontsLoaded] = useFonts({
+    PlayfairDisplay_800ExtraBold,
+  });
+
   const setAuth = useSetRecoilState(authAtom);
   const setProfile = useSetRecoilState(profileAtom);
 
@@ -61,8 +66,12 @@ const Login = ({ onSwitchToSignup }) => {
           <Leaf size={14} color="#1F7A4A" />
           <Text className="ml-2 text-[11px] font-extrabold tracking-[2px] uppercase text-emerald-800">Farm To Doorstep</Text>
         </View>
-        <Text className="text-[38px] font-extrabold text-stone-900 tracking-tight mb-1">Welcome Back</Text>
-        <Text className="text-[13px] text-stone-600 font-semibold tracking-wide">Login to continue your fresh routine</Text>
+        {fontsLoaded ? (
+          <Text className="text-[42px] text-stone-900 tracking-tight mb-1" style={{ fontFamily: 'PlayfairDisplay_800ExtraBold' }}>Welcome Back</Text>
+        ) : (
+          <Text className="text-[38px] font-extrabold text-stone-900 tracking-tight mb-1">Welcome Back</Text>
+        )}
+        <Text className="text-[13px] text-stone-600 font-semibold tracking-wide mt-1">Login to continue your fresh routine</Text>
       </View>
 
       {error ? (
@@ -71,46 +80,45 @@ const Login = ({ onSwitchToSignup }) => {
         </View>
       ) : null}
 
-      <View className="mb-3">
-        <View className="flex-row items-center rounded-2xl px-4 py-1" style={styles.inputWrap}>
-          <Mail size={18} color="#3f4b43" />
+      <View className="mb-2 w-full mt-4">
+        <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-3 mb-6" style={styles.inputWrap}>
+          <Mail size={18} color="#78857A" />
           <TextInput
             value={formData.email}
             onChangeText={(text) => onChange("email", text)}
-            placeholder="Email address"
-            placeholderTextColor="#8f9a90"
+            placeholder="Email Address"
+            placeholderTextColor="#A9B3AB"
             keyboardType="email-address"
             autoCapitalize="none"
-            className="flex-1 ml-3 py-3 text-[16px] font-semibold text-stone-900"
+            className="flex-1 ml-3 px-1 text-[17px] font-medium text-stone-800"
           />
         </View>
-      </View>
 
-      <View className="mb-6">
-        <View className="flex-row items-center rounded-2xl px-4 py-1" style={styles.inputWrap}>
-          <Lock size={18} color="#3f4b43" />
+        <View className="flex-row items-center border-b-2 border-[#D9E6D8] pb-3 mb-8" style={styles.inputWrap}>
+          <Lock size={18} color="#78857A" />
           <TextInput
             value={formData.password}
             onChangeText={(text) => onChange("password", text)}
-            placeholder="Password"
-            placeholderTextColor="#8f9a90"
+            placeholder="Secure Password"
+            placeholderTextColor="#A9B3AB"
             secureTextEntry
-            className="flex-1 ml-3 py-3 text-[16px] font-semibold text-stone-900"
+            className="flex-1 ml-3 px-1 text-[17px] font-medium text-stone-800"
           />
         </View>
       </View>
 
       <TouchableOpacity
-        className="rounded-2xl py-4 items-center"
+        className="rounded-full py-4 items-center overflow-hidden"
         onPress={handleLogin}
         disabled={loading}
         activeOpacity={0.85}
         style={[styles.actionButton, loading ? styles.buttonDisabled : null]}
       >
+        <View className="absolute inset-0 bg-black/10" />
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text className="text-white font-black text-[15px] uppercase tracking-[2px]">Continue</Text>
+          <Text className="text-white font-black text-[14px] uppercase tracking-[3.5px] z-10">Continue</Text>
         )}
       </TouchableOpacity>
 
@@ -154,23 +162,21 @@ const styles = StyleSheet.create({
     borderColor: "#F7CDC8",
   },
   inputWrap: {
-    backgroundColor: "rgba(255, 255, 255, 0.88)",
-    borderWidth: 1,
-    borderColor: "#D9E6D8",
+    backgroundColor: "transparent",
   },
   actionButton: {
-    backgroundColor: "#1E5A38",
+    backgroundColor: "#1F2B24", // Premium deep charcoal green
     borderWidth: 1,
-    borderColor: "#B7DEC0",
-    shadowColor: "#123A25",
-    shadowOpacity: 0.42,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 9 },
+    borderColor: "#3E5748",
+    shadowColor: "#111814",
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
     elevation: 8,
   },
   buttonDisabled: {
-    backgroundColor: "#5A8E71",
-    borderColor: "#B7D6C1",
+    backgroundColor: "#637469",
+    borderColor: "#889A8F",
   },
   softBlobOne: {
     position: "absolute",
