@@ -21,12 +21,17 @@ const Account = () => {
   return (
     <View className="flex-1 w-full flex">
       <ImageBackground 
-        source={require("../../assets/images/organic_auth_bg.png")}
+        source={
+          authMode === "login" 
+            ? require("../../assets/images/login_bg_meat_mobile.png") 
+            : require("../../assets/images/signup_bg_meat_mobile.png")
+        }
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
       >
-        {/* Dark subtle overlay for legibility */}
-        <View className="flex-1 bg-black/40 justify-center px-5">
+        <View className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-emerald-200/40" />
+        <View className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-amber-100/50" />
+        <View className="flex-1 bg-black/25 justify-center px-5">
           {authMode === "login" ? (
             <Login onSwitchToSignup={() => setAuthMode("signup")} />
           ) : (
