@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "267764487506",
-    "project_id": "ngfreshfarmfoodsdev",
-    "storage_bucket": "ngfreshfarmfoodsdev.firebasestorage.app"
+    "project_number": "88137638130",
+    "project_id": "ngfreshfarmfoods",
+    "storage_bucket": "ngfreshfarmfoods.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:267764487506:android:7a06ffeede8586ba75568b",
+        "mobilesdk_app_id": "1:88137638130:android:4b2ab8f76c3d05bdbd306b",
         "android_client_info": {
           "package_name": "com.nick.ngfreshfoods"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCtAzJ-BVodj7s8GE4zs37TJBtWM53Z5IY"
+          "current_key": "AIzaSyCw9S9IzM6TQSVsCL2RSQIvNW4YE79f0Ts"
         }
       ],
       "services": {

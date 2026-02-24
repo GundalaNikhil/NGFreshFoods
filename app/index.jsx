@@ -17,7 +17,7 @@ import CartScreen from "../components/bottomNavScreens/CartScreen";
 import HomeScreen from "../components/bottomNavScreens/HomeScreen";
 import ProductsScreen from "../components/bottomNavScreens/ProductsScreen";
 import "../global.css";
-import "../global.css";
+import AuthScreen from "../components/Login/AuthScreen";
 
 // Screen dimensions for responsive design
 const { height } = Dimensions.get("window");
@@ -97,12 +97,18 @@ function RootNavigator() {
 
   if (initializing) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
         <ActivityIndicator size="large" color="#1F2B24" />
       </View>
     );
   }
 
+  // Gatekeeping: If not authenticated, render the premium Auth flow
+  if (!authState.isAuthenticated) {
+    return <AuthScreen />;
+  }
+
+  // Main Authenticated App Flow
   return (
     <Tab.Navigator
         screenOptions={{
@@ -227,10 +233,15 @@ function RootNavigator() {
   ) 
 }
 
+import Toast from 'react-native-toast-message';
+
 export default function Index() {
   return (
-    <RecoilRoot>
-      <RootNavigator />
-    </RecoilRoot>
+    <>
+      <RecoilRoot>
+        <RootNavigator />
+      </RecoilRoot>
+      <Toast />
+    </>
   );
 }

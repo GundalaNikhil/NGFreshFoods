@@ -1,0 +1,131 @@
+import React, { useState } from 'react';
+import { View, StyleSheet, Image, KeyboardAvoidingView, Platform, Dimensions, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
+import PhoneInputStep from './PhoneInputStep';
+import OtpStep from './OtpStep';
+import { handleGlobalError } from '../../utils/errorHandler';
+import authFirebase from '@react-native-firebase/auth';
+
+const { width, height } = Dimensions.get('window');
+
+const AuthScreen = () => {
+  // 'PHONE' | 'OTP'
+  const [step, setStep] = useState('PHONE');
+  
+  // State shared between steps
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState(null);
+
+  const handlePhoneSubmitSuccess = (phone, confirmResult) => {
+    setPhoneNumber(phone);
+    setConfirmationResult(confirmResult);
+    setStep('OTP');
+  };
+
+  const handleBackToPhone = () => {
+    setStep('PHONE');
+    setConfirmationResult(null);
+  };
+
+  const handleResend = async () => {
+    try {
+      const confirmResult = await authFirebase().signInWithPhoneNumber(phoneNumber);
+      setConfirmationResult(confirmResult);
+      return { success: true };
+    } catch (err) {
+      console.log("Resend OTP Error:", err);
+      const errorMessage = handleGlobalError(err, "Resend OTP");
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.innerContainer}>
+          {/* Top Section: Pixar Character Background */}
+          <View style={styles.topSection}>
+            <Image 
+              source={require('../../assets/images/signup_character.png')} 
+              style={styles.characterImage}
+              resizeMode="cover"
+            />
+            {/* Gradient Overlay for a smooth transition to the white card */}
+            <View style={styles.gradientOverlay} />
+          </View>
+
+          {/* Bottom Section: The White Action Card */}
+          <Animated.View 
+            style={styles.bottomCard}
+            layout={Layout.springify().damping(18).stiffness(150)}
+          >
+            {step === 'PHONE' ? (
+              <Animated.View entering={FadeInDown.duration(400)} key="phone-step">
+                <PhoneInputStep onSuccess={handlePhoneSubmitSuccess} />
+              </Animated.View>
+            ) : (
+              <Animated.View entering={FadeIn.duration(400)} key="otp-step">
+                <OtpStep 
+                  phoneNumber={phoneNumber} 
+                  confirmationResult={confirmationResult} 
+                  onBack={handleBackToPhone} 
+                  onResend={handleResend}
+                />
+              </Animated.View>
+            )}
+          </Animated.View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FAF5ED', // Premium warm cream tone
+  },
+  innerContainer: {
+    flex: 1,
+  },
+  topSection: {
+    flex: 1,
+    width: '100%',
+    position: 'relative',
+    backgroundColor: '#EBE2D5',
+  },
+  characterImage: {
+    width: '100%',
+    height: '110%',
+    position: 'absolute',
+    top: -20, // Slightly shift up to focus on the character
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    // A linear gradient effect recreated using overlapping shadows or just letting the card handle the edge 
+    backgroundColor: 'transparent', 
+  },
+  bottomCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
+    paddingHorizontal: 28,
+    paddingTop: 36,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 32,
+    minHeight: height * 0.52, // Takes up just over half the screen
+    shadowColor: '#1A0E04',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 20, // Android shadow
+  }
+});
+
+export default AuthScreen;
