@@ -1,17 +1,22 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Icon } from "@rneui/themed";
-import React, { useEffect } from "react";
-import { Dimensions, Pressable, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Dimensions, Pressable, Text, View, ActivityIndicator } from "react-native";
 import Reanimated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { RecoilRoot } from "recoil";
+import { RecoilRoot, useRecoilState } from "recoil";
+import { authAtom } from "../recoil/atoms/authAtom";
+import { auth } from "../services/firebaseConfig";
+import { onAuthStateChanged } from "@react-native-firebase/auth";
 import AccountScreen from "../components/bottomNavScreens/AccountScreen";
 import CartScreen from "../components/bottomNavScreens/CartScreen";
 import HomeScreen from "../components/bottomNavScreens/HomeScreen";
 import ProductsScreen from "../components/bottomNavScreens/ProductsScreen";
+import "../global.css";
 import "../global.css";
 
 // Screen dimensions for responsive design
@@ -62,10 +67,44 @@ const TabButton = ({
   );
 };
 
-export default function Index() {
+const Stack = createNativeStackNavigator();
+
+// The main App routing logic inside RecoilRoot
+function RootNavigator() {
+  const [authState, setAuthState] = useRecoilState(authAtom);
+  const [initializing, setInitializing] = useState(true);
+
+  // Listen for Firebase Auth state changes
+  useEffect(() => {
+    const subscriber = onAuthStateChanged(auth(), (user) => {
+      if (user) {
+        // Only update if not already authenticated to avoid loop
+        if (!authState.isAuthenticated) {
+          user.getIdToken(true).then((token) => {
+            setAuthState({ isAuthenticated: true, token });
+          });
+        }
+      } else {
+        // User is signed out in Firebase
+        if (authState.isAuthenticated) {
+          setAuthState({ isAuthenticated: false, token: null });
+        }
+      }
+      if (initializing) setInitializing(false);
+    });
+    return subscriber; // unsubscribe on unmount
+  }, [authState.isAuthenticated, initializing, setAuthState]);
+
+  if (initializing) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#1F2B24" />
+      </View>
+    );
+  }
+
   return (
-    <RecoilRoot>
-      <Tab.Navigator
+    <Tab.Navigator
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
@@ -185,6 +224,13 @@ export default function Index() {
           }}
         />
       </Tab.Navigator>
+  ) 
+}
+
+export default function Index() {
+  return (
+    <RecoilRoot>
+      <RootNavigator />
     </RecoilRoot>
   );
 }

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, MapPin } from "lucide-react-native";
+import { ChevronDown, ChevronLeft, MapPin, ShoppingBag } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useCart } from "../../hooks/useCart";

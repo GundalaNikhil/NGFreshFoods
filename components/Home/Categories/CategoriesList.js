@@ -6,11 +6,11 @@ import CategoryItem from "./CategoryItem";
 
 const CATEGORY_IMAGE_MAP = {
   CAT_CHICKEN:
-    "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513830/ffw/Chicken%20Small%20Cut%20Pieces/vrigj9t1jbw5oihsuyqn.jpg",
+    "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513962/ffw/Fresh%20Whole%20Chicken/ri4imwvokptjrw6hcqpq.jpg",
   CAT_DAIRY_EGGS:
     "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513888/ffw/Farm%20Fresh%20Eggs%20%28Pack%20of%2012%29/g8hwht5nvy5vytuhbomy.jpg",
   CAT_MUTTON:
-    "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737391536/goat-rann-cut_1_fuxtwn.jpg",
+    "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513962/ffw/Fresh%20Whole%20Chicken/ri4imwvokptjrw6hcqpq.jpg",
 };
 
 const FALLBACK_CATEGORY_IMAGE =

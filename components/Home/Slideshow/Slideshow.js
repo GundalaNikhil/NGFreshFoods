@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Image, View } from "react-native";
+import { Animated, View } from "react-native";
+import { Image } from "expo-image";
+import { normalizeImageUrl } from "../../../utils/imageUrl";
 
 const images = [
   "https://res.cloudinary.com/djv3mrzk2/image/upload/v1735914513/Banner1_aosc5m.png",
@@ -38,9 +40,11 @@ const Slideshow = () => {
         style={{ opacity: fadeAnim }}
       >
         <Image
-          source={{ uri: images[currentIndex] }}
+          source={{ uri: normalizeImageUrl(images[currentIndex]) }}
+          contentFit="cover"
+          transition={200}
           className="w-full h-full"
-          resizeMode="cover"
+          style={{ width: "100%", height: "100%" }}
         />
       </Animated.View>
 

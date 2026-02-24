@@ -2,6 +2,7 @@ import { Minus, Plus } from "lucide-react-native";
 import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { useCart } from "../../hooks/useCart";
+import { getEntityImageUrl } from "../../utils/imageUrl";
 
 const CartItems = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
@@ -16,17 +17,30 @@ const CartItems = () => {
 
   return (
     <View className="px-4 py-2">
-      {cart.map((item, index) => (
-        <View 
-          key={item.productId} 
+      {cart.map((item, index) => {
+        const imageUri =
+          getEntityImageUrl(item) ||
+          "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=800&auto=format&fit=crop";
+
+        return (
+        <View
+          key={item.productId}
           className="flex-row items-center py-4 border-b border-gray-50 last:border-b-0"
         >
           {/* Left: Image */}
           <View className="mr-3">
             <Image
-              source={{ uri: item.image_url }}
-              className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-100"
+              source={{ uri: imageUri }}
+              style={{ width: 64, height: 64, borderRadius: 12 }}
               resizeMode="cover"
+              onError={(event) =>
+                console.log(
+                  "[ImageError][CartItems]",
+                  item?.name,
+                  imageUri,
+                  event?.nativeEvent?.error
+                )
+              }
             />
           </View>
 
@@ -82,7 +96,7 @@ const CartItems = () => {
             </Text>
           </View>
         </View>
-      ))}
+      )})}
     </View>
   );
 };

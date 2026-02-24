@@ -1,5 +1,7 @@
 import React from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+import { Image } from "expo-image";
+import { normalizeImageUrl } from "../../../utils/imageUrl";
 
 const CategoryItem = ({ title, image, itemSize, onPress }) => {
   return (
@@ -14,7 +16,9 @@ const CategoryItem = ({ title, image, itemSize, onPress }) => {
         style={{ height: itemSize - 12 }}
       >
         <Image
-          source={{ uri: image }}
+          source={{ uri: normalizeImageUrl(image) }}
+          contentFit="cover"
+          transition={200}
           style={{
             width: "100%",
             height: "100%",

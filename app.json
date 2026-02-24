@@ -14,7 +14,8 @@
         "resizeMode": "cover",
         "backgroundColor": "#d9dcb9"
       },
-      "bundleIdentifier": "com.nick.ngfreshfoods"
+      "bundleIdentifier": "com.nick.ngfreshfoods",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "package": "com.nick.ngfreshfoods",
@@ -63,6 +64,14 @@
       },
       "eas": {
         "projectId": "9bcd6544-2221-42d1-bf0a-58cb225a525c"
+      },
+      "firebase": {
+        "apiKey": "EXPO_PUBLIC_FIREBASE_API_KEY",
+        "authDomain": "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN",
+        "projectId": "EXPO_PUBLIC_FIREBASE_PROJECT_ID",
+        "storageBucket": "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET",
+        "messagingSenderId": "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+        "appId": "EXPO_PUBLIC_FIREBASE_APP_ID"
       }
     }
   }

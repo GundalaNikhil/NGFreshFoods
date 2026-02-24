@@ -8,9 +8,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getEntityImageUrl } from "../../utils/imageUrl";
 
 const ProductModal = ({ visible, product, onClose, onAddToCart }) => {
   if (!product) return null;
+  const imageUri =
+    getEntityImageUrl(product) ||
+    "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=800&auto=format&fit=crop";
 
   return (
     <Modal
@@ -31,9 +35,17 @@ const ProductModal = ({ visible, product, onClose, onAddToCart }) => {
           <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
             <View className="p-4">
               <Image
-                source={{ uri: product.image_url }}
-                className="w-full h-64 rounded-lg"
+                source={{ uri: imageUri }}
+                style={{ width: "100%", height: 256, borderRadius: 8 }}
                 resizeMode="cover"
+                onError={(event) =>
+                  console.log(
+                    "[ImageError][ProductModal]",
+                    product?.name,
+                    imageUri,
+                    event?.nativeEvent?.error
+                  )
+                }
               />
 
               <View className="mt-4">
