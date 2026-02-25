@@ -50,6 +50,7 @@ const toUserProfile = (payload) => {
     lastName,
     fullName,
     phoneNumber: payload?.phoneNumber || "",
+    isNewUser: payload?.newUser || false, // Note: Lombok generates isNewUser() but Jackson serializes boolean isNewUser as 'newUser'
     addresses: payload?.userAddresses || [],
     addressId: payload?.userAddresses?.[0]?.addressId || null,
   };

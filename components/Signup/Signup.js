@@ -82,7 +82,7 @@ const Signup = ({ onSwitchToLogin, onAuthSuccess }) => {
 
     try {
       const firebaseUserCredential = await confirmation.confirm(otpCode.trim());
-      const idToken = await firebaseUserCredential.user.getIdToken(true);
+      const idToken = await firebaseUserCredential.user.getIdToken();
 
       const response = await signupWithFirebaseOtpBff({
         ...formData,

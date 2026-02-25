@@ -3,10 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { useFonts, PlayfairDisplay_800ExtraBold } from '@expo-google-fonts/playfair-display';
 import { useSetRecoilState } from 'recoil';
 import { authAtom } from '../../recoil/atoms/authAtom';
+import { profileAtom } from '../../recoil/atoms/profileAtom';
+import { loginWithFirebaseOtpBff } from '../../services/bff/authBff';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { handleGlobalError } from '../../utils/errorHandler';
 
-const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend }) => {
+const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequiresProfile }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,6 +16,7 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend }) => {
 
   const inputRefs = useRef([]);
   const setAuth = useSetRecoilState(authAtom);
+  const setProfile = useSetRecoilState(profileAtom);
 
   const [fontsLoaded] = useFonts({
     PlayfairDisplay_800ExtraBold,
@@ -71,7 +74,23 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend }) => {
       const userCredential = await confirmationResult.confirm(code);
       
       const token = await userCredential.user.getIdToken();
-      setAuth({ isAuthenticated: true, token });
+      
+      // Send the Firebase ID Token to the Spring Boot Backend for validation & user sync
+      const backendResponse = await loginWithFirebaseOtpBff({ idToken: token });
+
+      if (backendResponse.success) {
+        // If the backend returns 200 OK but flags the user as new, route them to profile completion setup!
+        if (backendResponse.data.profile.isNewUser) {
+          onRequiresProfile(token);
+          return;
+        }
+        
+        // Otherwise, hydrate Recoil state with Backend's JWT and Profile and enter the app!
+        setAuth({ isAuthenticated: true, token: backendResponse.data.token });
+        setProfile(backendResponse.data.profile);
+      } else {
+        throw new Error(backendResponse.error.message || "Failed to authenticate with backend");
+      }
       
     } catch (err) {
       console.log("Firebase OTP Verification Error: ", err);

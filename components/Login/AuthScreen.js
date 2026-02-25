@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Image, KeyboardAvoidingView, Platform, Dimensions, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn, Layout, SlideInRight } from 'react-native-reanimated';
 import PhoneInputStep from './PhoneInputStep';
 import OtpStep from './OtpStep';
+import CompleteProfileStep from './CompleteProfileStep';
 import { handleGlobalError } from '../../utils/errorHandler';
 import authFirebase from '@react-native-firebase/auth';
 
 const { width, height } = Dimensions.get('window');
 
 const AuthScreen = () => {
-  // 'PHONE' | 'OTP'
+  // 'PHONE' | 'OTP' | 'PROFILE'
   const [step, setStep] = useState('PHONE');
   
   // State shared between steps
   const [phoneNumber, setPhoneNumber] = useState('');
   const [confirmationResult, setConfirmationResult] = useState(null);
+  const [firebaseIdToken, setFirebaseIdToken] = useState(null);
 
   const handlePhoneSubmitSuccess = (phone, confirmResult) => {
     setPhoneNumber(phone);
@@ -25,6 +27,16 @@ const AuthScreen = () => {
   const handleBackToPhone = () => {
     setStep('PHONE');
     setConfirmationResult(null);
+  };
+
+  const handleRequiresProfile = (idToken) => {
+    setFirebaseIdToken(idToken);
+    setStep('PROFILE');
+  };
+
+  const handleBackToOtp = () => {
+    setStep('OTP');
+    setFirebaseIdToken(null);
   };
 
   const handleResend = async () => {
@@ -44,7 +56,7 @@ const AuthScreen = () => {
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={styles.innerContainer}>
           {/* Top Section: Pixar Character Background */}
           <View style={styles.topSection}>
@@ -66,13 +78,22 @@ const AuthScreen = () => {
               <Animated.View entering={FadeInDown.duration(400)} key="phone-step">
                 <PhoneInputStep onSuccess={handlePhoneSubmitSuccess} />
               </Animated.View>
-            ) : (
+            ) : step === 'OTP' ? (
               <Animated.View entering={FadeIn.duration(400)} key="otp-step">
                 <OtpStep 
                   phoneNumber={phoneNumber} 
                   confirmationResult={confirmationResult} 
                   onBack={handleBackToPhone} 
                   onResend={handleResend}
+                  onRequiresProfile={handleRequiresProfile}
+                />
+              </Animated.View>
+            ) : (
+              <Animated.View entering={SlideInRight.duration(400)} key="profile-step">
+                <CompleteProfileStep 
+                  phoneNumber={phoneNumber} 
+                  firebaseIdToken={firebaseIdToken} 
+                  onBack={handleBackToOtp} 
                 />
               </Animated.View>
             )}

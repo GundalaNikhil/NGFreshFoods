@@ -1,5 +1,4 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Icon } from "@rneui/themed";
 import React, { useEffect, useState } from "react";
 import { Dimensions, Pressable, Text, View, ActivityIndicator } from "react-native";
@@ -12,6 +11,7 @@ import { RecoilRoot, useRecoilState } from "recoil";
 import { authAtom } from "../recoil/atoms/authAtom";
 import { auth } from "../services/firebaseConfig";
 import { onAuthStateChanged } from "@react-native-firebase/auth";
+import Toast from "react-native-toast-message";
 import AccountScreen from "../components/bottomNavScreens/AccountScreen";
 import CartScreen from "../components/bottomNavScreens/CartScreen";
 import HomeScreen from "../components/bottomNavScreens/HomeScreen";
@@ -67,8 +67,6 @@ const TabButton = ({
   );
 };
 
-const Stack = createNativeStackNavigator();
-
 // The main App routing logic inside RecoilRoot
 function RootNavigator() {
   const [authState, setAuthState] = useRecoilState(authAtom);
@@ -77,14 +75,7 @@ function RootNavigator() {
   // Listen for Firebase Auth state changes
   useEffect(() => {
     const subscriber = onAuthStateChanged(auth(), (user) => {
-      if (user) {
-        // Only update if not already authenticated to avoid loop
-        if (!authState.isAuthenticated) {
-          user.getIdToken(true).then((token) => {
-            setAuthState({ isAuthenticated: true, token });
-          });
-        }
-      } else {
+      if (!user) {
         // User is signed out in Firebase
         if (authState.isAuthenticated) {
           setAuthState({ isAuthenticated: false, token: null });
@@ -232,8 +223,6 @@ function RootNavigator() {
       </Tab.Navigator>
   ) 
 }
-
-import Toast from 'react-native-toast-message';
 
 export default function Index() {
   return (
