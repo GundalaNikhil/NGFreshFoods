@@ -8,7 +8,7 @@ import { loginWithFirebaseOtpBff } from '../../services/bff/authBff';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { handleGlobalError } from '../../utils/errorHandler';
 
-const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequiresProfile }) => {
+const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequiresProfile, onAuthSuccess }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,11 +26,11 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
   useEffect(() => {
     let interval = null;
     if (timer > 0) {
-      interval = setInterval(() => {
+      interval = globalThis.setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => globalThis.clearInterval(interval);
   }, [timer]);
 
   const handleChange = (text, index) => {
@@ -66,6 +66,10 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
     setError('');
 
     try {
+      if (!confirmationResult) {
+        throw new Error("Session expired. Please request OTP again.");
+      }
+
       /**
        * Calls Firebase verify with the OTP string.
        * If successful, it updates the local Firebase state. Then we extract the Bearer token
@@ -86,6 +90,7 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
         }
         
         // Otherwise, hydrate Recoil state with Backend's JWT and Profile and enter the app!
+        await onAuthSuccess?.();
         setAuth({ isAuthenticated: true, token: backendResponse.data.token });
         setProfile(backendResponse.data.profile);
       } else {

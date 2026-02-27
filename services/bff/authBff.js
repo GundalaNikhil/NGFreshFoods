@@ -1,6 +1,11 @@
 import { API_ENDPOINTS } from "../config/endpoints";
 import { apiClient } from "../http/apiClient";
 
+const normalizeText = (value) => (typeof value === "string" ? value.trim() : "");
+const normalizeEmail = (email) => normalizeText(email).toLowerCase();
+const normalizePhone = (phoneNumber) => normalizeText(phoneNumber);
+const normalizeOtp = (otp) => normalizeText(otp);
+
 const normalizeError = (error) => {
   if (error.response) {
     return {
@@ -59,8 +64,8 @@ const toUserProfile = (payload) => {
 export const loginWithBff = async ({ email, password }) => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.LOGIN, {
-      email,
-      password,
+      email: normalizeEmail(email),
+      password: normalizeText(password),
     });
 
     return {
@@ -84,11 +89,11 @@ export const signupWithBff = async ({
 }) => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.SIGNUP, {
-      firstName,
-      lastName,
-      email,
-      password,
-      phoneNumber,
+      firstName: normalizeText(firstName),
+      lastName: normalizeText(lastName),
+      email: normalizeEmail(email),
+      password: normalizeText(password),
+      phoneNumber: normalizePhone(phoneNumber),
     });
 
     return {
@@ -106,8 +111,8 @@ export const signupWithBff = async ({
 export const sendOtpWithBff = async ({ phoneNumber, purpose }) => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.OTP_SEND, {
-      phoneNumber,
-      purpose,
+      phoneNumber: normalizePhone(phoneNumber),
+      purpose: normalizeText(purpose),
     });
 
     return {
@@ -133,12 +138,12 @@ export const verifySignupOtpAndRegisterWithBff = async ({
 }) => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.OTP_VERIFY_SIGNUP, {
-      firstName,
-      lastName,
-      email,
-      password,
-      phoneNumber,
-      otp,
+      firstName: normalizeText(firstName),
+      lastName: normalizeText(lastName),
+      email: normalizeEmail(email),
+      password: normalizeText(password),
+      phoneNumber: normalizePhone(phoneNumber),
+      otp: normalizeOtp(otp),
     });
 
     return {
@@ -156,8 +161,8 @@ export const verifySignupOtpAndRegisterWithBff = async ({
 export const loginWithOtpBff = async ({ phoneNumber, otp }) => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.OTP_VERIFY_LOGIN, {
-      phoneNumber,
-      otp,
+      phoneNumber: normalizePhone(phoneNumber),
+      otp: normalizeOtp(otp),
     });
 
     return {
@@ -175,7 +180,7 @@ export const loginWithOtpBff = async ({ phoneNumber, otp }) => {
 export const loginWithFirebaseOtpBff = async ({ idToken }) => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.FIREBASE_LOGIN_OTP, {
-      idToken,
+      idToken: normalizeText(idToken),
     });
 
     return {
@@ -200,12 +205,12 @@ export const signupWithFirebaseOtpBff = async ({
 }) => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.FIREBASE_SIGNUP_OTP, {
-      idToken,
-      firstName,
-      lastName,
-      email,
-      password,
-      phoneNumber,
+      idToken: normalizeText(idToken),
+      firstName: normalizeText(firstName),
+      lastName: normalizeText(lastName),
+      email: normalizeEmail(email),
+      password: normalizeText(password),
+      phoneNumber: normalizePhone(phoneNumber),
     });
 
     return {

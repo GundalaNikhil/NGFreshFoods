@@ -8,7 +8,7 @@ import { signupWithFirebaseOtpBff } from '../../services/bff/authBff';
 import { CheckCircle2, User, Mail } from 'lucide-react-native';
 import { handleGlobalError } from '../../utils/errorHandler';
 
-const CompleteProfileStep = ({ phoneNumber, firebaseIdToken }) => {
+const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -48,6 +48,7 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken }) => {
       });
 
       if (backendResponse.success) {
+        await onAuthSuccess?.();
         setAuth({ isAuthenticated: true, token: backendResponse.data.token });
         setProfile(backendResponse.data.profile);
       } else {

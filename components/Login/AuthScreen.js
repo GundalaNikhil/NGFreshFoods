@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Image, KeyboardAvoidingView, Platform, Dimensions, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import Animated, { FadeInDown, FadeIn, Layout, SlideInRight } from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import PhoneInputStep from './PhoneInputStep';
 import OtpStep from './OtpStep';
 import CompleteProfileStep from './CompleteProfileStep';
 import { handleGlobalError } from '../../utils/errorHandler';
 import authFirebase from '@react-native-firebase/auth';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
+const AUTH_FLOW_STORAGE_KEY = 'auth_flow_state';
+const AUTH_FLOW_TTL_MS = 60 * 60 * 1000;
 
 const AuthScreen = () => {
   // 'PHONE' | 'OTP' | 'PROFILE'
@@ -18,6 +21,82 @@ const AuthScreen = () => {
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [firebaseIdToken, setFirebaseIdToken] = useState(null);
 
+  useEffect(() => {
+    let mounted = true;
+
+    const restoreFlowState = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(AUTH_FLOW_STORAGE_KEY);
+        if (!raw) return;
+
+        const parsed = JSON.parse(raw);
+        const isExpired =
+          !parsed?.savedAt || Date.now() - parsed.savedAt > AUTH_FLOW_TTL_MS;
+
+        if (isExpired) {
+          await AsyncStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
+          return;
+        }
+
+        if (!parsed?.phoneNumber || parsed.step === 'PHONE') {
+          await AsyncStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
+          return;
+        }
+
+        if (!mounted) return;
+        setPhoneNumber(parsed.phoneNumber);
+
+        if (parsed.step === 'PROFILE' && parsed.firebaseIdToken) {
+          setFirebaseIdToken(parsed.firebaseIdToken);
+          setStep('PROFILE');
+          return;
+        }
+
+        if (parsed.step === 'OTP') {
+          const confirmResult = await authFirebase().signInWithPhoneNumber(parsed.phoneNumber);
+          if (!mounted) return;
+          setConfirmationResult(confirmResult);
+          setStep('OTP');
+        }
+      } catch (_error) {
+        await AsyncStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
+      }
+    };
+
+    restoreFlowState();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const persistFlowState = async () => {
+      try {
+        if (step === 'PHONE') {
+          await AsyncStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
+          return;
+        }
+
+        if (!phoneNumber) return;
+
+        await AsyncStorage.setItem(
+          AUTH_FLOW_STORAGE_KEY,
+          JSON.stringify({
+            step,
+            phoneNumber,
+            firebaseIdToken: step === 'PROFILE' ? firebaseIdToken : null,
+            savedAt: Date.now(),
+          })
+        );
+      } catch (_error) {
+        // no-op: persistence failure should not block auth flow
+      }
+    };
+
+    persistFlowState();
+  }, [step, phoneNumber, firebaseIdToken]);
+
   const handlePhoneSubmitSuccess = (phone, confirmResult) => {
     setPhoneNumber(phone);
     setConfirmationResult(confirmResult);
@@ -27,6 +106,7 @@ const AuthScreen = () => {
   const handleBackToPhone = () => {
     setStep('PHONE');
     setConfirmationResult(null);
+    setFirebaseIdToken(null);
   };
 
   const handleRequiresProfile = (idToken) => {
@@ -34,9 +114,12 @@ const AuthScreen = () => {
     setStep('PROFILE');
   };
 
-  const handleBackToOtp = () => {
-    setStep('OTP');
-    setFirebaseIdToken(null);
+  const clearFlowState = async () => {
+    try {
+      await AsyncStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
+    } catch (_error) {
+      // no-op
+    }
   };
 
   const handleResend = async () => {
@@ -86,6 +169,7 @@ const AuthScreen = () => {
                   onBack={handleBackToPhone} 
                   onResend={handleResend}
                   onRequiresProfile={handleRequiresProfile}
+                  onAuthSuccess={clearFlowState}
                 />
               </Animated.View>
             ) : (
@@ -93,7 +177,7 @@ const AuthScreen = () => {
                 <CompleteProfileStep 
                   phoneNumber={phoneNumber} 
                   firebaseIdToken={firebaseIdToken} 
-                  onBack={handleBackToOtp} 
+                  onAuthSuccess={clearFlowState}
                 />
               </Animated.View>
             )}
