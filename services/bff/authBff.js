@@ -72,6 +72,7 @@ export const loginWithBff = async ({ email, password }) => {
       success: true,
       data: {
         token: response?.data?.jwtToken || null,
+        refreshToken: response?.data?.refreshToken || null,
         profile: toUserProfile(response?.data || {}),
       },
     };
@@ -100,6 +101,7 @@ export const signupWithBff = async ({
       success: true,
       data: {
         token: response?.data?.jwtToken || null,
+        refreshToken: response?.data?.refreshToken || null,
         profile: toUserProfile(response?.data || {}),
       },
     };
@@ -150,6 +152,7 @@ export const verifySignupOtpAndRegisterWithBff = async ({
       success: true,
       data: {
         token: response?.data?.jwtToken || null,
+        refreshToken: response?.data?.refreshToken || null,
         profile: toUserProfile(response?.data || {}),
       },
     };
@@ -169,6 +172,7 @@ export const loginWithOtpBff = async ({ phoneNumber, otp }) => {
       success: true,
       data: {
         token: response?.data?.jwtToken || null,
+        refreshToken: response?.data?.refreshToken || null,
         profile: toUserProfile(response?.data || {}),
       },
     };
@@ -187,6 +191,7 @@ export const loginWithFirebaseOtpBff = async ({ idToken }) => {
       success: true,
       data: {
         token: response?.data?.jwtToken || null,
+        refreshToken: response?.data?.refreshToken || null,
         profile: toUserProfile(response?.data || {}),
       },
     };
@@ -217,6 +222,7 @@ export const signupWithFirebaseOtpBff = async ({
       success: true,
       data: {
         token: response?.data?.jwtToken || null,
+        refreshToken: response?.data?.refreshToken || null,
         profile: toUserProfile(response?.data || {}),
       },
     };

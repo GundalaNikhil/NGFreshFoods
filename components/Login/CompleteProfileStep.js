@@ -5,6 +5,7 @@ import { useSetRecoilState } from 'recoil';
 import { authAtom } from '../../recoil/atoms/authAtom';
 import { profileAtom } from '../../recoil/atoms/profileAtom';
 import { signupWithFirebaseOtpBff } from '../../services/bff/authBff';
+import { setAuthTokens } from '../../services/http/apiClient';
 import { CheckCircle2, User, Mail } from 'lucide-react-native';
 import { handleGlobalError } from '../../utils/errorHandler';
 
@@ -49,7 +50,15 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) =>
 
       if (backendResponse.success) {
         await onAuthSuccess?.();
-        setAuth({ isAuthenticated: true, token: backendResponse.data.token });
+        setAuth({
+          isAuthenticated: true,
+          token: backendResponse.data.token,
+          refreshToken: backendResponse.data.refreshToken,
+        });
+        setAuthTokens({
+          token: backendResponse.data.token,
+          refreshToken: backendResponse.data.refreshToken,
+        });
         setProfile(backendResponse.data.profile);
       } else {
         throw new Error(backendResponse.error.message || "Failed to create profile");

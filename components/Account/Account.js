@@ -5,7 +5,7 @@ import { useRecoilValue } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import Login from "../Login/Login";
 import Signup from "../Signup/Signup";
-import Profile from "./Profile";
+import AccountHub from "./AccountHub";
 
 const Account = () => {
   const navigation = useNavigation();
@@ -15,7 +15,7 @@ const Account = () => {
   if (auth.isAuthenticated) {
     return (
       <View className="flex-1 w-full bg-gray-50 p-4">
-        <Profile />
+        <AccountHub />
       </View>
     );
   }

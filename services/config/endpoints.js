@@ -17,4 +17,13 @@ export const API_ENDPOINTS = {
   FIREBASE_LOGIN_OTP: `${API_BASE_URL}/api/${API_VERSION}/onboarding/firebase/login-otp`,
   FORGOT_PASSWORD: `${API_BASE_URL}/api/${API_VERSION}/onboarding/forgot-password`,
   RESET_PASSWORD: `${API_BASE_URL}/api/${API_VERSION}/onboarding/reset-password`,
+  REFRESH_TOKEN: `${API_BASE_URL}/api/${API_VERSION}/onboarding/refresh-token`,
+  PROFILE_ME: `${API_BASE_URL}/api/${API_VERSION}/users/me`,
+  PROFILE_UPDATE: `${API_BASE_URL}/api/${API_VERSION}/users/me/profile`,
+  ADDRESSES_ME: `${API_BASE_URL}/api/${API_VERSION}/users/me/addresses`,
+  ADDRESS_UPDATE: (addressId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/users/me/addresses/${addressId}`,
+  ADDRESS_DELETE: (addressId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/users/me/addresses/${addressId}`,
+  ORDERS_ME: `${API_BASE_URL}/api/${API_VERSION}/orders/my`,
 };

@@ -5,6 +5,7 @@ import { useSetRecoilState } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
 import { loginWithBff } from "../../services/bff/authBff";
+import { setAuthTokens } from "../../services/http/apiClient";
 import { useFonts, PlayfairDisplay_800ExtraBold } from '@expo-google-fonts/playfair-display';
 
 const Login = ({ onSwitchToSignup }) => {
@@ -41,7 +42,9 @@ const Login = ({ onSwitchToSignup }) => {
       setAuth({
         isAuthenticated: true,
         token: response.data.token,
+        refreshToken: response.data.refreshToken,
       });
+      setAuthTokens({ token: response.data.token, refreshToken: response.data.refreshToken });
       setProfile(response.data.profile);
     } else {
       setError(response.error.message);

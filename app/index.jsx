@@ -18,6 +18,7 @@ import HomeScreen from "../components/bottomNavScreens/HomeScreen";
 import ProductsScreen from "../components/bottomNavScreens/ProductsScreen";
 import "../global.css";
 import AuthScreen from "../components/Login/AuthScreen";
+import { setAuthFailureHandler, setAuthTokens } from "../services/http/apiClient";
 
 // Screen dimensions for responsive design
 const { height } = Dimensions.get("window");
@@ -78,13 +79,44 @@ function RootNavigator() {
       if (!user) {
         // User is signed out in Firebase
         if (authState.isAuthenticated) {
-          setAuthState({ isAuthenticated: false, token: null });
+          setAuthState({ isAuthenticated: false, token: null, refreshToken: null });
         }
       }
       if (initializing) setInitializing(false);
     });
     return subscriber; // unsubscribe on unmount
   }, [authState.isAuthenticated, initializing, setAuthState]);
+
+  useEffect(() => {
+    if (authState?.isAuthenticated) {
+      if (!authState.refreshToken) {
+        Toast.show({
+          type: "error",
+          text1: "Session updated",
+          text2: "Please log in again to continue.",
+        });
+        setAuthState({ isAuthenticated: false, token: null, refreshToken: null });
+        return;
+      }
+      setAuthTokens({
+        token: authState.token,
+        refreshToken: authState.refreshToken,
+      });
+    } else {
+      setAuthTokens({});
+    }
+  }, [authState?.isAuthenticated, authState?.token, authState?.refreshToken]);
+
+  useEffect(() => {
+    setAuthFailureHandler(() => {
+      Toast.show({
+        type: "error",
+        text1: "Session expired",
+        text2: "Please log in again.",
+      });
+      setAuthState({ isAuthenticated: false, token: null, refreshToken: null });
+    });
+  }, [setAuthState]);
 
   if (initializing) {
     return (

@@ -6,6 +6,7 @@ import { useSetRecoilState } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
 import { signupWithFirebaseOtpBff } from "../../services/bff/authBff";
+import { setAuthTokens } from "../../services/http/apiClient";
 
 const Signup = ({ onSwitchToLogin, onAuthSuccess }) => {
   const setAuth = useSetRecoilState(authAtom);
@@ -93,7 +94,9 @@ const Signup = ({ onSwitchToLogin, onAuthSuccess }) => {
         setAuth({
           isAuthenticated: true,
           token: response.data.token,
+          refreshToken: response.data.refreshToken,
         });
+        setAuthTokens({ token: response.data.token, refreshToken: response.data.refreshToken });
         setProfile(response.data.profile);
         if (onAuthSuccess) {
           onAuthSuccess();
