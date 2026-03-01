@@ -11,6 +11,8 @@ export const API_ENDPOINTS = {
   FIREBASE_SIGNUP_OTP: `${API_BASE_URL}/api/${API_VERSION}/onboarding/firebase/register-otp`,
   FIREBASE_LOGIN_OTP: `${API_BASE_URL}/api/${API_VERSION}/onboarding/firebase/login-otp`,
   REFRESH_TOKEN: `${API_BASE_URL}/api/${API_VERSION}/onboarding/refresh-token`,
+  CART: `${API_BASE_URL}/api/${API_VERSION}/cart`,
+  CART_MERGE: `${API_BASE_URL}/api/${API_VERSION}/cart/merge`,
   PROFILE_ME: `${API_BASE_URL}/api/${API_VERSION}/users/me`,
   PROFILE_UPDATE: `${API_BASE_URL}/api/${API_VERSION}/users/me/profile`,
   ADDRESSES_ME: `${API_BASE_URL}/api/${API_VERSION}/users/me/addresses`,

@@ -1,6 +1,7 @@
 import { useRecoilState, useRecoilValue } from "recoil";
 import { cartState } from "../recoil/atoms/cartAtom";
 import { promoCodeState } from "../recoil/atoms/discountAtom";
+import { authAtom } from "../recoil/atoms/authAtom";
 import {
   cartDiscountSelector,
   cartItemsCountSelector,
@@ -9,10 +10,12 @@ import {
 import { generateCustomProductId } from "../utils/cartHelper";
 import { useProducts } from "./useProducts";
 import React from "react";
+import { clearCart as clearServerCart } from "../services/bff/cartBff";
 
 export const useCart = () => {
   const [cart, setCart] = useRecoilState(cartState);
   const [promoCode, setPromoCode] = useRecoilState(promoCodeState);
+  const authState = useRecoilValue(authAtom);
   const cartTotal = useRecoilValue(cartTotalSelector);
   const cartDiscount = useRecoilValue(cartDiscountSelector);
   const itemCount = useRecoilValue(cartItemsCountSelector);
@@ -219,7 +222,7 @@ export const useCart = () => {
     }));
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
     console.log("Clearing cart. Current cart:", cart);
 
     // Store items that need stock updates before clearing
@@ -243,6 +246,14 @@ export const useCart = () => {
     });
 
     console.log("Cart cleared");
+
+    if (authState?.isAuthenticated) {
+      try {
+        await clearServerCart();
+      } catch (_error) {
+        // ignore server clear errors
+      }
+    }
   };
 
   // Console log current cart state whenever it changes
