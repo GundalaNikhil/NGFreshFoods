@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Icon } from "@rneui/themed";
-import React, { useEffect, useRef, useState } from "react";
-import { AppState, Dimensions, Pressable, Text, View, ActivityIndicator } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Dimensions, Pressable, Text, View, ActivityIndicator } from "react-native";
 import Reanimated, {
   useAnimatedStyle,
   useSharedValue,
@@ -20,9 +20,7 @@ import "../global.css";
 import AuthScreen from "../components/Login/AuthScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  refreshAccessToken,
   setAuthFailureHandler,
-  setAuthRefreshPromise,
   setAuthTokens,
   setAuthUpdateHandler,
 } from "../services/http/apiClient";
@@ -79,8 +77,6 @@ const TabButton = ({
 function RootNavigator() {
   const [authState, setAuthState] = useRecoilState(authAtom);
   const [initializing, setInitializing] = useState(true);
-  const [authRefreshing, setAuthRefreshing] = useState(false);
-  const refreshInFlight = useRef(false);
 
   // Listen for Firebase Auth state changes
   useEffect(() => {
@@ -137,98 +133,7 @@ function RootNavigator() {
     });
   }, [setAuthState]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const bootstrapRefresh = async () => {
-      if (!authState?.isAuthenticated || !authState.refreshToken) return;
-      try {
-        const data = await refreshAccessToken(authState.refreshToken);
-        if (!isMounted) return;
-        const nextAccessToken = data?.accessToken || data?.jwtToken || null;
-        const nextRefreshToken = data?.refreshToken || authState.refreshToken;
-        if (!nextAccessToken) {
-          throw new Error("Missing access token");
-        }
-        setAuthTokens({ token: nextAccessToken, refreshToken: nextRefreshToken });
-        setAuthState((prev) => ({
-          ...prev,
-          isAuthenticated: true,
-          token: nextAccessToken,
-          refreshToken: nextRefreshToken,
-        }));
-      } catch (_error) {
-        if (!isMounted) return;
-        Toast.show({
-          type: "error",
-          text1: "Session expired",
-          text2: "Please log in again.",
-        });
-        setAuthState({ isAuthenticated: false, token: null, refreshToken: null });
-        AsyncStorage.removeItem("auth");
-      }
-    };
-    bootstrapRefresh();
-    return () => {
-      isMounted = false;
-    };
-  }, [authState?.isAuthenticated, authState?.refreshToken, setAuthState]);
-
-  const runAuthRefresh = async () => {
-    if (!authState?.isAuthenticated || !authState.refreshToken) return;
-    if (refreshInFlight.current) return;
-    refreshInFlight.current = true;
-    setAuthRefreshing(true);
-    try {
-      const refreshPromise = (async () => {
-        const data = await refreshAccessToken(authState.refreshToken);
-        return data;
-      })();
-      setAuthRefreshPromise(refreshPromise);
-      // Avoid sending stale access token while refreshing
-      setAuthTokens({ token: null, refreshToken: authState.refreshToken });
-      const data = await refreshPromise;
-      const nextAccessToken = data?.accessToken || data?.jwtToken || null;
-      const nextRefreshToken = data?.refreshToken || authState.refreshToken;
-      if (!nextAccessToken) {
-        throw new Error("Missing access token");
-      }
-      setAuthTokens({ token: nextAccessToken, refreshToken: nextRefreshToken });
-      setAuthState((prev) => ({
-        ...prev,
-        isAuthenticated: true,
-        token: nextAccessToken,
-        refreshToken: nextRefreshToken,
-      }));
-    } catch (_error) {
-      Toast.show({
-        type: "error",
-        text1: "Session expired",
-        text2: "Please log in again.",
-      });
-      setAuthState({ isAuthenticated: false, token: null, refreshToken: null });
-      AsyncStorage.removeItem("auth");
-      setAuthTokens({});
-    } finally {
-      setAuthRefreshPromise(null);
-      refreshInFlight.current = false;
-      setAuthRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    runAuthRefresh();
-  }, [authState?.isAuthenticated, authState?.refreshToken]);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        runAuthRefresh();
-      }
-    });
-    return () => subscription.remove();
-  }, [authState?.isAuthenticated, authState?.refreshToken]);
-
-  if (initializing || authRefreshing) {
+  if (initializing) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
         <ActivityIndicator size="large" color="#1F2B24" />

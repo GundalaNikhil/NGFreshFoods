@@ -9,6 +9,7 @@ let refreshQueue = [];
 let onAuthFailure = null;
 let onAuthUpdate = null;
 let authRefreshPromise = null;
+let refreshInFlightPromise = null;
 
 const processQueue = (error, token = null) => {
   refreshQueue.forEach((promise) => {
@@ -39,20 +40,31 @@ export const setAuthRefreshPromise = (promise) => {
 };
 
 export const refreshAccessToken = async (refreshTokenValue) => {
-  const deviceId = await getDeviceId();
-  const response = await axios.post(
-    API_ENDPOINTS.REFRESH_TOKEN,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${refreshTokenValue}`,
-        ...(deviceId ? { "X-Device-Id": deviceId } : {}),
-      },
-      timeout: 15000,
-      withCredentials: true,
-    }
-  );
-  return response?.data || null;
+  if (refreshInFlightPromise) {
+    return refreshInFlightPromise;
+  }
+  refreshInFlightPromise = (async () => {
+    const deviceId = await getDeviceId();
+    const response = await axios.post(
+      API_ENDPOINTS.REFRESH_TOKEN,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${refreshTokenValue}`,
+          ...(deviceId ? { "X-Device-Id": deviceId } : {}),
+        },
+        timeout: 15000,
+        withCredentials: true,
+      }
+    );
+    return response?.data || null;
+  })();
+
+  try {
+    return await refreshInFlightPromise;
+  } finally {
+    refreshInFlightPromise = null;
+  }
 };
 
 export const apiClient = axios.create({

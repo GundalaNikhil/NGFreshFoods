@@ -4,7 +4,6 @@ import { apiClient } from "../http/apiClient";
 const normalizeText = (value) => (typeof value === "string" ? value.trim() : "");
 const normalizeEmail = (email) => normalizeText(email).toLowerCase();
 const normalizePhone = (phoneNumber) => normalizeText(phoneNumber);
-const normalizeOtp = (otp) => normalizeText(otp);
 
 const normalizeError = (error) => {
   if (error.response) {
@@ -59,126 +58,6 @@ const toUserProfile = (payload) => {
     addresses: payload?.userAddresses || [],
     addressId: payload?.userAddresses?.[0]?.addressId || null,
   };
-};
-
-export const loginWithBff = async ({ email, password }) => {
-  try {
-    const response = await apiClient.post(API_ENDPOINTS.LOGIN, {
-      email: normalizeEmail(email),
-      password: normalizeText(password),
-    });
-
-    return {
-      success: true,
-      data: {
-        token: response?.data?.jwtToken || null,
-        refreshToken: response?.data?.refreshToken || null,
-        profile: toUserProfile(response?.data || {}),
-      },
-    };
-  } catch (error) {
-    return normalizeError(error);
-  }
-};
-
-export const signupWithBff = async ({
-  firstName,
-  lastName,
-  email,
-  password,
-  phoneNumber,
-}) => {
-  try {
-    const response = await apiClient.post(API_ENDPOINTS.SIGNUP, {
-      firstName: normalizeText(firstName),
-      lastName: normalizeText(lastName),
-      email: normalizeEmail(email),
-      password: normalizeText(password),
-      phoneNumber: normalizePhone(phoneNumber),
-    });
-
-    return {
-      success: true,
-      data: {
-        token: response?.data?.jwtToken || null,
-        refreshToken: response?.data?.refreshToken || null,
-        profile: toUserProfile(response?.data || {}),
-      },
-    };
-  } catch (error) {
-    return normalizeError(error);
-  }
-};
-
-export const sendOtpWithBff = async ({ phoneNumber, purpose }) => {
-  try {
-    const response = await apiClient.post(API_ENDPOINTS.OTP_SEND, {
-      phoneNumber: normalizePhone(phoneNumber),
-      purpose: normalizeText(purpose),
-    });
-
-    return {
-      success: true,
-      data: {
-        message: response?.data?.message || "OTP sent successfully",
-        expiresAt: response?.data?.expiresAt || null,
-        devOtp: response?.data?.devOtp || null,
-      },
-    };
-  } catch (error) {
-    return normalizeError(error);
-  }
-};
-
-export const verifySignupOtpAndRegisterWithBff = async ({
-  firstName,
-  lastName,
-  email,
-  password,
-  phoneNumber,
-  otp,
-}) => {
-  try {
-    const response = await apiClient.post(API_ENDPOINTS.OTP_VERIFY_SIGNUP, {
-      firstName: normalizeText(firstName),
-      lastName: normalizeText(lastName),
-      email: normalizeEmail(email),
-      password: normalizeText(password),
-      phoneNumber: normalizePhone(phoneNumber),
-      otp: normalizeOtp(otp),
-    });
-
-    return {
-      success: true,
-      data: {
-        token: response?.data?.jwtToken || null,
-        refreshToken: response?.data?.refreshToken || null,
-        profile: toUserProfile(response?.data || {}),
-      },
-    };
-  } catch (error) {
-    return normalizeError(error);
-  }
-};
-
-export const loginWithOtpBff = async ({ phoneNumber, otp }) => {
-  try {
-    const response = await apiClient.post(API_ENDPOINTS.OTP_VERIFY_LOGIN, {
-      phoneNumber: normalizePhone(phoneNumber),
-      otp: normalizeOtp(otp),
-    });
-
-    return {
-      success: true,
-      data: {
-        token: response?.data?.jwtToken || null,
-        refreshToken: response?.data?.refreshToken || null,
-        profile: toUserProfile(response?.data || {}),
-      },
-    };
-  } catch (error) {
-    return normalizeError(error);
-  }
 };
 
 export const loginWithFirebaseOtpBff = async ({ idToken }) => {
