@@ -1,11 +1,14 @@
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/endpoints";
+import { getDeviceId } from "./deviceId";
 
 let accessToken = null;
 let refreshToken = null;
 let isRefreshing = false;
 let refreshQueue = [];
 let onAuthFailure = null;
+let onAuthUpdate = null;
+let authRefreshPromise = null;
 
 const processQueue = (error, token = null) => {
   refreshQueue.forEach((promise) => {
@@ -27,6 +30,31 @@ export const setAuthFailureHandler = (handler) => {
   onAuthFailure = typeof handler === "function" ? handler : null;
 };
 
+export const setAuthUpdateHandler = (handler) => {
+  onAuthUpdate = typeof handler === "function" ? handler : null;
+};
+
+export const setAuthRefreshPromise = (promise) => {
+  authRefreshPromise = promise || null;
+};
+
+export const refreshAccessToken = async (refreshTokenValue) => {
+  const deviceId = await getDeviceId();
+  const response = await axios.post(
+    API_ENDPOINTS.REFRESH_TOKEN,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${refreshTokenValue}`,
+        ...(deviceId ? { "X-Device-Id": deviceId } : {}),
+      },
+      timeout: 15000,
+      withCredentials: true,
+    }
+  );
+  return response?.data || null;
+};
+
 export const apiClient = axios.create({
   timeout: 15000,
   withCredentials: true,
@@ -35,7 +63,18 @@ export const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
+  if (authRefreshPromise) {
+    try {
+      await authRefreshPromise;
+    } catch (_error) {
+      // If refresh fails, continue and let 401 handler deal with it.
+    }
+  }
+  const deviceId = await getDeviceId();
+  if (deviceId) {
+    config.headers["X-Device-Id"] = deviceId;
+  }
   if (!config.headers.Authorization && accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
@@ -52,6 +91,9 @@ apiClient.interceptors.response.use(
     }
 
     const status = error?.response?.status;
+    if (originalRequest.url?.includes(API_ENDPOINTS.REFRESH_TOKEN)) {
+      return Promise.reject(error);
+    }
     if (status !== 401 || !refreshToken) {
       return Promise.reject(error);
     }
@@ -69,19 +111,14 @@ apiClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const response = await apiClient.post(
-        API_ENDPOINTS.REFRESH_TOKEN,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        }
-      );
+      const response = await refreshAccessToken(refreshToken);
 
-      const nextAccessToken = response?.data?.accessToken || response?.data?.jwtToken || null;
-      const nextRefreshToken = response?.data?.refreshToken || refreshToken;
+      const nextAccessToken = response?.accessToken || response?.jwtToken || null;
+      const nextRefreshToken = response?.refreshToken || refreshToken;
       setAuthTokens({ token: nextAccessToken, refreshToken: nextRefreshToken });
+      if (onAuthUpdate) {
+        onAuthUpdate({ token: nextAccessToken, refreshToken: nextRefreshToken });
+      }
       processQueue(null, nextAccessToken);
 
       originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`;

@@ -1,25 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Text,
   TextInput,
   TouchableOpacity,
   View,
   ScrollView,
 } from "react-native";
-import {
-  Tag,
-  Gift,
-  X,
-  Info,
-  CheckCircle,
-  AlertTriangle,
-  ChevronRight,
-} from "lucide-react-native";
-import {
-  validatePromoCode,
-  getAvailablePromoCodes,
-  calculateChickenWeight,
-} from "../../utils/promoHelper";
+import { Tag, Gift, ChevronRight } from "lucide-react-native";
 
 const CartPromoCode = ({
   onApplyPromo,
@@ -28,62 +16,28 @@ const CartPromoCode = ({
   promoCode: appliedPromoCode,
   discountAmount,
   onRemovePromo,
-  cartItems,
-  userProfile,
   cartTotal,
+  availableCoupons = [],
+  couponsLoading = false,
+  isApplying = false,
+  couponsError = "",
+  onReloadCoupons,
 }) => {
   const [promoCode, setPromoCode] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [warning, setWarning] = useState("");
-  const [availablePromoCodes, setAvailablePromoCodes] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Update available promo codes when cart changes
-  useEffect(() => {
-    const available = getAvailablePromoCodes(cartItems, userProfile);
-    setAvailablePromoCodes(available);
-  }, [cartItems, userProfile]);
+  const hasActivePromo = !!(selectedOffer || appliedPromoCode);
 
-  // **NEW: Check if current applied promo is still valid**
-  useEffect(() => {
-    if (
-      (selectedOffer?.promoCode || appliedPromoCode) &&
-      Object.keys(cartItems).length > 0
-    ) {
-      const currentPromoCode = selectedOffer?.promoCode || appliedPromoCode;
-      const validation = validatePromoCode(
-        currentPromoCode,
-        cartItems,
-        userProfile,
-        cartTotal
-      );
-
-      if (!validation.isValid) {
-        setWarning(
-          `${currentPromoCode} may be removed as cart conditions changed`
-        );
-        // Clear other messages
-        setError("");
-        setSuccess("");
-      } else {
-        setWarning("");
-      }
-    } else {
-      setWarning("");
-    }
-  }, [cartItems, cartTotal, selectedOffer, appliedPromoCode, userProfile]);
-
-  // Clear messages when promo code input changes
   useEffect(() => {
     if (promoCode) {
       setError("");
       setSuccess("");
-      setWarning("");
     }
   }, [promoCode]);
 
-  // Clear input when offer is applied/removed
   useEffect(() => {
     if (selectedOffer || appliedPromoCode) {
       setPromoCode("");
@@ -92,122 +46,63 @@ const CartPromoCode = ({
     }
   }, [selectedOffer, appliedPromoCode]);
 
-  // Auto-clear success message after 4 seconds
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => {
-        setSuccess("");
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
-
-  // Auto-clear error message after 4 seconds
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError("");
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
-
-  // Auto-clear warning message after 6 seconds
-  useEffect(() => {
-    if (warning) {
-      const timer = setTimeout(() => {
-        setWarning("");
-      }, 6000);
-      return () => clearTimeout(timer);
-    }
-  }, [warning]);
-
-  const hasActivePromo = !!(selectedOffer || appliedPromoCode);
-
   const handleApplyPromo = () => {
     if (!promoCode.trim()) {
-      setError("Please enter a promo code");
+      setError("Please enter a coupon code");
       return;
     }
 
-    const validation = validatePromoCode(
-      promoCode,
-      cartItems,
-      userProfile,
-      cartTotal
-    );
-
-    if (validation.isValid) {
-      setError("");
-      setWarning("");
-      setSuccess(
-        `${validation.promo.title} applied successfully! You saved ₹${validation.discount}`
-      );
-      onApplyPromo({
-        promoCode: promoCode.toUpperCase(),
-        discount: validation.discount,
-        promo: validation.promo,
-      });
-      setPromoCode("");
-      setShowSuggestions(false);
-    } else {
-      setError(validation.errorMessage);
-      setSuccess("");
-      setWarning("");
-    }
+    setLoading(true);
+    onApplyPromo({ promoCode: promoCode.toUpperCase() }).then((result) => {
+      setLoading(false);
+      if (result?.ok) {
+        setError("");
+        setSuccess(
+          `${result.coupon?.title || "Coupon"} applied! You saved ₹${Number(
+            result.discount || 0
+          ).toFixed(2)}`
+        );
+        setPromoCode("");
+        setShowSuggestions(false);
+      } else {
+        setError(result?.message || "Invalid coupon");
+        setSuccess("");
+      }
+    });
   };
 
   const handleRemovePromo = () => {
     setPromoCode("");
     setError("");
     setSuccess("");
-    setWarning("");
     setShowSuggestions(false);
     onRemovePromo();
   };
 
   const handleShowOffers = () => {
-    if (!hasActivePromo) {
-      onShowOffers();
-    }
+    onShowOffers();
   };
 
   const handleInputFocus = () => {
-    if (!hasActivePromo && availablePromoCodes.length > 0) {
+    if (!hasActivePromo && availableCoupons.length > 0) {
       setShowSuggestions(true);
     }
   };
 
-  const handleSuggestionSelect = (promo) => {
-    setPromoCode(promo.code);
+  const handleSuggestionSelect = (coupon) => {
+    setPromoCode(coupon.code);
     setShowSuggestions(false);
-    // Auto-apply after selection
-    setTimeout(() => {
-      const validation = validatePromoCode(
-        promo.code,
-        cartItems,
-        userProfile,
-        cartTotal
-      );
-      if (validation.isValid) {
-        onApplyPromo({
-          promoCode: promo.code,
-          discount: validation.discount,
-          promo: validation.promo,
-        });
-        setSuccess(
-          `${validation.promo.title} applied successfully! You saved ₹${validation.discount}`
-        );
-      }
-    }, 100);
+    setTimeout(() => handleApplyPromo(), 100);
   };
 
-  // Calculate cart insights
-  const chickenWeight = calculateChickenWeight(cartItems);
+  const eligibleCoupons = availableCoupons.filter((coupon) => {
+    const minAmount = Number(coupon.minOrderAmount || 0);
+    return cartTotal >= minAmount;
+  });
 
   return (
     <View className="px-4 py-2 mt-2">
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={handleShowOffers}
         className="flex-row items-center justify-between bg-white border border-gray-100 p-4 rounded-xl shadow-sm"
       >
@@ -220,49 +115,96 @@ const CartPromoCode = ({
         <ChevronRight size={20} color="#16A34A" />
       </TouchableOpacity>
 
-      {/* Active Offer Banner */}
       {selectedOffer && (
         <View className="bg-green-50 p-4 rounded-xl mt-3 border border-green-100">
           <View className="flex-row items-center justify-between mb-1">
             <View className="flex-row items-center flex-1">
               <Gift size={18} color="#16A34A" />
               <Text className="text-green-700 font-bold ml-2 text-sm">
-                '{selectedOffer.promoCode}' applied!
+                '{selectedOffer.code || selectedOffer.promoCode}' applied!
               </Text>
             </View>
             <TouchableOpacity onPress={handleRemovePromo}>
-              <Text className="text-green-600 font-bold text-xs uppercase">Remove</Text>
+              <Text className="text-green-600 font-bold text-xs uppercase">
+                Remove
+              </Text>
             </TouchableOpacity>
           </View>
           <Text className="text-gray-600 text-[11px] ml-7">
-            You are saving ₹{discountAmount} on this order
+            You are saving ₹{Number(discountAmount || 0).toFixed(2)} on this
+            order
           </Text>
         </View>
       )}
 
-      {/* Manual Input - Shown only if no promo applied */}
       {!hasActivePromo && (
-        <View className="flex-row items-center mt-4">
-          <TextInput
-            value={promoCode}
-            onChangeText={setPromoCode}
-            onFocus={() => setShowSuggestions(true)}
-            placeholder="Type coupon code here..."
-            className="flex-1 border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-[14px] font-medium"
-            autoCapitalize="characters"
-          />
-          <TouchableOpacity
-            onPress={handleApplyPromo}
-            disabled={!promoCode.trim()}
-            className="ml-3"
-          >
-            <Text className={`font-bold text-[14px] ${promoCode.trim() ? "text-green-600" : "text-gray-300"}`}>
-              APPLY
+        <View className="mt-4">
+          <View className="flex-row items-center">
+            <TextInput
+              value={promoCode}
+              onChangeText={setPromoCode}
+              onFocus={handleInputFocus}
+              placeholder="Type coupon code here..."
+              className="flex-1 border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-[14px] font-medium"
+              autoCapitalize="characters"
+            />
+            <TouchableOpacity
+              onPress={handleApplyPromo}
+              disabled={!promoCode.trim() || loading || isApplying}
+              className="ml-3"
+            >
+              {loading || isApplying ? (
+                <ActivityIndicator size="small" color="#16A34A" />
+              ) : (
+                <Text
+                  className={`font-bold text-[14px] ${
+                    promoCode.trim() ? "text-green-600" : "text-gray-300"
+                  }`}
+                >
+                  APPLY
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {showSuggestions && eligibleCoupons.length > 0 && (
+            <View className="mt-3 bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+              <ScrollView style={{ maxHeight: 160 }}>
+                {eligibleCoupons.map((coupon) => (
+                  <TouchableOpacity
+                    key={coupon.code}
+                    onPress={() => handleSuggestionSelect(coupon)}
+                    className="px-4 py-3 border-b border-gray-50"
+                  >
+                    <Text className="text-[13px] font-bold text-gray-800">
+                      {coupon.code}
+                    </Text>
+                    {coupon.title || coupon.description ? (
+                      <Text className="text-[11px] text-gray-500">
+                        {coupon.title || coupon.description}
+                      </Text>
+                    ) : null}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {couponsLoading ? (
+            <Text className="text-[11px] text-gray-400 mt-3">
+              Loading coupons...
             </Text>
-          </TouchableOpacity>
+          ) : null}
+          {couponsError ? (
+            <TouchableOpacity onPress={onReloadCoupons} className="mt-3">
+              <Text className="text-[11px] text-red-600">
+                {couponsError} Tap to retry.
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       )}
-      
+
       {error ? (
         <Text className="text-red-500 text-xs mt-2 px-1">{error}</Text>
       ) : success ? (

@@ -1,10 +1,8 @@
-import { ChevronDown, ChevronLeft, MapPin, ShoppingBag } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
-import { Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ChevronDown, ChevronLeft, MapPin } from "lucide-react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useCart } from "../../hooks/useCart";
-import { useOffers } from "../../hooks/useOffers";
-import { debugCartAnalysis, validatePromoCode } from "../../utils/promoHelper";
-import AddressHeader from "../Home/AddressHeader";
+import { fetchActiveCoupons, validateCoupon } from "../../services/bff/couponsBff";
 import CartFooter from "./CartFooter";
 import CartItems from "./CartItems";
 import CartPromoCode from "./CartPromoCode";
@@ -12,9 +10,14 @@ import CartSummary from "./CartSummary";
 import OffersModal from "./Offers/OffersModal";
 
 const Cart = () => {
-  const { cart, cartData, cartTotal, cartDiscount, clearCart } = useCart();
-  const { applyOffer, removeOffer, calculateOfferDiscount } = useOffers();
+  const { cart, cartData, cartTotal, cartDiscount, applyCoupon, removeCoupon } = useCart();
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [couponsError, setCouponsError] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const lastValidatedTotalRef = useRef(null);
+  const inFlightRef = useRef(false);
 
   // Get current promo/offer state from cart
   const selectedOffer = cartData?.offer || null;
@@ -22,55 +25,107 @@ const Cart = () => {
   const promoCode = cartData?.promoCode || "";
 
   // Extract cart items for validation
-  const cartItems = cart || cartData || {};
-
-  // Mock user profile
-  const userProfile = {
-    isFirstTime: true,
-    isFirstTimeUser: true,
-  };
+  const cartItems = cart || [];
 
   useEffect(() => {
-    if ((selectedOffer || promoCode) && Object.keys(cartItems).length > 0) {
-      let currentPromoCode = selectedOffer?.promoCode || promoCode;
-      
-      if (currentPromoCode) {
-        const validation = validatePromoCode(
-          currentPromoCode,
-          cartItems,
-          userProfile,
-          cartTotal
-        );
+    if (cartItems.length === 0 && (selectedOffer || promoCode)) {
+      removeCoupon();
+    }
+  }, [cartItems.length, selectedOffer, promoCode, removeCoupon]);
 
-        if (!validation.isValid) {
-          removeOffer();
-        }
+  useEffect(() => {
+    if (selectedOffer) {
+      const minAmount = Number(selectedOffer.minOrderAmount || 0);
+      if (cartTotal < minAmount) {
+        removeCoupon();
       }
     }
-  }, [cartItems, cartTotal, selectedOffer, promoCode, userProfile, removeOffer]);
+  }, [cartTotal, selectedOffer, removeCoupon]);
 
   useEffect(() => {
-    if (Object.keys(cartItems).length === 0 && (selectedOffer || promoCode)) {
-      removeOffer();
-    }
-  }, [cartItems, selectedOffer, promoCode, removeOffer]);
+    let isActive = true;
+    const revalidate = async () => {
+      if (!selectedOffer || cartTotal <= 0) return;
+      if (inFlightRef.current) return;
+      const code = selectedOffer.code || selectedOffer.promoCode;
+      if (!code) return;
+      if (lastValidatedTotalRef.current === cartTotal) return;
+      inFlightRef.current = true;
+      const response = await validateCoupon({
+        code,
+        orderAmount: cartTotal,
+      });
+      inFlightRef.current = false;
+      if (!isActive) return;
+      lastValidatedTotalRef.current = cartTotal;
+      if (response.success && response.data?.valid) {
+        applyCoupon(response.data.coupon, response.data.discountAmount);
+      } else {
+        removeCoupon();
+      }
+    };
 
-  const handleOfferSelect = (offer) => {
-    applyOffer(offer, cartTotal);
-    setIsOffersModalVisible(false);
+    const timer = setTimeout(revalidate, 800);
+    return () => {
+      isActive = false;
+      clearTimeout(timer);
+    };
+  }, [cartTotal, selectedOffer, applyCoupon, removeCoupon]);
+
+  const loadCoupons = async (forceRefresh = false) => {
+    setCouponsLoading(true);
+    setCouponsError("");
+    const response = await fetchActiveCoupons({ forceRefresh });
+    if (response.success) {
+      setAvailableCoupons(response.data || []);
+    } else {
+      setCouponsError(response.error.message || "Failed to load coupons.");
+    }
+    setCouponsLoading(false);
   };
 
-  const handlePromoCodeApply = (promoData) => {
-    const promoOffer = {
-      id: `promo_${promoData.promoCode}`,
-      title: promoData.promo?.title || `Promo Code: ${promoData.promoCode}`,
-      promoCode: promoData.promoCode,
-      description: promoData.promo?.description || `Flat ₹${promoData.discount} off`,
-      isPromoCode: true,
-      discount: promoData.discount,
-      type: promoData.promo?.type || "fixed",
+  useEffect(() => {
+    loadCoupons(false);
+  }, []);
+
+  const handleOfferSelect = async (offer) => {
+    setIsApplyingCoupon(true);
+    const response = await validateCoupon({
+      code: offer.code,
+      orderAmount: cartTotal,
+    });
+    setIsApplyingCoupon(false);
+    if (response.success && response.data?.valid) {
+      removeCoupon();
+      applyCoupon(response.data.coupon, response.data.discountAmount);
+      setIsOffersModalVisible(false);
+    }
+  };
+
+  const handlePromoCodeApply = async (promoData) => {
+    setIsApplyingCoupon(true);
+    const response = await validateCoupon({
+      code: promoData.promoCode,
+      orderAmount: cartTotal,
+    });
+    setIsApplyingCoupon(false);
+    if (response.success && response.data?.valid) {
+      applyCoupon(response.data.coupon, response.data.discountAmount);
+      return {
+        ok: true,
+        message: response.data.message || "Coupon applied",
+        discount: response.data.discountAmount,
+        coupon: response.data.coupon,
+      };
+    }
+
+    return {
+      ok: false,
+      message:
+        response?.data?.message ||
+        response?.error?.message ||
+        "Invalid coupon",
     };
-    applyOffer(promoOffer, cartTotal);
   };
 
   const getItemCount = () => {
@@ -117,8 +172,6 @@ const Cart = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 120 }}
           >
-
-
             <View className="bg-white mb-2">
               <CartItems />
             </View>
@@ -130,10 +183,13 @@ const Cart = () => {
                 selectedOffer={selectedOffer}
                 promoCode={promoCode}
                 discountAmount={promoDiscount}
-                onRemovePromo={removeOffer}
-                cartItems={cartItems}
-                userProfile={userProfile}
+                onRemovePromo={removeCoupon}
                 cartTotal={cartTotal}
+                availableCoupons={availableCoupons}
+                couponsLoading={couponsLoading}
+                isApplying={isApplyingCoupon}
+                couponsError={couponsError}
+                onReloadCoupons={() => loadCoupons(true)}
               />
             </View>
 
@@ -188,27 +244,32 @@ const Cart = () => {
             itemCount={itemCount}
           />
 
-          <OffersModal
-            visible={isOffersModalVisible}
-            onClose={() => setIsOffersModalVisible(false)}
-            onSelectOffer={handleOfferSelect}
-            selectedOffer={selectedOffer}
-            cartTotal={cartTotal}
-            cartItems={cartItems}
-            userProfile={userProfile}
-          />
+            <OffersModal
+              visible={isOffersModalVisible}
+              onClose={() => setIsOffersModalVisible(false)}
+              onSelectOffer={handleOfferSelect}
+              selectedOffer={selectedOffer}
+              cartTotal={cartTotal}
+              offers={availableCoupons}
+              loading={couponsLoading}
+              isApplying={isApplyingCoupon}
+              error={couponsError}
+              onReload={() => loadCoupons(true)}
+            />
         </>
       ) : (
         <View className="flex-1 items-center justify-center p-8">
-          <View className="w-24 h-24 bg-green-50 rounded-full items-center justify-center mb-6">
-            <ShoppingBag size={48} color="#16A34A" />
-          </View>
-          <Text className="text-xl font-bold text-gray-900">Your cart is empty</Text>
+          <Image 
+            source={require("../../assets/images/characters/orders/empty.png")} 
+            style={{ width: 180, height: 180, marginBottom: 24 }}
+            resizeMode="contain"
+          />
+          <Text className="text-xl font-bold text-gray-900">Your cart is lonely</Text>
           <Text className="text-gray-500 text-center mt-2 leading-relaxed">
-            Good food is always cooking! Go ahead, order some yummy items from the menu.
+            Your kitchen is waiting for some fresh farm foods. Let's add some delicious meat, chicken or eggs to your cart!
           </Text>
-          <TouchableOpacity className="mt-8 bg-green-600 px-8 py-3 rounded-xl">
-            <Text className="text-white font-bold text-base">Browse Menu</Text>
+          <TouchableOpacity className="mt-8 bg-green-600 px-10 py-4 rounded-2xl shadow-sm">
+            <Text className="text-white font-bold text-base">Browse Categories</Text>
           </TouchableOpacity>
         </View>
       )}

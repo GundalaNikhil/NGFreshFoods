@@ -1,6 +1,7 @@
 import { X } from "lucide-react-native";
 import React, { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -53,6 +54,7 @@ const ChickenCustomizationModal = ({
     flavourOptions[0]?.value
   );
   const [selectedCut, setSelectedCut] = useState(cutOptions[0]?.value);
+  const [loading, setLoading] = useState(false);
 
   const calculateTotalPrice = useMemo(() => {
     if (customPriceCalculator) {
@@ -87,7 +89,8 @@ const ChickenCustomizationModal = ({
     customPriceCalculator,
   ]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    setLoading(true);
     const customizedProduct = {
       ...product,
       customizations: {
@@ -99,7 +102,8 @@ const ChickenCustomizationModal = ({
       base_price: calculateTotalPrice,
     };
 
-    onAddToCart(customizedProduct);
+    await onAddToCart(customizedProduct);
+    setLoading(false);
     onClose();
   };
 
@@ -242,10 +246,12 @@ const ChickenCustomizationModal = ({
 
             <TouchableOpacity
               onPress={handleAddToCart}
-              className="bg-red-600 p-4 rounded-lg"
+              disabled={loading}
+              className="bg-red-600 p-4 rounded-lg flex-row justify-center items-center"
             >
+              {loading && <ActivityIndicator color="#fff" size="small" className="mr-2" />}
               <Text className="text-white text-center font-semibold text-lg">
-                Add To Cart
+                {loading ? "Adding..." : "Add To Cart"}
               </Text>
             </TouchableOpacity>
           </View>

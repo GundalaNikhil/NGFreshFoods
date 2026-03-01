@@ -4,29 +4,25 @@ import { Tag, Gift, Check, AlertCircle } from "lucide-react-native";
 
 const OfferCard = ({ offer, isSelected, onSelect, cartTotal }) => {
   const getOfferDiscount = (offer, total) => {
-    switch (offer.promoCode) {
-      case "WELCOME50":
-        return Math.min(total * 0.5, 500);
-      case "WEEKENDfeast":
-        return Math.min(total * 0.2, 500);
-      case "SAVE300NOW":
-        return total >= 1000 ? 300 : 0;
-      case "BULKBUY10":
-        return total * 0.1;
-      case "HOLIDAY15":
-        return total * 0.15;
-      default:
-        return 0;
+    if (!offer) return 0;
+    if (offer.discountType === "PERCENTAGE") {
+      const percentValue = Number(offer.discountValue || 0);
+      const raw = (total * percentValue) / 100;
+      if (offer.maxDiscountAmount) {
+        return Math.min(raw, Number(offer.maxDiscountAmount));
+      }
+      return raw;
     }
+    const flat = Number(offer.discountValue || 0);
+    if (offer.maxDiscountAmount) {
+      return Math.min(flat, Number(offer.maxDiscountAmount));
+    }
+    return flat;
   };
 
   const isEligible = (offer, total) => {
-    switch (offer.promoCode) {
-      case "SAVE300NOW":
-        return total >= 1000;
-      default:
-        return true;
-    }
+    const minAmount = Number(offer.minOrderAmount || 0);
+    return total >= minAmount;
   };
 
   const discount = getOfferDiscount(offer, cartTotal);
@@ -35,86 +31,83 @@ const OfferCard = ({ offer, isSelected, onSelect, cartTotal }) => {
   return (
     <TouchableOpacity
       onPress={eligible ? onSelect : null}
-      className={`mb-4 rounded-2xl p-5 border-2 ${
+      className={`mb-4 rounded-3xl p-6 border ${
         isSelected
-          ? "border-emerald-500 bg-emerald-50"
+          ? "border-emerald-500 bg-emerald-50/50"
           : eligible
           ? "border-gray-200 bg-white"
-          : "border-gray-200 bg-gray-50"
-      } ${eligible ? "shadow-lg shadow-gray-200/50" : ""}`}
+          : "border-gray-100 bg-gray-50"
+      } ${eligible ? "shadow-md shadow-emerald-900/5" : ""}`}
       disabled={!eligible}
+      activeOpacity={0.85}
     >
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1">
-          <View className="flex-row items-center mb-2">
-            {eligible ? (
-              <Tag size={18} color={isSelected ? "#059669" : "#6b7280"} />
+      <View className="flex-row items-start">
+        <View className="w-12 h-12 rounded-2xl bg-emerald-100 items-center justify-center mr-4">
+           {eligible ? (
+              <Tag size={24} color="#059669" />
             ) : (
-              <AlertCircle size={18} color="#ef4444" />
+              <AlertCircle size={24} color="#94A3B8" />
             )}
+        </View>
+
+        <View className="flex-1">
+          <View className="flex-row items-center justify-between mb-1">
             <Text
-              className={`font-bold text-lg ml-2 ${
+              className={`font-black text-lg tracking-tight ${
                 isSelected
-                  ? "text-emerald-700"
+                  ? "text-emerald-800"
                   : eligible
                   ? "text-gray-900"
                   : "text-gray-400"
               }`}
             >
-              {offer.title}
+              {offer.code || offer.promoCode}
             </Text>
+            {isSelected && (
+              <View className="bg-emerald-500 p-1 rounded-full">
+                <Check size={12} color="white" strokeWidth={4} />
+              </View>
+            )}
           </View>
           
           <Text
-            className={`text-sm mb-3 ${
-              eligible ? "text-gray-600" : "text-gray-400"
+            className={`text-[15px] font-bold mb-1 ${
+              eligible ? "text-gray-800" : "text-gray-400"
             }`}
           >
-            {offer.description}
+            {offer.title || "Special Discount"}
+          </Text>
+
+          <Text
+            className={`text-[13px] leading-relaxed mb-4 ${
+              eligible ? "text-gray-500 font-medium" : "text-gray-400"
+            }`}
+          >
+            {offer.description || `Save big on your order today!`}
           </Text>
 
           <View className="flex-row items-center justify-between">
-            <View
-              className={`px-3 py-1.5 rounded-lg ${
-                isSelected
-                  ? "bg-emerald-200"
-                  : eligible
-                  ? "bg-gray-100"
-                  : "bg-gray-200"
-              }`}
-            >
-              <Text
-                className={`font-bold text-xs ${
-                  isSelected
-                    ? "text-emerald-800"
-                    : eligible
-                    ? "text-gray-700"
-                    : "text-gray-400"
-                }`}
-              >
-                {offer.promoCode}
-              </Text>
-            </View>
-
-            {eligible && discount > 0 && (
-              <Text className="text-emerald-600 font-bold text-sm">
-                Save ₹{discount.toFixed(0)}
-              </Text>
+            {eligible ? (
+               <View className="bg-emerald-600 px-3 py-1 rounded-full">
+                <Text className="text-white font-black text-[11px] uppercase tracking-wider">
+                  Save ₹{discount.toFixed(0)}
+                </Text>
+              </View>
+            ) : (
+              <View className="bg-gray-200 px-3 py-1 rounded-full">
+                 <Text className="text-gray-500 font-bold text-[10px] uppercase">
+                  Locked
+                </Text>
+              </View>
             )}
 
             {!eligible && (
-              <Text className="text-red-500 font-medium text-xs">
-                Minimum ₹1000 required
+              <Text className="text-gray-400 font-bold text-[11px]">
+                Add ₹{Number((offer.minOrderAmount || 0) - cartTotal).toFixed(0)} more
               </Text>
             )}
           </View>
         </View>
-
-        {isSelected && (
-          <View className="bg-emerald-500 p-2 rounded-full ml-3">
-            <Check size={16} color="white" />
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );

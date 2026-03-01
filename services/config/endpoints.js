@@ -26,4 +26,6 @@ export const API_ENDPOINTS = {
   ADDRESS_DELETE: (addressId) =>
     `${API_BASE_URL}/api/${API_VERSION}/users/me/addresses/${addressId}`,
   ORDERS_ME: `${API_BASE_URL}/api/${API_VERSION}/orders/my`,
+  COUPONS_ACTIVE: `${API_BASE_URL}/api/${API_VERSION}/coupons/active`,
+  COUPONS_VALIDATE: `${API_BASE_URL}/api/${API_VERSION}/coupons/validate`,
 };

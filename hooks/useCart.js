@@ -199,6 +199,26 @@ export const useCart = () => {
     setPromoCode({ code: null, discount: 0 });
   };
 
+  const applyCoupon = (coupon, discountAmount) => {
+    setCart((current) => ({
+      ...current,
+      appliedOffer: true,
+      promoCode: coupon?.code || coupon?.promoCode || null,
+      offer: coupon || null,
+      discountAmount: Number(discountAmount || 0),
+    }));
+  };
+
+  const removeCoupon = () => {
+    setCart((current) => ({
+      ...current,
+      appliedOffer: false,
+      promoCode: null,
+      offer: null,
+      discountAmount: 0,
+    }));
+  };
+
   const clearCart = () => {
     console.log("Clearing cart. Current cart:", cart);
 
@@ -260,6 +280,8 @@ export const useCart = () => {
     updateQuantity,
     applyPromoCode,
     clearPromoCode,
+    applyCoupon,
+    removeCoupon,
     clearCart,
   };
 };

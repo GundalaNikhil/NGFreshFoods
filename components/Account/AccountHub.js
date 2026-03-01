@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -261,11 +262,14 @@ const AccountHub = () => {
       <ScrollView className="flex-1">
         <SectionHeader title="Your Orders" onBack={() => setSection("home")} />
         {loadingOrders ? (
-          <Text className="text-gray-500">Loading orders...</Text>
+          <View className="flex-1 items-center justify-center p-20">
+            <ActivityIndicator size="large" color="#107A4A" />
+            <Text className="text-gray-400 mt-4 font-medium">Fetching orders...</Text>
+          </View>
         ) : ordersError ? (
           <EmptyState
             title="Unable to load your orders"
-            subtitle="We hit a small snag while fetching your order history. Please check your connection and try again."
+            subtitle="We hit a small snag while fetching your kitchen history. A quick retry or a fresh start might help!"
             actionLabel="Try again"
             onAction={loadOrders}
             image={require("../../assets/images/characters/orders/empty.png")}
@@ -400,7 +404,7 @@ const AccountHub = () => {
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
             <View className="w-16 h-16 rounded-2xl bg-emerald-50 items-center justify-center mr-4 border border-emerald-100 overflow-hidden">
-               <Image 
+              <Image 
                 source={require("../../assets/images/characters/profile/user.png")}
                 style={{ width: "100%", height: "100%" }}
                 resizeMode="cover"
@@ -430,7 +434,10 @@ const AccountHub = () => {
           <Text className="text-[11px] text-red-600 mt-3">{profileError}</Text>
         ) : null}
         {loadingProfile ? (
-          <Text className="text-[11px] text-gray-400 mt-2">Refreshing...</Text>
+          <View className="mt-3 flex-row items-center">
+            <ActivityIndicator size="small" color="#107A4A" />
+            <Text className="text-[11px] text-gray-400 ml-2">Refreshing profile...</Text>
+          </View>
         ) : null}
       </View>
 
@@ -484,12 +491,13 @@ const ProfileEditor = ({ profile, loading, error, onSave, onReload }) => {
 
       <TouchableOpacity
         onPress={() => onSave({ firstName, lastName, phoneNumber })}
-        className="bg-emerald-600 rounded-xl py-3 items-center"
+        className="bg-emerald-600 rounded-xl py-3 items-center flex-row justify-center"
         disabled={loading}
         activeOpacity={0.85}
       >
+        {loading && <ActivityIndicator size="small" color="white" className="mr-2" />}
         <Text className="text-white font-semibold text-[13px]">
-          {loading ? "Saving..." : "Save changes"}
+          {loading ? "Saving changes..." : "Save changes"}
         </Text>
       </TouchableOpacity>
 
@@ -542,11 +550,14 @@ const AddressManager = ({
   return (
     <View>
       {loading ? (
-        <Text className="text-gray-500">Loading addresses...</Text>
+        <View className="flex-1 items-center justify-center p-20">
+          <ActivityIndicator size="large" color="#107A4A" />
+          <Text className="text-gray-400 mt-4 font-medium">Loading your addresses...</Text>
+        </View>
       ) : error ? (
         <EmptyState
           title="Unable to load addresses"
-          subtitle="We couldn't retrieve your saved spots. A quick retry might fix it!"
+          subtitle="We couldn't retrieve your saved spots. You can try again or start fresh by adding a new one!"
           actionLabel="Try again"
           onAction={onReload}
           image={require("../../assets/images/characters/address/empty.png")}
