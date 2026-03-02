@@ -23,4 +23,6 @@ export const API_ENDPOINTS = {
   ORDERS_ME: `${API_BASE_URL}/api/${API_VERSION}/orders/my`,
   COUPONS_ACTIVE: `${API_BASE_URL}/api/${API_VERSION}/coupons/active`,
   COUPONS_VALIDATE: `${API_BASE_URL}/api/${API_VERSION}/coupons/validate`,
+  PRODUCTS: `${API_BASE_URL}/api/${API_VERSION}/products`,
+  CATEGORIES: `${API_BASE_URL}/api/${API_VERSION}/categories`,
 };

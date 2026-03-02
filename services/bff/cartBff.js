@@ -4,16 +4,10 @@ import { API_ENDPOINTS } from "../config/endpoints";
 const normalizeNumber = (value) =>
   typeof value === "number" && !Number.isNaN(value) ? value : 0;
 
-const isUuid = (value) =>
-  typeof value === "string" &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value
-  );
-
 const toPayloadItem = (item) => {
   if (!item) return null;
   const productId = item.id || item.productId || null;
-  if (!isUuid(productId)) {
+  if (!productId) {
     return null;
   }
   return {

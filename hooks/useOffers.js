@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from "react";
-import { OffersData } from "../components/data/OffersData";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { cartState } from "../recoil/atoms/cartAtom";
+import { fetchActiveCoupons } from "../services/bff/couponsBff";
 import {
   validatePromoCode,
   calculateChickenWeight,
@@ -10,6 +10,34 @@ import {
 
 export const useOffers = () => {
   const [cart, setCart] = useRecoilState(cartState);
+  const [availableOffers, setAvailableOffers] = useState([]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadOffers = async () => {
+      const response = await fetchActiveCoupons();
+      if (!isActive) return;
+
+      if (response?.success && Array.isArray(response.data)) {
+        const normalized = response.data.map((coupon) => ({
+          ...coupon,
+          promoCode: coupon.code || coupon.promoCode,
+          flag: coupon.isActive ?? true,
+          isPromoCode: true,
+        }));
+        setAvailableOffers(normalized);
+      } else {
+        setAvailableOffers([]);
+      }
+    };
+
+    loadOffers();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const calculateOfferDiscount = useCallback(
     (offer, cartTotal) => {
@@ -123,29 +151,8 @@ export const useOffers = () => {
   }, [setCart]);
 
   const getAvailableOffers = useCallback(() => {
-    // Filter offers based on cart contents and conditions
-    const cartItems = cart || {};
-    const chickenWeight = calculateChickenWeight(cartItems);
-    const weekend = isWeekend();
-
-    return OffersData.filter((offer) => {
-      if (!offer.flag) return false;
-
-      // Add validation logic for offers based on your conditions
-      switch (offer.promoCode) {
-        case "B1G1FRESH":
-        case "EGGSTRA4YOU":
-          return chickenWeight >= 1;
-        case "DOUBLEDELIGHT":
-          return chickenWeight >= 2;
-        case "WEEKENDFEAST":
-        case "WEEKENDfeast":
-          return weekend;
-        default:
-          return true; // Show other offers by default
-      }
-    });
-  }, [cart]);
+    return availableOffers.filter((offer) => offer.flag !== false);
+  }, [availableOffers, cart]);
 
   // Validate if a promo code can be applied
   const validatePromo = useCallback(

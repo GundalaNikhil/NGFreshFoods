@@ -106,7 +106,14 @@ apiClient.interceptors.response.use(
     if (originalRequest.url?.includes(API_ENDPOINTS.REFRESH_TOKEN)) {
       return Promise.reject(error);
     }
-    if (status !== 401 || !refreshToken) {
+    if (status !== 401) {
+      return Promise.reject(error);
+    }
+    if (!refreshToken) {
+      setAuthTokens({});
+      if (onAuthFailure) {
+        onAuthFailure(error);
+      }
       return Promise.reject(error);
     }
 
@@ -137,6 +144,7 @@ apiClient.interceptors.response.use(
       return apiClient(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
+      setAuthTokens({});
       if (onAuthFailure) {
         onAuthFailure(refreshError);
       }

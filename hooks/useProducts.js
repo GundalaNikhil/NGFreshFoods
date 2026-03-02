@@ -1,6 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { productsData } from "../components/data/ProductsData";
 import { getEntityImageUrl } from "../utils/imageUrl";
 import {
   categoriesState,
@@ -8,26 +7,52 @@ import {
   selectedCategoryState,
 } from "../recoil/atoms/productsAtom";
 import { filteredProductsSelector } from "../recoil/selectors/productSelector";
+import { fetchCategories, fetchProducts } from "../services/bff/productsBff";
 
-const getProductId = (product) => product?.id || product?.product_id;
+const getProductId = (product) =>
+  product?.id || product?.product_id || product?.productId;
 
 const normalizeProduct = (product) => {
   const resolvedId = getProductId(product);
   const resolvedImageUrl = getEntityImageUrl(product);
+  const resolvedCategoryId =
+    product?.category_id ||
+    product?.categoryId ||
+    product?.category?.category_id ||
+    product?.category?.categoryId ||
+    null;
 
   return {
     ...product,
     id: resolvedId,
     product_id: resolvedId,
-    base_price: product?.base_price ?? product?.price ?? 0,
-    price: product?.price ?? product?.base_price ?? 0,
+    category_id: resolvedCategoryId,
+    base_price:
+      product?.base_price ?? product?.basePrice ?? product?.price ?? 0,
+    price: product?.price ?? product?.base_price ?? product?.basePrice ?? 0,
     unit: product?.unit ?? product?.perQuantity ?? "",
     perQuantity: product?.perQuantity ?? product?.unit ?? "",
+    stock_quantity: product?.stock_quantity ?? product?.stockQuantity ?? 0,
     image_url: resolvedImageUrl,
     image: resolvedImageUrl,
     tags: Array.isArray(product?.tags) ? product.tags : [],
     nutritional_info: product?.nutritional_info || {},
   };
+};
+
+const normalizeCategory = (category) => ({
+  ...category,
+  category_id: category?.category_id || category?.categoryId || category?.id,
+});
+
+const dedupeByCategoryId = (items = []) => {
+  const seen = new Set();
+  return items.filter((item) => {
+    const id = item?.category_id;
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
 };
 
 export const useProducts = () => {
@@ -36,6 +61,7 @@ export const useProducts = () => {
   const [selectedCategory, setSelectedCategory] = useRecoilState(
     selectedCategoryState
   );
+  const hasLoadedRef = useRef(false);
   const filteredProducts = useRecoilValue(filteredProductsSelector);
   const normalizedProducts = useMemo(
     () => products.map(normalizeProduct),
@@ -45,59 +71,98 @@ export const useProducts = () => {
     () => filteredProducts.map(normalizeProduct),
     [filteredProducts]
   );
+  const normalizedCategories = useMemo(
+    () => dedupeByCategoryId(categories.map(normalizeCategory)),
+    [categories]
+  );
 
-  const catalogCategories = useMemo(() => {
-    const CATEGORY_NAME_MAP = {
-      CAT_CHICKEN: "Chicken",
-      CAT_DAIRY_EGGS: "Eggs",
-      CAT_MUTTON: "Mutton",
+  useEffect(() => {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+
+    let isActive = true;
+
+    const loadCatalog = async () => {
+      try {
+        const [productsResponse, categoriesResponse] = await Promise.all([
+          fetchProducts(),
+          fetchCategories(),
+        ]);
+
+        if (!isActive) return;
+
+        if (Array.isArray(productsResponse)) {
+          setProducts(productsResponse);
+        }
+
+        if (Array.isArray(categoriesResponse)) {
+          const normalized = categoriesResponse.map(normalizeCategory);
+          const hasUuid = normalized.some(
+            (category) =>
+              typeof category.category_id === "string" &&
+              category.category_id.includes("-")
+          );
+          const filtered = hasUuid
+            ? normalized.filter(
+                (category) => category.category_id?.includes("-")
+              )
+            : normalized;
+          setCategories(dedupeByCategoryId(filtered));
+        }
+      } catch (error) {
+        console.warn("Failed to load catalog from API", error);
+      }
     };
 
-    return Array.from(new Set(normalizedProducts.map((p) => p.category_id))).map(
-      (categoryId) => ({
-        category_id: categoryId,
-        name: CATEGORY_NAME_MAP[categoryId] || categoryId.replace("CAT_", ""),
-      })
-    );
-  }, [normalizedProducts]);
+    loadCatalog();
+
+    return () => {
+      isActive = false;
+    };
+  }, [setProducts, setCategories]);
+
+  const hasNormalizedProducts = useRef(false);
+  const hasNormalizedCategories = useRef(false);
 
   useEffect(() => {
-    const persistedProductIds = new Set(products.map((p) => getProductId(p)));
-    const missingProducts = productsData.filter(
-      (p) => !persistedProductIds.has(getProductId(p))
-    );
-
-    if (missingProducts.length > 0) {
-      setProducts((current) => [...current, ...missingProducts]);
-    }
-  }, [products, setProducts]);
-
-  useEffect(() => {
+    if (hasNormalizedProducts.current || products.length === 0) return;
     const hasLegacySchema = products.some(
       (product) =>
         (product?.product_id && !product?.id) ||
+        (product?.productId && !product?.id) ||
         (product?.price !== undefined && product?.base_price === undefined) ||
         (product?.perQuantity !== undefined && product?.unit === undefined) ||
-        (product?.image !== undefined && product?.image_url === undefined)
+        (product?.image !== undefined && product?.image_url === undefined) ||
+        (product?.categoryId && !product?.category_id)
     );
 
     if (hasLegacySchema) {
       setProducts((current) => current.map(normalizeProduct));
     }
+    hasNormalizedProducts.current = true;
   }, [products, setProducts]);
 
   useEffect(() => {
-    const currentCategoryIds = new Set(
-      categories.map((category) => category.category_id)
-    );
-    const missingCategories = catalogCategories.filter(
-      (category) => !currentCategoryIds.has(category.category_id)
+    if (hasNormalizedCategories.current || categories.length === 0) return;
+    const hasLegacyCategories = categories.some(
+      (category) => !category?.category_id && category?.categoryId
     );
 
-    if (missingCategories.length > 0) {
-      setCategories((current) => [...current, ...missingCategories]);
+    if (hasLegacyCategories) {
+      setCategories((current) => dedupeByCategoryId(current.map(normalizeCategory)));
     }
-  }, [categories, catalogCategories, setCategories]);
+    hasNormalizedCategories.current = true;
+  }, [categories, setCategories]);
+
+  useEffect(() => {
+    if (selectedCategory === "ALL") return;
+    const categoryIds = new Set(
+      normalizedCategories.map((category) => category.category_id)
+    );
+    if (!categoryIds.has(selectedCategory)) {
+      setSelectedCategory("ALL");
+    }
+  }, [normalizedCategories, selectedCategory, setSelectedCategory]);
 
   const updateProduct = (productId, updates) => {
     setProducts((current) =>
@@ -129,7 +194,7 @@ export const useProducts = () => {
   return {
     products: normalizedFilteredProducts,
     allProducts: normalizedProducts,
-    categories: catalogCategories,
+    categories: normalizedCategories,
     selectedCategory,
     setSelectedCategory,
     updateProduct,

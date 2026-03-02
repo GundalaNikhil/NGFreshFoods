@@ -9,7 +9,6 @@ import {
 } from "../recoil/selectors/cartSelector";
 import { generateCustomProductId } from "../utils/cartHelper";
 import { useProducts } from "./useProducts";
-import React from "react";
 import { clearCart as clearServerCart } from "../services/bff/cartBff";
 
 export const useCart = () => {
@@ -21,8 +20,14 @@ export const useCart = () => {
   const itemCount = useRecoilValue(cartItemsCountSelector);
   const { updateStock } = useProducts();
 
-  // Ensure cart has the proper structure
   const cartItems = cart?.items || [];
+
+  // ── helpers ──
+
+  const bumpVersion = (cartObj) => ({
+    ...cartObj,
+    _version: (cartObj._version || 0) + 1,
+  });
 
   const calculateCustomPrice = (product, customizations) => {
     if (!customizations) return product.base_price;
@@ -40,60 +45,49 @@ export const useCart = () => {
     const flavourExtra =
       customizations.flavour === "Smoked & Turmeric" ? 10 : 0;
 
-    const finalPrice = weightAdjustedPrice + skinExtra + flavourExtra;
-
-    return Number(finalPrice.toFixed(2));
+    return Number((weightAdjustedPrice + skinExtra + flavourExtra).toFixed(2));
   };
 
-  // Generate unique customization ID
   const generateCustomizationId = (product, customizations) => {
     if (!customizations) return null;
-
     const customString = `${product.id}_${customizations.netWeight}_${customizations.skinType}_${customizations.flavour}_${customizations.cutSize}`;
     return customString.replace(/\s+/g, "_").toLowerCase();
   };
+
+  // ── cart actions ──
 
   const addToCart = (product, customizations = null) => {
     const productId = generateCustomProductId(product, customizations);
     const itemPrice = customizations
       ? calculateCustomPrice(product, customizations)
       : product.base_price;
-
     const customizationId = generateCustomizationId(product, customizations);
 
-    // Track if we need to update stock
     let shouldUpdateStock = false;
 
     setCart((currentCart) => {
-      // Ensure currentCart has proper structure
       const currentItems = currentCart?.items || [];
-
       const existingItem = currentItems.find(
         (item) => item.productId === productId
       );
 
       if (existingItem) {
-        const updatedItem = {
-          ...existingItem,
-          custQuantity: existingItem.custQuantity + 1,
-          quantity: existingItem.quantity + 1,
-          totalPrice: itemPrice * (existingItem.quantity + 1),
-          custPrice: itemPrice * (existingItem.custQuantity + 1),
-        };
-
-        console.log("Updated existing item:", updatedItem);
         shouldUpdateStock = true;
-
         const updatedItems = currentItems.map((item) =>
-          item.productId === productId ? updatedItem : item
+          item.productId === productId
+            ? {
+                ...item,
+                custQuantity: item.custQuantity + 1,
+                quantity: item.quantity + 1,
+                totalPrice: itemPrice * (item.quantity + 1),
+                custPrice: itemPrice * (item.custQuantity + 1),
+              }
+            : item
         );
-
-        return {
-          ...currentCart,
-          items: updatedItems,
-        };
+        return bumpVersion({ ...currentCart, items: updatedItems });
       }
 
+      shouldUpdateStock = true;
       const newItem = {
         productId,
         customizationId,
@@ -101,21 +95,16 @@ export const useCart = () => {
         customizations,
         quantity: 1,
         custQuantity: 1,
-        itemPrice: itemPrice,
+        itemPrice,
         custPrice: itemPrice,
         totalPrice: itemPrice,
       };
-
-      console.log("Added new item:", newItem);
-      shouldUpdateStock = true;
-
-      return {
+      return bumpVersion({
         ...currentCart,
         items: [...currentItems, newItem],
-      };
+      });
     });
 
-    // Only update stock for products that have stock management - AFTER state update
     if (product.stock_quantity !== undefined && shouldUpdateStock) {
       updateStock(product.id, 1);
     }
@@ -123,25 +112,17 @@ export const useCart = () => {
 
   const removeFromCart = (productId) => {
     const item = cartItems.find((item) => item.productId === productId);
-    if (item) {
-      console.log("Removing item:", item);
+    if (!item) return;
 
-      setCart((current) => {
-        const currentItems = current?.items || [];
-        const updatedItems = currentItems.filter(
-          (item) => item.productId !== productId
-        );
+    setCart((current) => {
+      const updatedItems = (current?.items || []).filter(
+        (i) => i.productId !== productId
+      );
+      return bumpVersion({ ...current, items: updatedItems });
+    });
 
-        return {
-          ...current,
-          items: updatedItems,
-        };
-      });
-
-      // Only update stock if the product has stock management - AFTER state update
-      if (item.stock_quantity !== undefined) {
-        updateStock(item.id, -item.quantity);
-      }
+    if (item.stock_quantity !== undefined) {
+      updateStock(item.id, -item.quantity);
     }
   };
 
@@ -151,48 +132,35 @@ export const useCart = () => {
       return;
     }
 
-    // Find the item and calculate quantity difference before state update
     const currentItem = cartItems.find((item) => item.productId === productId);
     if (!currentItem) return;
 
     const quantityDiff = newQuantity - currentItem.quantity;
 
     setCart((current) => {
-      const currentItems = current?.items || [];
-
-      const updatedItems = currentItems.map((item) => {
-        if (item.productId === productId) {
-          // Recalculate total price based on new quantity
-          const itemPrice = item.customizations
-            ? calculateCustomPrice(item, item.customizations)
-            : item.base_price;
-
-          const updatedItem = {
-            ...item,
-            quantity: newQuantity,
-            custQuantity: newQuantity,
-            itemPrice: itemPrice,
-            custPrice: itemPrice * newQuantity,
-            totalPrice: itemPrice * newQuantity,
-          };
-
-          console.log("Updated quantity for item:", updatedItem);
-          return updatedItem;
-        }
-        return item;
+      const updatedItems = (current?.items || []).map((item) => {
+        if (item.productId !== productId) return item;
+        const price = item.customizations
+          ? calculateCustomPrice(item, item.customizations)
+          : item.base_price;
+        return {
+          ...item,
+          quantity: newQuantity,
+          custQuantity: newQuantity,
+          itemPrice: price,
+          custPrice: price * newQuantity,
+          totalPrice: price * newQuantity,
+        };
       });
-
-      return {
-        ...current,
-        items: updatedItems,
-      };
+      return bumpVersion({ ...current, items: updatedItems });
     });
 
-    // Only update stock if the product has stock management - AFTER state update
     if (currentItem.stock_quantity !== undefined) {
       updateStock(currentItem.id, quantityDiff);
     }
   };
+
+  // ── coupon / promo ──
 
   const applyPromoCode = (code, discount) => {
     setPromoCode({ code, discount });
@@ -203,49 +171,49 @@ export const useCart = () => {
   };
 
   const applyCoupon = (coupon, discountAmount) => {
-    setCart((current) => ({
-      ...current,
-      appliedOffer: true,
-      promoCode: coupon?.code || coupon?.promoCode || null,
-      offer: coupon || null,
-      discountAmount: Number(discountAmount || 0),
-    }));
+    setCart((current) =>
+      bumpVersion({
+        ...current,
+        appliedOffer: true,
+        promoCode: coupon?.code || coupon?.promoCode || null,
+        offer: coupon || null,
+        discountAmount: Number(discountAmount || 0),
+      })
+    );
   };
 
   const removeCoupon = () => {
-    setCart((current) => ({
-      ...current,
-      appliedOffer: false,
-      promoCode: null,
-      offer: null,
-      discountAmount: 0,
-    }));
+    setCart((current) =>
+      bumpVersion({
+        ...current,
+        appliedOffer: false,
+        promoCode: null,
+        offer: null,
+        discountAmount: 0,
+      })
+    );
   };
 
   const clearCart = async () => {
-    console.log("Clearing cart. Current cart:", cart);
-
-    // Store items that need stock updates before clearing
     const itemsToUpdateStock = cartItems.filter(
       (item) => item.stock_quantity !== undefined
     );
 
-    setCart({
-      items: [],
-      appliedOffer: false,
-      promoCode: null,
-      offer: null,
-      discountAmount: 0,
-    });
+    setCart(
+      bumpVersion({
+        items: [],
+        appliedOffer: false,
+        promoCode: null,
+        offer: null,
+        discountAmount: 0,
+      })
+    );
 
     clearPromoCode();
 
-    // Update stock for all items AFTER state update
     itemsToUpdateStock.forEach((item) => {
       updateStock(item.id, -item.quantity);
     });
-
-    console.log("Cart cleared");
 
     if (authState?.isAuthenticated) {
       try {
@@ -256,32 +224,9 @@ export const useCart = () => {
     }
   };
 
-  // Console log current cart state whenever it changes
-  React.useEffect(() => {
-    console.log("Current Cart State:", cart);
-    console.log("Cart Items:", cartItems);
-    console.log("Cart Total Items:", itemCount);
-    console.log("Cart Total Amount:", cartTotal);
-
-    // Detailed breakdown of each item
-    cartItems.forEach((item, index) => {
-      console.log(`Item ${index + 1}:`, {
-        productName: item.name,
-        productId: item.productId,
-        customizationId: item.customizationId,
-        customizations: item.customizations,
-        quantity: item.quantity,
-        custQuantity: item.custQuantity,
-        itemPrice: item.itemPrice,
-        custPrice: item.custPrice,
-        totalPrice: item.totalPrice,
-      });
-    });
-  }, [cart, cartItems, itemCount, cartTotal]);
-
   return {
-    cart: cartItems, // Return items array for backward compatibility
-    cartData: cart, // Return full cart object
+    cart: cartItems,
+    cartData: cart,
     cartTotal,
     cartDiscount,
     itemCount,

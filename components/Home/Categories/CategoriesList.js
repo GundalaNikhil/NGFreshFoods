@@ -47,10 +47,13 @@ const CategoriesList = () => {
       >
         {categories.map((category, index) => (
           <CategoryItem
-            key={category.category_id || index}
+            key={category.category_id || category.name || index}
             title={category.name}
             image={
-              CATEGORY_IMAGE_MAP[category.category_id] || FALLBACK_CATEGORY_IMAGE
+              category.image_url ||
+              category.imageUrl ||
+              CATEGORY_IMAGE_MAP[category.category_id] ||
+              FALLBACK_CATEGORY_IMAGE
             }
             itemSize={itemSize}
             onPress={() => handleCategoryPress(category.category_id)}

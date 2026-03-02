@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Icon } from "@rneui/themed";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, Pressable, Text, View, ActivityIndicator } from "react-native";
 import Reanimated, {
   useAnimatedStyle,
@@ -9,7 +9,6 @@ import Reanimated, {
 } from "react-native-reanimated";
 import { RecoilRoot, useRecoilState } from "recoil";
 import { authAtom } from "../recoil/atoms/authAtom";
-import { cartState } from "../recoil/atoms/cartAtom";
 import { auth } from "../services/firebaseConfig";
 import { onAuthStateChanged } from "@react-native-firebase/auth";
 import Toast from "react-native-toast-message";
@@ -25,7 +24,7 @@ import {
   setAuthTokens,
   setAuthUpdateHandler,
 } from "../services/http/apiClient";
-import { mergeCart, replaceCart } from "../services/bff/cartBff";
+import CartSyncManager from "../providers/CartSyncManager";
 
 // Screen dimensions for responsive design
 const { height } = Dimensions.get("window");
@@ -78,28 +77,30 @@ const TabButton = ({
 // The main App routing logic inside RecoilRoot
 function RootNavigator() {
   const [authState, setAuthState] = useRecoilState(authAtom);
-  const [cart, setCart] = useRecoilState(cartState);
   const [initializing, setInitializing] = useState(true);
-  const cartSyncRef = React.useRef({
-    merged: false,
-    syncing: false,
-    lastPayload: null,
-    debounceId: null,
-  });
 
-  // Listen for Firebase Auth state changes
+  const initRef = useRef(true);
+
+  // Listen for Firebase Auth state changes — subscribe ONCE
   useEffect(() => {
     const subscriber = onAuthStateChanged(auth(), (user) => {
       if (!user) {
         // User is signed out in Firebase
-        if (authState.isAuthenticated) {
-          setAuthState({ isAuthenticated: false, token: null, refreshToken: null });
-        }
+        setAuthState((prev) => {
+          if (prev.isAuthenticated) {
+            return { isAuthenticated: false, token: null, refreshToken: null };
+          }
+          return prev;
+        });
       }
-      if (initializing) setInitializing(false);
+      if (initRef.current) {
+        initRef.current = false;
+        setInitializing(false);
+      }
     });
     return subscriber; // unsubscribe on unmount
-  }, [authState.isAuthenticated, initializing, setAuthState]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (authState?.isAuthenticated) {
@@ -122,101 +123,7 @@ function RootNavigator() {
     }
   }, [authState?.isAuthenticated, authState?.token, authState?.refreshToken]);
 
-  useEffect(() => {
-    if (!authState?.isAuthenticated) {
-      cartSyncRef.current.merged = false;
-      return;
-    }
-    if (cartSyncRef.current.merged || cartSyncRef.current.syncing) return;
 
-    const runMerge = async () => {
-      try {
-        cartSyncRef.current.syncing = true;
-        const merged = await mergeCart(cart?.items || []);
-        if (merged?.items) {
-          setCart((current) => ({
-            ...current,
-            items: merged.items.map((item) => {
-              let parsedCustomizations = null;
-              if (item.customizations) {
-                try {
-                  parsedCustomizations = JSON.parse(item.customizations);
-                } catch (_error) {
-                  parsedCustomizations = null;
-                }
-              }
-              const unitPrice = Number(item.unitPrice || 0);
-              const quantity = item.quantity || 1;
-              const totalPrice = Number(item.totalPrice || unitPrice * quantity || 0);
-
-              return {
-                productId: item.clientProductId || item.productId,
-                id: item.productId,
-                name: item.productName,
-                image_url: item.imageUrl,
-                base_price: unitPrice,
-                customizations: parsedCustomizations,
-                quantity,
-                custQuantity: quantity,
-                itemPrice: unitPrice,
-                totalPrice,
-                custPrice: totalPrice,
-              };
-            }),
-          }));
-        }
-        cartSyncRef.current.merged = true;
-      } catch (_error) {
-        // Ignore merge failures; local cart still usable.
-      } finally {
-        cartSyncRef.current.syncing = false;
-      }
-    };
-
-    runMerge();
-  }, [authState?.isAuthenticated, cart?.items, setCart]);
-
-  useEffect(() => {
-    if (!authState?.isAuthenticated) {
-      return;
-    }
-    if (cartSyncRef.current.syncing) {
-      return;
-    }
-
-    const payload = JSON.stringify(
-      (cart?.items || []).map((item) => ({
-        productId: item.id || item.productId,
-        clientProductId: item.productId || item.id,
-        quantity: item.quantity,
-        customizations: item.customizations || null,
-        itemPrice: item.itemPrice || item.base_price || 0,
-        totalPrice: item.totalPrice || 0,
-        name: item.name || "",
-        imageUrl: item.image_url || item.imageUrl || "",
-      }))
-    );
-
-    if (payload === cartSyncRef.current.lastPayload) {
-      return;
-    }
-
-    if (cartSyncRef.current.debounceId) {
-      clearTimeout(cartSyncRef.current.debounceId);
-    }
-
-    cartSyncRef.current.debounceId = setTimeout(async () => {
-      try {
-        cartSyncRef.current.syncing = true;
-        await replaceCart(cart?.items || []);
-        cartSyncRef.current.lastPayload = payload;
-      } catch (_error) {
-        // ignore sync failure
-      } finally {
-        cartSyncRef.current.syncing = false;
-      }
-    }, 800);
-  }, [authState?.isAuthenticated, cart?.items]);
 
   useEffect(() => {
     setAuthFailureHandler(() => {
@@ -253,6 +160,8 @@ function RootNavigator() {
 
   // Main Authenticated App Flow
   return (
+    <>
+    <CartSyncManager />
     <Tab.Navigator
         screenOptions={{
           headerShown: false,
@@ -373,7 +282,8 @@ function RootNavigator() {
           }}
         />
       </Tab.Navigator>
-  ) 
+    </>
+  );
 }
 
 export default function Index() {

@@ -5,6 +5,7 @@ export const cartState = atom({
   key: "cartState",
   default: {
     items: [],
+    _version: 0,
     appliedOffer: false,
     promoCode: null,
     offer: null,
