@@ -2,13 +2,15 @@ import { useCallback, useRef } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { Alert, Linking } from "react-native";
 
-// Safe import — native module is null until app is rebuilt after `npm install`
-let RazorpayCheckout = null;
-try {
-  RazorpayCheckout = require("react-native-razorpay").default;
-} catch (e) {
-  console.warn("[usePayment] react-native-razorpay not available:", e.message);
-}
+const getRazorpayModule = () => {
+  try {
+    const mod = require("react-native-razorpay");
+    return mod?.default || mod;
+  } catch (e) {
+    console.warn("[usePayment] react-native-razorpay not available:", e.message);
+    return null;
+  }
+};
 import { paymentAtom } from "../recoil/atoms/paymentAtom";
 import { authAtom } from "../recoil/atoms/authAtom";
 import { profileAtom } from "../recoil/atoms/profileAtom";
@@ -205,11 +207,14 @@ export const usePayment = () => {
 
       console.log("[usePayment] → Opening Razorpay Checkout...");
 
-      if (!RazorpayCheckout) {
-        console.error("[usePayment] ✗ RazorpayCheckout native module is NULL. Rebuild required.");
+      const RazorpayCheckout = getRazorpayModule();
+      if (!RazorpayCheckout || typeof RazorpayCheckout.open !== "function") {
+        console.error("[usePayment] ✗ RazorpayCheckout native module missing.");
         throw new Error(
-          "Payment module not loaded. Please rebuild the app:\n" +
-          "npx expo prebuild --clean && npx expo run:android"
+          "Payment module not loaded. Use a dev client (not Expo Go) and rebuild:\n" +
+          "1) set newArchEnabled=false in app.json\n" +
+          "2) npx expo prebuild --clean\n" +
+          "3) npx expo run:android"
         );
       }
 
