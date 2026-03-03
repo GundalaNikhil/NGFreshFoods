@@ -1,6 +1,6 @@
-import { ChevronRight, MapPin } from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 const CartFooter = ({ totalPayable, itemCount, onPlaceOrder }) => {
   const [loading, setLoading] = React.useState(false);
@@ -9,8 +9,11 @@ const CartFooter = ({ totalPayable, itemCount, onPlaceOrder }) => {
   const handlePress = async () => {
     if (onPlaceOrder) {
       setLoading(true);
-      await onPlaceOrder();
-      setLoading(false);
+      try {
+        await onPlaceOrder();
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

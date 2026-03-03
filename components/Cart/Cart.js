@@ -1,17 +1,29 @@
 import { ChevronDown, ChevronLeft, MapPin } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useCart } from "../../hooks/useCart";
+import { usePayment } from "../../hooks/usePayment";
 import { fetchActiveCoupons, validateCoupon } from "../../services/bff/couponsBff";
 import CartFooter from "./CartFooter";
 import CartItems from "./CartItems";
 import CartPromoCode from "./CartPromoCode";
 import CartSummary from "./CartSummary";
+import CheckoutSheet from "./CheckoutSheet";
 import OffersModal from "./Offers/OffersModal";
 
 const Cart = () => {
   const { cart, cartData, cartTotal, cartDiscount, applyCoupon, removeCoupon } = useCart();
+  const {
+    checkoutState,
+    paymentMethod,
+    error: paymentError,
+    startCheckout,
+    resetPayment,
+    setPaymentMethod,
+  } = usePayment();
+
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
+  const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState([]);
   const [couponsLoading, setCouponsLoading] = useState(false);
   const [couponsError, setCouponsError] = useState("");
@@ -137,6 +149,35 @@ const Cart = () => {
   const TAX_RATE = 0.05;
   const grandTotal = (cartTotal - promoDiscount + DELIVERY_FEE) * (1 + TAX_RATE);
 
+  // ── Checkout handlers ──
+
+  const handlePlaceOrder = () => {
+    setIsCheckoutVisible(true);
+  };
+
+  const handlePayOnline = async () => {
+    const result = await startCheckout();
+    if (result?.success) {
+      // CheckoutSheet will show success state
+    }
+  };
+
+  const handleCheckoutClose = () => {
+    if (checkoutState !== "CREATING_ORDER" && checkoutState !== "VERIFYING") {
+      setIsCheckoutVisible(false);
+    }
+  };
+
+  // Close checkout sheet on success after a delay
+  useEffect(() => {
+    if (checkoutState === "SUCCESS") {
+      const timer = setTimeout(() => {
+        // Sheet stays visible showing success state, user closes manually via "Done"
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [checkoutState]);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Stylish Address Header */}
@@ -242,20 +283,34 @@ const Cart = () => {
           <CartFooter
             totalPayable={grandTotal}
             itemCount={itemCount}
+            onPlaceOrder={handlePlaceOrder}
           />
 
-            <OffersModal
-              visible={isOffersModalVisible}
-              onClose={() => setIsOffersModalVisible(false)}
-              onSelectOffer={handleOfferSelect}
-              selectedOffer={selectedOffer}
-              cartTotal={cartTotal}
-              offers={availableCoupons}
-              loading={couponsLoading}
-              isApplying={isApplyingCoupon}
-              error={couponsError}
-              onReload={() => loadCoupons(true)}
-            />
+          <CheckoutSheet
+            visible={isCheckoutVisible}
+            onClose={handleCheckoutClose}
+            onPayOnline={handlePayOnline}
+            totalPayable={grandTotal}
+            itemCount={itemCount}
+            checkoutState={checkoutState}
+            error={paymentError}
+            paymentMethod={paymentMethod}
+            onSelectMethod={setPaymentMethod}
+            onReset={resetPayment}
+          />
+
+          <OffersModal
+            visible={isOffersModalVisible}
+            onClose={() => setIsOffersModalVisible(false)}
+            onSelectOffer={handleOfferSelect}
+            selectedOffer={selectedOffer}
+            cartTotal={cartTotal}
+            offers={availableCoupons}
+            loading={couponsLoading}
+            isApplying={isApplyingCoupon}
+            error={couponsError}
+            onReload={() => loadCoupons(true)}
+          />
         </>
       ) : (
         <View className="flex-1 items-center justify-center p-8">
