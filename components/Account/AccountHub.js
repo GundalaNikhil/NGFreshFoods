@@ -210,7 +210,6 @@ const AccountHub = () => {
     const response = await fetchMyProfile({ token: auth.token });
     if (response.success) {
       setProfile(response.data.profile);
-      setAddresses(response.data.profile.addresses || []);
     } else {
       setProfileError(response.error.message || "Failed to load profile.");
     }
