@@ -27,3 +27,8 @@ export const productsErrorState = atom({
   key: "productsErrorState",
   default: false,
 });
+
+export const searchQueryState = atom({
+  key: "searchQueryState",
+  default: "",
+});

@@ -13,7 +13,7 @@ const ProductFilter = () => {
     >
       <TouchableOpacity
         onPress={() => setSelectedCategory("ALL")}
-        className={`ml-4 mr-2 px-4 py-1.5 rounded-lg border ${
+        className={`ml-4 mr-2 px-4 h-8 items-center justify-center rounded-lg border ${
           selectedCategory === "ALL" 
             ? "bg-red-50 border-red-200" 
             : "bg-white border-gray-200"
@@ -32,7 +32,7 @@ const ProductFilter = () => {
         <TouchableOpacity
           key={category.category_id}
           onPress={() => setSelectedCategory(category.category_id)}
-          className={`mr-2 px-4 py-1.5 rounded-lg border ${
+          className={`mr-2 px-4 h-8 items-center justify-center rounded-lg border ${
             selectedCategory === category.category_id
               ? "bg-red-50 border-red-200"
               : "bg-white border-gray-200"

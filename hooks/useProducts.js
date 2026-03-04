@@ -7,6 +7,7 @@ import {
   selectedCategoryState,
   productsLoadingState,
   productsErrorState,
+  searchQueryState,
 } from "../recoil/atoms/productsAtom";
 import { filteredProductsSelector } from "../recoil/selectors/productSelector";
 import { fetchCategories, fetchProducts } from "../services/bff/productsBff";
@@ -77,6 +78,7 @@ export const useProducts = () => {
   );
   const [loading, setLoading] = useRecoilState(productsLoadingState);
   const [error, setError] = useRecoilState(productsErrorState);
+  const [searchQuery, setSearchQuery] = useRecoilState(searchQueryState);
   const filteredProducts = useRecoilValue(filteredProductsSelector);
   const normalizedProducts = useMemo(
     () => (Array.isArray(products) ? products.map(normalizeProduct) : []),
@@ -234,5 +236,7 @@ export const useProducts = () => {
     error,
     updateProduct,
     updateStock,
+    searchQuery,
+    setSearchQuery,
   };
 };

@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { ActivityIndicator, SafeAreaView, Text, View } from "react-native";
 import { useProducts } from "../../hooks/useProducts";
 import AddressHeader from "../Home/AddressHeader";
-import SearchBar from "../Home/SearchBar/SearchBar";
 import ProductFilter from "./ProductFilter";
 import ProductList from "./ProductList";
 import ProductModal from "./ProductModal";
+import ProductSearchBar from "./ProductSearchBar";
 
 const Products = () => {
   const { products, loading, error } = useProducts();
@@ -29,6 +29,7 @@ const Products = () => {
           </View>
         ) : (
           <>
+            <ProductSearchBar />
             <ProductFilter />
             <ProductList products={products} onAddToCart={handleAddToCart} />
           </>
