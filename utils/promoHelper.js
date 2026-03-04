@@ -44,18 +44,17 @@ export const calculateChickenWeight = (cartItems) => {
       item.type?.toLowerCase().includes("chicken");
 
     if (isChicken) {
-      const quantity = item.quantity || item.custQuantity || 0;
+      const quantity = item.quantity || 0;
       let weightPerUnit = 0;
 
-      // First check for netWeight in customizations (like in the example object)
-      if (item.customizations?.netWeight) {
-        const netWeightStr = item.customizations.netWeight.toLowerCase();
-        // Handle different weight formats (gms, kg, etc.)
+      // Check variantLabel for weight (e.g. "250gms", "1kg")
+      if (item.variantLabel) {
+        const netWeightStr = item.variantLabel.toLowerCase();
         const gMatch = netWeightStr.match(/(\d+(?:\.\d+)?)\s*g(?:ms)?/);
         const kgMatch = netWeightStr.match(/(\d+(?:\.\d+)?)\s*kg/);
 
         if (gMatch) {
-          weightPerUnit = parseFloat(gMatch[1]) / 1000; // Convert grams to kg
+          weightPerUnit = parseFloat(gMatch[1]) / 1000;
         } else if (kgMatch) {
           weightPerUnit = parseFloat(kgMatch[1]);
         }
@@ -119,14 +118,14 @@ const getCheapestChickenItem = (cartItems) => {
       item.categoryName?.toLowerCase().includes("chicken") ||
       item.name?.toLowerCase().includes("chicken") ||
       item.productName?.toLowerCase().includes("chicken");
-    return isChicken && (item.quantity || item.custQuantity) > 0;
+    return isChicken && item.quantity > 0;
   });
 
   if (chickenItems.length === 0) return null;
 
   return chickenItems.reduce((min, item) => {
-    const currentPrice = item.base_price || item.itemPrice || item.totalPrice || 0;
-    const minPrice = min.base_price || min.itemPrice || min.totalPrice || 0;
+    const currentPrice = item.unitPrice || 0;
+    const minPrice = min.unitPrice || 0;
     return currentPrice < minPrice ? item : min;
   });
 };

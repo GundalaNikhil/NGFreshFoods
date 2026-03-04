@@ -30,17 +30,19 @@ const CartSummary = ({
 
         <View className="flex-row justify-between items-center mb-3">
           <Text className="text-[14px] text-gray-600 font-medium">Delivery Partner Fee</Text>
-          <Text className="text-[14px] text-gray-800 font-semibold">
-            ₹{deliveryFee.toFixed(2)}
+          <Text className={`text-[14px] ${deliveryFee === 0 ? "text-green-600 font-bold" : "text-gray-800 font-semibold"}`}>
+            {deliveryFee === 0 ? "FREE" : `₹${deliveryFee.toFixed(2)}`}
           </Text>
         </View>
 
-        <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-[14px] text-gray-600 font-medium">Taxes and Charges</Text>
-          <Text className="text-[14px] text-gray-800 font-semibold">
-            ₹{taxes.toFixed(2)}
-          </Text>
-        </View>
+        {taxes > 0 && (
+          <View className="flex-row justify-between items-center mb-3">
+            <Text className="text-[14px] text-gray-600 font-medium">Taxes and Charges</Text>
+            <Text className="text-[14px] text-gray-800 font-semibold">
+              ₹{taxes.toFixed(2)}
+            </Text>
+          </View>
+        )}
 
         <View className="h-[1px] bg-gray-50 my-2" />
 

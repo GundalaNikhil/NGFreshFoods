@@ -46,14 +46,14 @@ const CartPromoCode = ({
     }
   }, [selectedOffer, appliedPromoCode]);
 
-  const handleApplyPromo = () => {
-    if (!promoCode.trim()) {
+  const applyCode = (code) => {
+    if (!code.trim()) {
       setError("Please enter a coupon code");
       return;
     }
 
     setLoading(true);
-    onApplyPromo({ promoCode: promoCode.toUpperCase() }).then((result) => {
+    onApplyPromo({ promoCode: code.toUpperCase() }).then((result) => {
       setLoading(false);
       if (result?.ok) {
         setError("");
@@ -69,6 +69,10 @@ const CartPromoCode = ({
         setSuccess("");
       }
     });
+  };
+
+  const handleApplyPromo = () => {
+    applyCode(promoCode);
   };
 
   const handleRemovePromo = () => {
@@ -92,7 +96,8 @@ const CartPromoCode = ({
   const handleSuggestionSelect = (coupon) => {
     setPromoCode(coupon.code);
     setShowSuggestions(false);
-    setTimeout(() => handleApplyPromo(), 100);
+    // Call applyCode directly with the code — avoids stale closure on promoCode state
+    applyCode(coupon.code);
   };
 
   const eligibleCoupons = availableCoupons.filter((coupon) => {
@@ -191,9 +196,12 @@ const CartPromoCode = ({
           )}
 
           {couponsLoading ? (
-            <Text className="text-[11px] text-gray-400 mt-3">
-              Loading coupons...
-            </Text>
+            <View className="items-center justify-center py-6">
+              <ActivityIndicator size="large" color="#16A34A" />
+              <Text className="text-[12px] text-gray-400 mt-2 font-medium">
+                Loading coupons...
+              </Text>
+            </View>
           ) : null}
           {couponsError ? (
             <TouchableOpacity onPress={onReloadCoupons} className="mt-3">

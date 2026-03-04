@@ -145,8 +145,10 @@ const Cart = () => {
   };
 
   const itemCount = getItemCount();
-  const DELIVERY_FEE = 25.0;
-  const TAX_RATE = 0.05;
+  const MIN_ORDER_FOR_FREE_DELIVERY = 500.0;
+  const DELIVERY_FEE = cartTotal >= MIN_ORDER_FOR_FREE_DELIVERY ? 0 : 25.0;
+  const ENABLE_TAXES = false; // Flag to disable taxes for now
+  const TAX_RATE = ENABLE_TAXES ? 0.05 : 0;
   const grandTotal = (cartTotal - promoDiscount + DELIVERY_FEE) * (1 + TAX_RATE);
 
   // ── Checkout handlers ──

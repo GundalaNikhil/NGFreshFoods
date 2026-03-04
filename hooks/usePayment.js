@@ -54,37 +54,24 @@ export const usePayment = () => {
    */
   const buildOrderPayload = useCallback(() => {
     const items = cart.map((item) => ({
-      productId: item.id || item.productId || null,
-      categoryId: item.categoryId || null,
+      productId: item.productId || null,
+      variantId: item.variantId || null,
+      addonIds: item.addonIds || [],
+      quantity: item.quantity || 1,
+      price: item.unitPrice || 0, // For server-side mismatch detection only
+      totalPrice: item.lineTotal || 0,
+      // Legacy fields (ignored by server but kept for backward compat)
       name: item.name || "Item",
-      imageUrl: item.image_url || item.imageUrl || null,
-      // Use custQuantity (billing qty) — matches cartTotalSelector logic
-      quantity: item.custQuantity || item.quantity || 1,
-      price: item.itemPrice || item.base_price || 0,
-      // Use custPrice (billing total) — matches cartTotalSelector logic
-      totalPrice: item.custPrice || item.totalPrice || 0,
-      customizations: item.customizations
-        ? JSON.stringify(item.customizations)
-        : null,
+      imageUrl: item.imageUrl || null,
     }));
 
     const promoCode = cartData?.promoCode || null;
     const discountAmount = cartData?.discountAmount || 0;
 
-    // Get userId from profile atom (not auth atom)
     const userId = profile?.userId || null;
 
     console.log("[usePayment] buildOrderPayload:", {
       userId,
-      profileState: JSON.stringify({
-        userId: profile?.userId,
-        email: profile?.email,
-        firstName: profile?.firstName,
-      }),
-      authState: JSON.stringify({
-        isAuthenticated: authState?.isAuthenticated,
-        hasToken: !!authState?.token,
-      }),
       itemCount: items.length,
       cartTotal,
       promoCode,

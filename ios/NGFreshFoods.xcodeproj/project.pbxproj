@@ -14,8 +14,8 @@
 		96905EF65AED1B983A6B3ABC /* libPods-NGFreshFoods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58EEBF8E8E6FB1BC6CAF49B5 /* libPods-NGFreshFoods.a */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		202EDE044F5843F7AE3D26FF /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0C44AC3990D34E20A97CEAC6 /* GoogleService-Info.plist */; };
-		81B0241C3E9E4B4F8E39EE70 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE64DAB2D208440AA71C9849 /* noop-file.swift */; };
+		DFFF981F5F4C4ADCB56E6490 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 586D73E6CBDD41059C4C2E0C /* GoogleService-Info.plist */; };
+		7630FDFD6339493788C967DC /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667A03DD452A4B7089A6F189 /* noop-file.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,9 +32,9 @@
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-NGFreshFoods/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		0C44AC3990D34E20A97CEAC6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; name = "GoogleService-Info.plist"; path = "NGFreshFoods/GoogleService-Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
-		DE64DAB2D208440AA71C9849 /* noop-file.swift */ = {isa = PBXFileReference; name = "noop-file.swift"; path = "NGFreshFoods/noop-file.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		DDE3015209C94014A925B9C6 /* NGFreshFoods-Bridging-Header.h */ = {isa = PBXFileReference; name = "NGFreshFoods-Bridging-Header.h"; path = "NGFreshFoods/NGFreshFoods-Bridging-Header.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
+		586D73E6CBDD41059C4C2E0C /* GoogleService-Info.plist */ = {isa = PBXFileReference; name = "GoogleService-Info.plist"; path = "NGFreshFoods/GoogleService-Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
+		667A03DD452A4B7089A6F189 /* noop-file.swift */ = {isa = PBXFileReference; name = "noop-file.swift"; path = "NGFreshFoods/noop-file.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		FF746FA4FFE1403FBDAED8AF /* NGFreshFoods-Bridging-Header.h */ = {isa = PBXFileReference; name = "NGFreshFoods-Bridging-Header.h"; path = "NGFreshFoods/NGFreshFoods-Bridging-Header.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,9 +59,9 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				0C44AC3990D34E20A97CEAC6 /* GoogleService-Info.plist */,
-				DE64DAB2D208440AA71C9849 /* noop-file.swift */,
-				DDE3015209C94014A925B9C6 /* NGFreshFoods-Bridging-Header.h */,
+				586D73E6CBDD41059C4C2E0C /* GoogleService-Info.plist */,
+				667A03DD452A4B7089A6F189 /* noop-file.swift */,
+				FF746FA4FFE1403FBDAED8AF /* NGFreshFoods-Bridging-Header.h */,
 			);
 			name = NGFreshFoods;
 			sourceTree = "<group>";
@@ -201,8 +201,8 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				202EDE044F5843F7AE3D26FF /* GoogleService-Info.plist in Resources */,
-				B5BF155FE5B6493C8A4641A7 /* NGFreshFoods-Bridging-Header.h in Resources */,
+				DFFF981F5F4C4ADCB56E6490 /* GoogleService-Info.plist in Resources */,
+				A898F99B02FA47EC9ADD0900 /* NGFreshFoods-Bridging-Header.h in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,7 +278,7 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
-				81B0241C3E9E4B4F8E39EE70 /* noop-file.swift in Sources */,
+				7630FDFD6339493788C967DC /* noop-file.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { getEntityImageUrl } from "../utils/imageUrl";
 import {
@@ -25,18 +25,27 @@ const normalizeProduct = (product) => {
   return {
     ...product,
     id: resolvedId,
+    productId: resolvedId,
     product_id: resolvedId,
+    categoryId: resolvedCategoryId,
     category_id: resolvedCategoryId,
     base_price:
       product?.base_price ?? product?.basePrice ?? product?.price ?? 0,
+    basePrice:
+      product?.basePrice ?? product?.base_price ?? product?.price ?? 0,
     price: product?.price ?? product?.base_price ?? product?.basePrice ?? 0,
     unit: product?.unit ?? product?.perQuantity ?? "",
     perQuantity: product?.perQuantity ?? product?.unit ?? "",
     stock_quantity: product?.stock_quantity ?? product?.stockQuantity ?? 0,
+    stockQuantity: product?.stockQuantity ?? product?.stock_quantity ?? 0,
     image_url: resolvedImageUrl,
+    imageUrl: resolvedImageUrl,
     image: resolvedImageUrl,
     tags: Array.isArray(product?.tags) ? product.tags : [],
     nutritional_info: product?.nutritional_info || {},
+    // Variant/addon data from API (empty for fallback/static data)
+    variants: product?.variants || [],
+    addons: product?.addons || [],
   };
 };
 
@@ -55,13 +64,15 @@ const dedupeByCategoryId = (items = []) => {
   });
 };
 
+// Module-level flag — shared across ALL hook instances so API is called only once
+let _catalogLoaded = false;
+
 export const useProducts = () => {
   const [products, setProducts] = useRecoilState(productsState);
   const [categories, setCategories] = useRecoilState(categoriesState);
   const [selectedCategory, setSelectedCategory] = useRecoilState(
     selectedCategoryState
   );
-  const hasLoadedRef = useRef(false);
   const filteredProducts = useRecoilValue(filteredProductsSelector);
   const normalizedProducts = useMemo(
     () => products.map(normalizeProduct),
@@ -77,8 +88,8 @@ export const useProducts = () => {
   );
 
   useEffect(() => {
-    if (hasLoadedRef.current) return;
-    hasLoadedRef.current = true;
+    if (_catalogLoaded) return;
+    _catalogLoaded = true;
 
     let isActive = true;
 
@@ -121,11 +132,11 @@ export const useProducts = () => {
     };
   }, [setProducts, setCategories]);
 
-  const hasNormalizedProducts = useRef(false);
-  const hasNormalizedCategories = useRef(false);
+  const hasNormalizedProducts = useMemo(() => ({ done: false }), []);
+  const hasNormalizedCategories = useMemo(() => ({ done: false }), []);
 
   useEffect(() => {
-    if (hasNormalizedProducts.current || products.length === 0) return;
+    if (hasNormalizedProducts.done || products.length === 0) return;
     const hasLegacySchema = products.some(
       (product) =>
         (product?.product_id && !product?.id) ||
@@ -139,11 +150,11 @@ export const useProducts = () => {
     if (hasLegacySchema) {
       setProducts((current) => current.map(normalizeProduct));
     }
-    hasNormalizedProducts.current = true;
+    hasNormalizedProducts.done = true;
   }, [products, setProducts]);
 
   useEffect(() => {
-    if (hasNormalizedCategories.current || categories.length === 0) return;
+    if (hasNormalizedCategories.done || categories.length === 0) return;
     const hasLegacyCategories = categories.some(
       (category) => !category?.category_id && category?.categoryId
     );
@@ -151,7 +162,7 @@ export const useProducts = () => {
     if (hasLegacyCategories) {
       setCategories((current) => dedupeByCategoryId(current.map(normalizeCategory)));
     }
-    hasNormalizedCategories.current = true;
+    hasNormalizedCategories.done = true;
   }, [categories, setCategories]);
 
   useEffect(() => {

@@ -9,108 +9,118 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { calculateUnitPrice } from "../../utils/cartHelper";
 
-const WEIGHT_OPTIONS = [
-  { label: "250gms", value: "250gms" },
-  { label: "500gms", value: "500gms" },
-  { label: "750gms", value: "750gms" },
-  { label: "1kg", value: "1kg" },
-];
-
-const SKIN_OPTIONS = [
-  { label: "Skin", value: "Skin", additionalPrice: 0 },
-  { label: "Skinless", value: "Skinless", additionalPrice: 100 },
-];
-
-const FLAVOUR_OPTIONS = [
-  { label: "Normal", value: "normal", additionalPrice: 0 },
-  {
-    label: "Smoked & Turmeric",
-    value: "Smoked & Turmeric",
-    additionalPrice: 10,
-  },
-];
-
-const CHICKEN_CUT_OPTIONS = [
-  { label: "Small", value: "Small Cut Pieces", additionalPrice: 0 },
-  { label: "Medium", value: "Medium Cut Pieces", additionalPrice: 0 },
-  { label: "Large", value: "Large Cut Pieces", additionalPrice: 0 },
-];
-
+/**
+ * ChickenCustomizationModal
+ *
+ * Renders variant/addon options from API data (product.variants, product.addons).
+ * No hardcoded arrays — everything comes from the DB.
+ *
+ * @param {Object}   product      – product with variants[] and addons[] from API
+ * @param {boolean}  visible
+ * @param {Function} onClose
+ * @param {Function} onAddToCart  – called with (product, selectedVariant, selectedAddons)
+ */
 const ChickenCustomizationModal = ({
   product,
   visible,
   onClose,
   onAddToCart,
-  weightOptions = WEIGHT_OPTIONS,
-  skinOptions = SKIN_OPTIONS,
-  flavourOptions = FLAVOUR_OPTIONS,
-  cutOptions = CHICKEN_CUT_OPTIONS,
-  customPriceCalculator = null,
 }) => {
-  const [selectedWeight, setSelectedWeight] = useState(weightOptions[0]?.value);
-  const [selectedSkin, setSelectedSkin] = useState(skinOptions[0]?.value);
-  const [selectedFlavour, setSelectedFlavour] = useState(
-    flavourOptions[0]?.value
-  );
-  const [selectedCut, setSelectedCut] = useState(cutOptions[0]?.value);
+  const variants = product?.variants || [];
+  const addons = product?.addons || [];
+
+  // Group addons by addonGroup
+  const addonGroups = useMemo(() => {
+    const groups = {};
+    addons.forEach((addon) => {
+      if (!groups[addon.addonGroup]) {
+        groups[addon.addonGroup] = [];
+      }
+      groups[addon.addonGroup].push(addon);
+    });
+    return groups;
+  }, [addons]);
+
+  // Initialize selections to defaults
+  const defaultVariant = variants.find((v) => v.isDefault) || variants[0] || null;
+  const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
+
+  // Default addon per group
+  const getDefaultAddonSelections = () => {
+    const selections = {};
+    Object.entries(addonGroups).forEach(([group, options]) => {
+      const defaultOpt = options.find((a) => a.isDefault) || options[0];
+      if (defaultOpt) selections[group] = defaultOpt;
+    });
+    return selections;
+  };
+  const [addonSelections, setAddonSelections] = useState(getDefaultAddonSelections());
   const [loading, setLoading] = useState(false);
 
-  const calculateTotalPrice = useMemo(() => {
-    if (customPriceCalculator) {
-      return customPriceCalculator({
-        basePrice: product.base_price,
-        weight: selectedWeight,
-        skin: selectedSkin,
-        flavour: selectedFlavour,
-        cut: selectedCut,
-      });
+  // Reset selections when modal opens with a different product
+  React.useEffect(() => {
+    if (visible) {
+      const defVar = variants.find((v) => v.isDefault) || variants[0] || null;
+      setSelectedVariant(defVar);
+      setAddonSelections(getDefaultAddonSelections());
     }
+  }, [visible, product?.productId]);
 
-    const weightMultipliers = {
-      "250gms": 0.25,
-      "500gms": 0.5,
-      "750gms": 0.75,
-      "1kg": 1,
-    };
+  const selectedAddons = Object.values(addonSelections).filter(Boolean);
 
-    const weightAdjustedPrice =
-      product.base_price * (weightMultipliers[selectedWeight] || 0.25);
-    const skinExtra = selectedSkin === "Skinless" ? 100 : 0;
-    const flavourExtra = selectedFlavour === "Smoked & Turmeric" ? 10 : 0;
-
-    return weightAdjustedPrice + skinExtra + flavourExtra;
-  }, [
-    product,
-    selectedWeight,
-    selectedSkin,
-    selectedFlavour,
-    selectedCut,
-    customPriceCalculator,
-  ]);
+  const totalPrice = useMemo(() => {
+    if (!selectedVariant) return product?.base_price || product?.basePrice || 0;
+    return calculateUnitPrice(selectedVariant.price, selectedAddons);
+  }, [selectedVariant, selectedAddons, product]);
 
   const handleAddToCart = async () => {
     setLoading(true);
-    const customizedProduct = {
-      ...product,
-      customizations: {
-        netWeight: selectedWeight,
-        skinType: selectedSkin,
-        flavour: selectedFlavour,
-        cutSize: selectedCut,
-      },
-      base_price: calculateTotalPrice,
-    };
-
-    await onAddToCart(customizedProduct);
+    await onAddToCart(product, selectedVariant, selectedAddons);
     setLoading(false);
     onClose();
   };
 
+  const handleSelectAddon = (group, addon) => {
+    setAddonSelections((prev) => ({ ...prev, [group]: addon }));
+  };
+
+  // ── Rendering ──
+
+  const colorSchemes = {
+    default: {
+      container: "bg-rose-50",
+      default: "bg-white border-rose-200",
+      selected: "bg-rose-600 border-rose-600",
+    },
+    SKIN: {
+      container: "bg-amber-50",
+      default: "bg-white border-amber-200",
+      selected: "bg-amber-600 border-amber-600",
+    },
+    CUT_SIZE: {
+      container: "bg-emerald-50",
+      default: "bg-white border-emerald-200",
+      selected: "bg-emerald-600 border-emerald-600",
+    },
+    FLAVOUR: {
+      container: "bg-orange-50",
+      default: "bg-white border-orange-200",
+      selected: "bg-orange-500 border-orange-500",
+    },
+  };
+
+  const groupLabels = {
+    SKIN: "Type of Meat",
+    FLAVOUR: "Flavour",
+    CUT_SIZE: "Cut Size Pieces",
+  };
+
   const renderOptionButton = (option, isSelected, onSelect, colorScheme) => (
     <TouchableOpacity
-      key={option.value}
-      onPress={() => onSelect(option.value)}
+      key={option.variantId || option.addonId}
+      onPress={() => onSelect(option)}
       className={`border rounded-lg p-3 mb-2 mr-2 ${
         isSelected ? colorScheme.selected : colorScheme.default
       }`}
@@ -122,32 +132,27 @@ const ChickenCustomizationModal = ({
       >
         {option.label}
       </Text>
-      {option.additionalPrice > 0 && (
+      {(option.extraPrice > 0) && (
         <Text
           className={`text-xs mt-1 ${
             isSelected ? "text-white/80" : "text-gray-500"
           }`}
         >
-          + ₹{option.additionalPrice}
+          + ₹{option.extraPrice}
         </Text>
       )}
     </TouchableOpacity>
   );
 
-  const renderSection = (
-    title,
-    options,
-    selectedValue,
-    onSelect,
-    colorScheme
-  ) => (
-    <View className={`p-4 rounded-xl mb-4 ${colorScheme.container}`}>
+  const renderSection = (key, title, options, selectedOption, onSelect, colorScheme) => (
+    <View key={key} className={`p-4 rounded-xl mb-4 ${colorScheme.container}`}>
       <Text className="text-lg font-semibold text-gray-800 mb-3">{title}</Text>
       <View className="flex-row flex-wrap">
         {options.map((option) =>
           renderOptionButton(
             option,
-            selectedValue === option.value,
+            (selectedOption?.variantId || selectedOption?.addonId) ===
+              (option.variantId || option.addonId),
             onSelect,
             colorScheme
           )
@@ -156,28 +161,7 @@ const ChickenCustomizationModal = ({
     </View>
   );
 
-  const colorSchemes = {
-    weight: {
-      container: "bg-rose-50",
-      default: "bg-white border-rose-200",
-      selected: "bg-rose-600 border-rose-600",
-    },
-    skin: {
-      container: "bg-amber-50",
-      default: "bg-white border-amber-200",
-      selected: "bg-amber-600 border-amber-600",
-    },
-    cut: {
-      container: "bg-emerald-50",
-      default: "bg-white border-emerald-200",
-      selected: "bg-emerald-600 border-emerald-600",
-    },
-    flavour: {
-      container: "bg-orange-50",
-      default: "bg-white border-orange-200",
-      selected: "bg-orange-500 border-orange-500",
-    },
-  };
+  if (!variants.length && !addons.length) return null;
 
   return (
     <Modal
@@ -203,44 +187,41 @@ const ChickenCustomizationModal = ({
           </View>
 
           <ScrollView className="p-4" showsVerticalScrollIndicator={false}>
-            {renderSection(
-              "Net Weight",
-              weightOptions,
-              selectedWeight,
-              setSelectedWeight,
-              colorSchemes.weight
-            )}
-            {renderSection(
-              "Type of Meat",
-              skinOptions,
-              selectedSkin,
-              setSelectedSkin,
-              colorSchemes.skin
-            )}
-            {renderSection(
-              "Cut Size Pieces",
-              cutOptions,
-              selectedCut,
-              setSelectedCut,
-              colorSchemes.cut
-            )}
-            {renderSection(
-              "Flavour",
-              flavourOptions,
-              selectedFlavour,
-              setSelectedFlavour,
-              colorSchemes.flavour
+            {/* Variant selection (weight) */}
+            {variants.length > 0 &&
+              renderSection(
+                "variants",
+                "Net Weight",
+                variants,
+                selectedVariant,
+                setSelectedVariant,
+                colorSchemes.default
+              )}
+
+            {/* Addon group selections */}
+            {Object.entries(addonGroups).map(([group, options]) =>
+              renderSection(
+                `addon-${group}`,
+                groupLabels[group] || group,
+                options,
+                addonSelections[group],
+                (addon) => handleSelectAddon(group, addon),
+                colorSchemes[group] || colorSchemes.default
+              )
             )}
           </ScrollView>
 
           <View className="p-4 border-t border-gray-100">
             <View className="bg-gray-50 p-4 rounded-xl mb-4">
               <Text className="text-2xl font-bold text-gray-800">
-                ₹{calculateTotalPrice.toFixed(2)}
+                ₹{totalPrice.toFixed(2)}
               </Text>
               <Text className="text-sm text-gray-600 mt-1">
-                {selectedWeight} | {selectedCut} | {selectedSkin} |{" "}
-                {selectedFlavour}
+                {selectedVariant?.label || ""}{" "}
+                {selectedAddons
+                  .filter((a) => a.extraPrice > 0)
+                  .map((a) => `+ ${a.label}`)
+                  .join(" ")}
               </Text>
             </View>
 

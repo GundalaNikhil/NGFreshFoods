@@ -9,22 +9,22 @@ const CartItems = () => {
 
   const handleQuantityChange = (item, newQuantity) => {
     if (newQuantity === 0) {
-      removeFromCart(item.productId);
+      removeFromCart(item.cartKey);
     } else {
-      updateQuantity(item.productId, newQuantity);
+      updateQuantity(item.cartKey, newQuantity);
     }
   };
 
   return (
     <View className="px-4 py-2">
-      {cart.map((item, index) => {
+      {cart.map((item) => {
         const imageUri =
           getEntityImageUrl(item) ||
           "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=800&auto=format&fit=crop";
 
         return (
         <View
-          key={item.productId}
+          key={item.cartKey}
           className="flex-row items-center py-4 border-b border-gray-50 last:border-b-0"
         >
           {/* Left: Image */}
@@ -55,14 +55,22 @@ const CartItems = () => {
               </Text>
             </View>
             
+            {/* Variant + Addon tags */}
             <View className="flex-row flex-wrap mt-1.5">
-              {item.customizations && Object.entries(item.customizations).map(([key, value], i) => (
+              {item.variantLabel && (
+                <View className="bg-rose-50 px-2 py-0.5 rounded-md mr-1.5 mb-1.5 border border-rose-200/50">
+                  <Text className="text-[10px] text-rose-700 font-bold uppercase tracking-tight">
+                    {item.variantLabel}
+                  </Text>
+                </View>
+              )}
+              {(item.addonLabels || []).map((label, i) => (
                 <View 
                   key={i} 
                   className="bg-gray-100/80 px-2 py-0.5 rounded-md mr-1.5 mb-1.5 border border-gray-200/50"
                 >
                   <Text className="text-[10px] text-gray-600 font-bold uppercase tracking-tight">
-                    {value}
+                    {label}
                   </Text>
                 </View>
               ))}
@@ -73,18 +81,18 @@ const CartItems = () => {
           <View className="items-end">
             <View className="bg-white border border-gray-200 rounded-lg h-7 flex-row items-center shadow-sm shadow-black/5 min-w-[70px] justify-between mb-2">
               <TouchableOpacity
-                onPress={() => handleQuantityChange(item, item.custQuantity - 1)}
+                onPress={() => handleQuantityChange(item, item.quantity - 1)}
                 className="w-6 items-center justify-center h-full"
               >
                 <Minus size={12} color="#1C1C1C" strokeWidth={4} />
               </TouchableOpacity>
               
               <Text className="text-[12px] font-black text-gray-900">
-                {item.custQuantity}
+                {item.quantity}
               </Text>
 
               <TouchableOpacity
-                onPress={() => handleQuantityChange(item, item.custQuantity + 1)}
+                onPress={() => handleQuantityChange(item, item.quantity + 1)}
                 className="w-6 items-center justify-center h-full"
               >
                 <Plus size={12} color="#1C1C1C" strokeWidth={4} />
@@ -92,7 +100,7 @@ const CartItems = () => {
             </View>
             
             <Text className="text-[13px] font-bold text-gray-900">
-              ₹{item.totalPrice}
+              ₹{item.lineTotal}
             </Text>
           </View>
         </View>

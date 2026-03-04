@@ -12,16 +12,21 @@ const ProductCard = ({ product, onAddToCart }) => {
     ((product.mrp - product.base_price) / product.mrp) * 100
   );
 
+  const hasCustomizations =
+    (product.variants && product.variants.length > 0) ||
+    (product.addons && product.addons.length > 0);
+
   const handleAddToCartClick = () => {
-    if (product.category_id === "CAT_DAIRY_EGGS") {
-      addToCart(product);
-    } else {
+    if (hasCustomizations) {
       setQuantityModalVisible(true);
+    } else {
+      // Non-customizable product (eggs, dairy, etc.) — add directly
+      addToCart(product, null, []);
     }
   };
 
-  const handleCustomizedAddToCart = (customizedProduct) => {
-    addToCart(product, customizedProduct.customizations);
+  const handleCustomizedAddToCart = (prod, selectedVariant, selectedAddons) => {
+    addToCart(prod, selectedVariant, selectedAddons);
     setQuantityModalVisible(false);
   };
 
@@ -79,14 +84,16 @@ const ProductCard = ({ product, onAddToCart }) => {
               </View>
             </TouchableOpacity>
           </View>
-          <Text className="text-[10px] text-gray-400 mt-4 text-center">
-            Customizable
-          </Text>
+          {hasCustomizations && (
+            <Text className="text-[10px] text-gray-400 mt-4 text-center">
+              Customizable
+            </Text>
+          )}
         </View>
       </View>
 
-      {/* Customization Modal */}
-      {product.category_id === "CAT_CHICKEN" && (
+      {/* Customization Modal — now data-driven from API */}
+      {hasCustomizations && (
         <ChickenCustomizationModal
           visible={quantityModalVisible}
           product={product}

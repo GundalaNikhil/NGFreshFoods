@@ -7,21 +7,7 @@ export const cartTotalSelector = selector({
   get: ({ get }) => {
     const cart = get(cartState);
     const items = cart.items || [];
-    return items.reduce((total, item) => {
-      let itemTotal;
-
-      if (item.custPrice !== undefined) {
-        itemTotal = item.custPrice;
-      } else if (item.totalPrice !== undefined) {
-        itemTotal = item.totalPrice;
-      } else {
-        const basePrice = item.itemPrice || item.base_price;
-        const quantity = item.custQuantity || item.quantity;
-        itemTotal = basePrice * quantity;
-      }
-
-      return total + itemTotal;
-    }, 0);
+    return items.reduce((total, item) => total + (item.lineTotal || 0), 0);
   },
 });
 
@@ -30,10 +16,7 @@ export const cartItemsCountSelector = selector({
   get: ({ get }) => {
     const cart = get(cartState);
     const items = cart.items || [];
-    return items.reduce((count, item) => {
-      const quantity = item.custQuantity || item.quantity;
-      return count + quantity;
-    }, 0);
+    return items.reduce((count, item) => count + (item.quantity || 0), 0);
   },
 });
 

@@ -7,7 +7,7 @@ import {
   cartItemsCountSelector,
   cartTotalSelector,
 } from "../recoil/selectors/cartSelector";
-import { generateCustomProductId } from "../utils/cartHelper";
+import { generateCartKey, calculateUnitPrice } from "../utils/cartHelper";
 import { useProducts } from "./useProducts";
 import { clearCart as clearServerCart } from "../services/bff/cartBff";
 
@@ -22,141 +22,128 @@ export const useCart = () => {
 
   const cartItems = cart?.items || [];
 
-  // ── helpers ──
-
   const bumpVersion = (cartObj) => ({
     ...cartObj,
     _version: (cartObj._version || 0) + 1,
   });
 
-  const calculateCustomPrice = (product, customizations) => {
-    if (!customizations) return product.base_price;
-
-    const weightMultipliers = {
-      "250gms": 0.25,
-      "500gms": 0.5,
-      "750gms": 0.75,
-      "1kg": 1,
-    };
-
-    const weightAdjustedPrice =
-      product.base_price * (weightMultipliers[customizations.netWeight] || 0.25);
-    const skinExtra = customizations.skinType === "Skinless" ? 100 : 0;
-    const flavourExtra =
-      customizations.flavour === "Smoked & Turmeric" ? 10 : 0;
-
-    return Number((weightAdjustedPrice + skinExtra + flavourExtra).toFixed(2));
-  };
-
-  const generateCustomizationId = (product, customizations) => {
-    if (!customizations) return null;
-    const customString = `${product.id}_${customizations.netWeight}_${customizations.skinType}_${customizations.flavour}_${customizations.cutSize}`;
-    return customString.replace(/\s+/g, "_").toLowerCase();
-  };
-
   // ── cart actions ──
 
-  const addToCart = (product, customizations = null) => {
-    const productId = generateCustomProductId(product, customizations);
-    const itemPrice = customizations
-      ? calculateCustomPrice(product, customizations)
-      : product.base_price;
-    const customizationId = generateCustomizationId(product, customizations);
+  /**
+   * Add a product to cart.
+   *
+   * @param {Object}  product          – product object from API
+   * @param {Object}  selectedVariant  – { variantId, label, price } or null for non-variant products
+   * @param {Array}   selectedAddons   – [{ addonId, label, extraPrice, addonGroup }] or []
+   */
+  const addToCart = (product, selectedVariant = null, selectedAddons = []) => {
+    const productId = product.productId || product.id;
+    const variantId = selectedVariant?.variantId || null;
+    const addonIds = selectedAddons.map((a) => a.addonId);
+    const cartKey = generateCartKey(productId, variantId, addonIds);
 
-    let shouldUpdateStock = false;
+    const unitPrice = selectedVariant
+      ? calculateUnitPrice(Number(selectedVariant.price) || 0, selectedAddons)
+      : Number(product.base_price || product.basePrice || product.price || 0);
+
+    console.log("[useCart] addToCart:", {
+      productId,
+      variantId,
+      unitPrice,
+      variantPrice: selectedVariant?.price,
+      base_price: product.base_price,
+      basePrice: product.basePrice,
+    });
 
     setCart((currentCart) => {
       const currentItems = currentCart?.items || [];
-      const existingItem = currentItems.find(
-        (item) => item.productId === productId
-      );
+      const existingItem = currentItems.find((item) => item.cartKey === cartKey);
 
       if (existingItem) {
-        shouldUpdateStock = true;
+        const newQty = existingItem.quantity + 1;
         const updatedItems = currentItems.map((item) =>
-          item.productId === productId
+          item.cartKey === cartKey
             ? {
                 ...item,
-                custQuantity: item.custQuantity + 1,
-                quantity: item.quantity + 1,
-                totalPrice: itemPrice * (item.quantity + 1),
-                custPrice: itemPrice * (item.custQuantity + 1),
+                quantity: newQty,
+                lineTotal: Number((unitPrice * newQty).toFixed(2)),
               }
             : item
         );
         return bumpVersion({ ...currentCart, items: updatedItems });
       }
 
-      shouldUpdateStock = true;
       const newItem = {
+        cartKey,
         productId,
-        customizationId,
-        ...product,
-        customizations,
+        variantId,
+        addonIds,
         quantity: 1,
-        custQuantity: 1,
-        itemPrice,
-        custPrice: itemPrice,
-        totalPrice: itemPrice,
+        unitPrice,
+        lineTotal: unitPrice,
+        // Display metadata
+        name: product.name,
+        imageUrl: product.image_url || product.imageUrl,
+        variantLabel: selectedVariant?.label || null,
+        addonLabels: selectedAddons.map((a) => a.label),
+        addonGroups: selectedAddons.reduce((acc, a) => {
+          acc[a.addonGroup] = a.label;
+          return acc;
+        }, {}),
       };
+
       return bumpVersion({
         ...currentCart,
         items: [...currentItems, newItem],
       });
     });
 
-    if (product.stock_quantity !== undefined && shouldUpdateStock) {
-      updateStock(product.id, 1);
+    if (product.stock_quantity !== undefined || product.stockQuantity !== undefined) {
+      updateStock(product.id || product.productId, 1);
     }
   };
 
-  const removeFromCart = (productId) => {
-    const item = cartItems.find((item) => item.productId === productId);
+  const removeFromCart = (cartKey) => {
+    const item = cartItems.find((item) => item.cartKey === cartKey);
     if (!item) return;
 
     setCart((current) => {
       const updatedItems = (current?.items || []).filter(
-        (i) => i.productId !== productId
+        (i) => i.cartKey !== cartKey
       );
       return bumpVersion({ ...current, items: updatedItems });
     });
 
-    if (item.stock_quantity !== undefined) {
-      updateStock(item.id, -item.quantity);
+    if (item.productId) {
+      updateStock(item.productId, -item.quantity);
     }
   };
 
-  const updateQuantity = (productId, newQuantity) => {
+  const updateQuantity = (cartKey, newQuantity) => {
     if (newQuantity < 1) {
-      removeFromCart(productId);
+      removeFromCart(cartKey);
       return;
     }
 
-    const currentItem = cartItems.find((item) => item.productId === productId);
+    const currentItem = cartItems.find((item) => item.cartKey === cartKey);
     if (!currentItem) return;
 
     const quantityDiff = newQuantity - currentItem.quantity;
 
     setCart((current) => {
       const updatedItems = (current?.items || []).map((item) => {
-        if (item.productId !== productId) return item;
-        const price = item.customizations
-          ? calculateCustomPrice(item, item.customizations)
-          : item.base_price;
+        if (item.cartKey !== cartKey) return item;
         return {
           ...item,
           quantity: newQuantity,
-          custQuantity: newQuantity,
-          itemPrice: price,
-          custPrice: price * newQuantity,
-          totalPrice: price * newQuantity,
+          lineTotal: Number((item.unitPrice * newQuantity).toFixed(2)),
         };
       });
       return bumpVersion({ ...current, items: updatedItems });
     });
 
-    if (currentItem.stock_quantity !== undefined) {
-      updateStock(currentItem.id, quantityDiff);
+    if (currentItem.productId) {
+      updateStock(currentItem.productId, quantityDiff);
     }
   };
 
@@ -171,6 +158,11 @@ export const useCart = () => {
   };
 
   const applyCoupon = (coupon, discountAmount) => {
+    console.log("[useCart] applyCoupon:", {
+      couponCode: coupon?.code || coupon?.promoCode,
+      discountAmount,
+      currentItemCount: cartItems.length,
+    });
     setCart((current) =>
       bumpVersion({
         ...current,
@@ -183,6 +175,7 @@ export const useCart = () => {
   };
 
   const removeCoupon = () => {
+    console.log("[useCart] removeCoupon, itemCount:", cartItems.length);
     setCart((current) =>
       bumpVersion({
         ...current,
@@ -195,10 +188,6 @@ export const useCart = () => {
   };
 
   const clearCart = async () => {
-    const itemsToUpdateStock = cartItems.filter(
-      (item) => item.stock_quantity !== undefined
-    );
-
     setCart(
       bumpVersion({
         items: [],
@@ -210,10 +199,6 @@ export const useCart = () => {
     );
 
     clearPromoCode();
-
-    itemsToUpdateStock.forEach((item) => {
-      updateStock(item.id, -item.quantity);
-    });
 
     if (authState?.isAuthenticated) {
       try {
