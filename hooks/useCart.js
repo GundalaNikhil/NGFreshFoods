@@ -37,7 +37,7 @@ export const useCart = () => {
    * @param {Array}   selectedAddons   – [{ addonId, label, extraPrice, addonGroup }] or []
    */
   const addToCart = (product, selectedVariant = null, selectedAddons = []) => {
-    const productId = product.productId || product.id;
+    const productId = product.product_id || product.productId || product.id;
     const variantId = selectedVariant?.variantId || null;
     const addonIds = selectedAddons.map((a) => a.addonId);
     const cartKey = generateCartKey(productId, variantId, addonIds);
