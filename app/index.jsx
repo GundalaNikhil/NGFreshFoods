@@ -1,14 +1,16 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Icon } from "@rneui/themed";
 import React, { useEffect, useRef, useState } from "react";
-import { Dimensions, Pressable, Text, View, ActivityIndicator } from "react-native";
+import { Dimensions, Pressable, Text, View, ActivityIndicator, Platform } from "react-native";
 import Reanimated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
-import { RecoilRoot, useRecoilState } from "recoil";
+import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
 import { authAtom } from "../recoil/atoms/authAtom";
+import { cartState } from "../recoil/atoms/cartAtom";
 import { auth } from "../services/firebaseConfig";
 import { onAuthStateChanged } from "@react-native-firebase/auth";
 import Toast from "react-native-toast-message";
@@ -25,6 +27,21 @@ import {
   setAuthUpdateHandler,
 } from "../services/http/apiClient";
 import CartSyncManager from "../providers/CartSyncManager";
+import { Home, CircleUserRound, ShoppingCart } from "lucide-react-native";
+
+// Material icon wrappers for filled, dark style
+const LICIOUS_RED = "#E41D2D";
+
+const HomeIcon = ({ size, color }) => <Home size={size} color={color} strokeWidth={2.2} />;
+const DrumstickIcon = ({ size, color }) => (
+  <Icon type="material-community" name="food-drumstick" size={size} color={color} />
+);
+const AccountIcon = ({ size, color }) => (
+  <CircleUserRound size={size} color={color} strokeWidth={2.2} />
+);
+const CartIcon = ({ size, color }) => (
+  <ShoppingCart size={size} color={color} strokeWidth={2.2} />
+);
 
 // Screen dimensions for responsive design
 const { height } = Dimensions.get("window");
@@ -32,43 +49,132 @@ const isSmallScreen = height < 700;
 
 const Tab = createBottomTabNavigator();
 
-// Custom tab button with Licious-style animation and feedback
-const TabButton = ({
-  children = null,
-  onPress = () => {},
-  accessibilityState = {},
-}) => {
-  const focused = accessibilityState.selected;
-  const scale = useSharedValue(1);
+const TAB_ICONS = {
+  Home: HomeIcon,
+  Products: DrumstickIcon,
+  Account: AccountIcon,
+  Cart: CartIcon,
+};
+
+// ── Premium Custom Tab Bar ──
+const CustomTabBar = ({ state, descriptors, navigation }) => {
+  const cart = useRecoilValue(cartState);
+  const itemCount = cart?.items?.length || 0;
+
+  return (
+    <View
+      style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: "#FFFFFF",
+        borderTopWidth: 1,
+        borderColor: "rgba(0,0,0,0.08)",
+        paddingTop: 6,
+        paddingBottom: Platform.OS === "ios" ? (isSmallScreen ? 10 : 18) : 6,
+        paddingHorizontal: 8,
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {state.routes.map((route, index) => {
+          const focused = state.index === index;
+          const IconComponent = TAB_ICONS[route.name];
+
+          const onPress = () => {
+            const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          return (
+            <TabItem
+              key={route.name}
+              focused={focused}
+              label={route.name}
+              IconComponent={IconComponent}
+              onPress={onPress}
+              badge={route.name === "Cart" && itemCount > 0 ? itemCount : 0}
+            />
+          );
+        })}
+      </View>
+    </View>
+  );
+};
+
+const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
+  const pillWidth = useSharedValue(focused ? 1 : 0);
 
   useEffect(() => {
-    // Smoother, more subtle animation like Licious
-    scale.value = withSpring(focused ? 1.1 : 1, {
-      damping: 15,
-      stiffness: 150,
-    });
-  }, [focused, scale]);
+    pillWidth.value = withSpring(focused ? 1 : 0, { damping: 16, stiffness: 140 });
+  }, [focused]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+  const pillAnimStyle = useAnimatedStyle(() => ({
+    paddingHorizontal: 10 + pillWidth.value * 6,
+    backgroundColor: `rgba(209, 18, 67, ${pillWidth.value * 0.06})`,
   }));
 
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-1 items-center justify-center ${
-        isSmallScreen ? "py-1" : "py-1.5"
-      }`}
+      style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
     >
       <Reanimated.View
-        className={`items-center justify-center`}
-        style={animatedStyle}
+        style={[
+          {
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: 8,
+            borderRadius: 20,
+          },
+          pillAnimStyle,
+        ]}
       >
-        {children}
-        {/* Licious-style active indicator dot */}
-        {focused && (
-          <View className="absolute -bottom-1 w-1 h-1 rounded-full bg-red-500" />
-        )}
+        {/* Icon */}
+        <View style={{ position: "relative" }}>
+          <IconComponent
+            size={20}
+            color={focused ? LICIOUS_RED : "#333333"}
+          />
+          {badge > 0 && (
+            <View
+              style={{
+                position: "absolute",
+                top: -5,
+                right: -9,
+                backgroundColor: LICIOUS_RED,
+                borderRadius: 7,
+                minWidth: 15,
+                height: 15,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingHorizontal: 3,
+                borderWidth: 1.5,
+                borderColor: "white",
+              }}
+            >
+              <Text style={{ color: "white", fontSize: 8, fontWeight: "900" }}>
+                {badge > 9 ? "9+" : badge}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <Text
+          numberOfLines={1}
+          style={{
+            marginTop: 4,
+            fontSize: 11,
+            fontWeight: focused ? "800" : "600",
+            color: focused ? LICIOUS_RED : "#333333",
+            letterSpacing: 0.2,
+          }}
+        >
+          {label}
+        </Text>
       </Reanimated.View>
     </Pressable>
   );
@@ -168,124 +274,15 @@ function RootNavigator() {
     <>
     <CartSyncManager />
     <Tab.Navigator
+        tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          tabBarStyle: {
-            backgroundColor: "white",
-            height: isSmallScreen ? 50 : 54, // Adjusted height for labels and icons
-            borderTopWidth: 1,
-            borderTopColor: "#f1f1f1",
-            paddingBottom: isSmallScreen ? 4 : 6,
-            paddingTop: 6,
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            elevation: 0, // Removing default shadow
-            shadowOpacity: 0, // Removing iOS shadow
-          },
-          tabBarActiveTintColor: "#d11243", // Restored Red active color
-          tabBarInactiveTintColor: "#666666",
-          tabBarShowLabel: true,
-          tabBarButton: (props) => <TabButton {...props} />,
-          tabBarSafeAreaInset: { bottom: 0 },
         }}
       >
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Icon
-                type="material-community"
-                name={focused ? "home" : "home-outline"}
-                size={22}
-                color={color}
-              />
-            ),
-            tabBarLabel: ({ focused }) => (
-              <Text
-                className={`text-[10px] mt-0.5 font-bold ${
-                  focused ? "text-[#d11243]" : "text-gray-500"
-                }`}
-              >
-                Home
-              </Text>
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Products"
-          component={ProductsScreen}
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Icon
-                type="material-community"
-                name={focused ? "food-drumstick" : "food-drumstick-outline"}
-                size={22}
-                color={color}
-              />
-            ),
-            tabBarLabel: ({ focused }) => (
-              <Text
-                className={`text-[10px] mt-0.5 font-bold ${
-                  focused ? "text-[#d11243]" : "text-gray-500"
-                }`}
-              >
-                Products
-              </Text>
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Account"
-          component={AccountScreen}
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <Icon
-                type="material-community"
-                name={focused ? "account" : "account-outline"}
-                size={22}
-                color={color}
-              />
-            ),
-            tabBarLabel: ({ focused }) => (
-              <Text
-                className={`text-[10px] mt-0.5 font-bold ${
-                  focused ? "text-[#d11243]" : "text-gray-500"
-                }`}
-              >
-                Account
-              </Text>
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Cart"
-          component={CartScreen}
-          options={{
-            tabBarIcon: ({ color, focused }) => (
-              <View className="relative">
-                <Icon
-                  type="material-community"
-                  name={focused ? "cart" : "cart-outline"}
-                  size={22}
-                  color={color}
-                />
-                {/* Cart badge */}
-              </View>
-            ),
-            tabBarLabel: ({ focused }) => (
-              <Text
-                className={`text-[10px] mt-0.5 font-bold ${
-                  focused ? "text-[#d11243]" : "text-gray-500"
-                }`}
-              >
-                Cart
-              </Text>
-            ),
-          }}
-        />
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Products" component={ProductsScreen} />
+        <Tab.Screen name="Account" component={AccountScreen} />
+        <Tab.Screen name="Cart" component={CartScreen} />
       </Tab.Navigator>
     </>
   );
