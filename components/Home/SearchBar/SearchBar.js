@@ -1,24 +1,62 @@
-import { Search } from "lucide-react-native";
-import React from "react";
-import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { Search, X } from "lucide-react-native";
+import React, { useRef, useState, useCallback } from "react";
+import {
+  TextInput,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Keyboard,
+} from "react-native";
+import { useProducts } from "../../../hooks/useProducts";
 
 const SearchBar = () => {
-  const navigation = useNavigation();
+  const { searchQuery, setSearchQuery, setSelectedCategory } = useProducts();
+  const inputRef = useRef(null);
+  const [isFocused, setIsFocused] = useState(false);
 
-  const handlePress = () => {
-    navigation.navigate("Products");
-  };
+  const handleClear = useCallback(() => {
+    setSearchQuery("");
+    setIsFocused(false);
+    Keyboard.dismiss();
+  }, [setSearchQuery]);
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      activeOpacity={0.8}
-      style={styles.bar}
-    >
+    <View style={[styles.bar, isFocused && styles.barFocused]}>
       <Search size={18} color="#93959f" strokeWidth={2} style={styles.icon} />
-      <Text style={styles.placeholder}>Search for chicken, eggs, mutton...</Text>
-    </TouchableOpacity>
+      <TextInput
+        ref={inputRef}
+        value={searchQuery}
+        onChangeText={(text) => {
+          setSearchQuery(text);
+          if (text.length > 0) setSelectedCategory("ALL");
+        }}
+        onFocus={() => {
+          setIsFocused(true);
+          setSelectedCategory("ALL");
+        }}
+        onBlur={() => {
+          if (!searchQuery) setIsFocused(false);
+        }}
+        placeholder="Search for chicken, eggs, mutton..."
+        placeholderTextColor="#93959f"
+        style={styles.input}
+        returnKeyType="search"
+        autoCorrect={false}
+        selectionColor="#E23744"
+      />
+      {searchQuery.length > 0 && (
+        <TouchableOpacity
+          onPress={handleClear}
+          activeOpacity={0.6}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={styles.clearBtn}
+        >
+          <View style={styles.clearCircle}>
+            <X size={12} color="#fff" strokeWidth={2.5} />
+          </View>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 };
 
@@ -33,14 +71,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7e3",
   },
+  barFocused: {
+    borderColor: "#d0d0d0",
+    backgroundColor: "#fff",
+  },
   icon: {
     marginRight: 10,
   },
-  placeholder: {
+  input: {
     flex: 1,
     fontSize: 15,
     fontWeight: "400",
-    color: "#93959f",
+    color: "#1c1c1c",
+    paddingVertical: 0,
+    height: 44,
+  },
+  clearBtn: {
+    marginLeft: 8,
+  },
+  clearCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#93959f",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

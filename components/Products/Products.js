@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { ActivityIndicator, SafeAreaView, Text, View } from "react-native";
 import { useProducts } from "../../hooks/useProducts";
-import AddressHeader from "../Home/AddressHeader";
 import ProductFilter from "./ProductFilter";
 import ProductList from "./ProductList";
 import ProductModal from "./ProductModal";
 import ProductSearchBar from "./ProductSearchBar";
 
 const Products = () => {
-  const { products, loading, error } = useProducts();
+  const { products, loading, error, searchQuery } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  const isSearching = searchQuery.trim().length > 0;
 
   const handleAddToCart = (product) => {
     setSelectedProduct(product);
@@ -30,7 +31,7 @@ const Products = () => {
         ) : (
           <>
             <ProductSearchBar />
-            <ProductFilter />
+            {!isSearching && <ProductFilter />}
             <ProductList products={products} onAddToCart={handleAddToCart} />
           </>
         )}
