@@ -97,6 +97,7 @@ export const usePayment = () => {
       return;
     }
     isProcessing.current = true;
+    let checkoutSucceeded = false;
 
     console.log("[usePayment] ═══ Starting checkout ═══");
     console.log("[usePayment] Auth state:", {
@@ -246,6 +247,7 @@ export const usePayment = () => {
       // NOTE: clearCart is NOT called here anymore.
       // Cart.js calls clearCartAfterSuccess() AFTER navigating to the success screen
       // to prevent the empty cart view from flashing.
+      checkoutSucceeded = true;
       return { success: true, order: { ...order, payment: verifyResult.data } };
     } catch (error) {
       const errorMessage =
@@ -273,9 +275,21 @@ export const usePayment = () => {
 
       return { success: false, error: errorMessage };
     } finally {
-      isProcessing.current = false;
+      // Only release the processing lock on failure.
+      // On success, the lock stays until Cart.js calls resetProcessingFlag().
+      if (!checkoutSucceeded) {
+        isProcessing.current = false;
+      }
     }
   }, [buildOrderPayload, setPayment, clearCart, authState, profile]);
+
+  /**
+   * Force-reset the processing flag.
+   * Called by Cart.js after navigating to the success screen.
+   */
+  const resetProcessingFlag = useCallback(() => {
+    isProcessing.current = false;
+  }, []);
 
   return {
     payment,
@@ -293,5 +307,6 @@ export const usePayment = () => {
     resetPayment,
     setPaymentMethod,
     clearCartAfterSuccess: clearCart,
+    resetProcessingFlag,
   };
 };

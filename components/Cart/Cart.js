@@ -24,6 +24,7 @@ const Cart = () => {
     resetPayment,
     setPaymentMethod,
     clearCartAfterSuccess,
+    resetProcessingFlag,
   } = usePayment();
 
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
@@ -185,6 +186,7 @@ const Cart = () => {
     if (checkoutState !== "CREATING_ORDER" && checkoutState !== "VERIFYING") {
       setIsCheckoutVisible(false);
       setIsCheckoutInProgress(false);
+      resetProcessingFlag(); // Release so user can retry
     }
   };
 
@@ -195,8 +197,8 @@ const Cart = () => {
     setActiveScreen("success");
     resetPayment();
     setIsCheckoutInProgress(false);
+    resetProcessingFlag(); // Release the processing lock in usePayment
     // Clear cart AFTER we've navigated away from the cart view
-    // This prevents the empty cart from flashing
     setTimeout(() => {
       clearCartAfterSuccess();
     }, 300);

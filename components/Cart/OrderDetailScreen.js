@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Image,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -11,26 +12,28 @@ import {
   View,
 } from "react-native";
 import {
-  Check,
   ChevronLeft,
   Clock,
   CreditCard,
-  MapPin,
-  Package,
   Phone,
-  ShoppingBag,
-  Truck,
-  UtensilsCrossed,
 } from "lucide-react-native";
 import { fetchOrderById } from "../../services/bff/accountBff";
 
-// ── Status timeline config ──
+// ── Pixar 3D illustrations for each timeline step ──
+const TIMELINE_IMAGES = {
+  PENDING: require("../../assets/images/characters/orders/tracking/order_placed.png"),
+  CONFIRMED: require("../../assets/images/characters/orders/tracking/order_confirmed.png"),
+  PREPARING: require("../../assets/images/characters/orders/tracking/order_preparing.png"),
+  OUT_FOR_DELIVERY: require("../../assets/images/characters/orders/tracking/order_out_delivery.png"),
+  DELIVERED: require("../../assets/images/characters/orders/tracking/order_delivered.png"),
+};
+
 const TIMELINE_STEPS = [
-  { key: "PENDING",            label: "Order Placed",        icon: ShoppingBag },
-  { key: "CONFIRMED",          label: "Confirmed",           icon: Check },
-  { key: "PREPARING",          label: "Preparing",           icon: UtensilsCrossed },
-  { key: "OUT_FOR_DELIVERY",   label: "Out for Delivery",    icon: Truck },
-  { key: "DELIVERED",          label: "Delivered",            icon: Package },
+  { key: "PENDING", label: "Order Placed", subtitle: "We've received your order" },
+  { key: "CONFIRMED", label: "Confirmed", subtitle: "Your order is confirmed" },
+  { key: "PREPARING", label: "Preparing", subtitle: "Your food is being prepared" },
+  { key: "OUT_FOR_DELIVERY", label: "Out for Delivery", subtitle: "On the way to you!" },
+  { key: "DELIVERED", label: "Delivered", subtitle: "Enjoy your meal!" },
 ];
 
 const STATUS_INDEX = {
@@ -52,25 +55,31 @@ const getStatusColor = (status) => {
       return { bg: "#DBEAFE", text: "#2563EB", dot: "#2563EB" };
     case "CANCELLED":
       return { bg: "#FEE2E2", text: "#DC2626", dot: "#DC2626" };
-    default: // PENDING
+    default:
       return { bg: "#FEF3C7", text: "#D97706", dot: "#D97706" };
   }
 };
 
 /**
- * OrderDetailScreen – full order detail with status timeline, items, payment info.
- *
- * Props:
- *   orderId   – UUID string of the order to load
- *   order     – optional pre-loaded order object (if coming from success screen)
- *   onBack    – () => void
+ * OrderDetailScreen – Premium order detail with Pixar 3D timeline.
  */
 const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
   const [order, setOrder] = useState(initialOrder || null);
   const [loading, setLoading] = useState(!initialOrder);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const lineAnim = useRef(new Animated.Value(0)).current;
+
+  // Animations for timeline steps
+  const stepAnims = useRef(
+    TIMELINE_STEPS.map(() => ({
+      scale: new Animated.Value(0.5),
+      opacity: new Animated.Value(0),
+    }))
+  ).current;
+
+  // Hero image animation
+  const heroScale = useRef(new Animated.Value(0.8)).current;
+  const heroOpacity = useRef(new Animated.Value(0)).current;
 
   const loadOrder = useCallback(
     async (isRefresh = false) => {
@@ -96,15 +105,45 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
     }
   }, [initialOrder, loadOrder]);
 
-  // Animate timeline on order load
+  // Animate timeline steps sequentially
   useEffect(() => {
     if (order) {
       const activeIdx = STATUS_INDEX[order.orderStatus] ?? 0;
-      Animated.timing(lineAnim, {
-        toValue: activeIdx,
-        duration: 800,
-        useNativeDriver: false,
-      }).start();
+
+      // Hero image
+      Animated.parallel([
+        Animated.spring(heroScale, {
+          toValue: 1,
+          tension: 60,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heroOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Stagger timeline steps
+      const animations = stepAnims.slice(0, activeIdx + 1).map((anim, idx) =>
+        Animated.parallel([
+          Animated.spring(anim.scale, {
+            toValue: 1,
+            tension: 80,
+            friction: 8,
+            delay: idx * 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim.opacity, {
+            toValue: 1,
+            duration: 300,
+            delay: idx * 150,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      Animated.parallel(animations).start();
     }
   }, [order?.orderStatus]);
 
@@ -155,9 +194,10 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
   const isCancelled = order.orderStatus === "CANCELLED";
   const statusColor = getStatusColor(order.orderStatus);
   const createdAt = order.createdAt ? new Date(order.createdAt) : null;
+  const activeStepKey = TIMELINE_STEPS[Math.min(activeIdx, TIMELINE_STEPS.length - 1)]?.key || "PENDING";
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#FAFFFE" }}>
       <StatusBar barStyle="dark-content" />
       <Header orderNumber={orderNumber} onBack={onBack} />
 
@@ -169,14 +209,54 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#16A34A" />
         }
       >
+        {/* ── Hero Illustration — sticker style with glow ── */}
+        {!isCancelled && (
+          <Animated.View
+            style={{
+              alignItems: "center",
+              paddingTop: 12,
+              paddingBottom: 8,
+              opacity: heroOpacity,
+              transform: [{ scale: heroScale }],
+            }}
+          >
+            {/* Soft glow halos */}
+            <View
+              style={{
+                position: "absolute",
+                top: 20,
+                width: 150,
+                height: 150,
+                borderRadius: 75,
+                backgroundColor: "rgba(22, 163, 74, 0.05)",
+              }}
+            />
+            <View
+              style={{
+                position: "absolute",
+                top: 35,
+                width: 110,
+                height: 110,
+                borderRadius: 55,
+                backgroundColor: "rgba(22, 163, 74, 0.07)",
+              }}
+            />
+            <Image
+              source={TIMELINE_IMAGES[activeStepKey]}
+              style={{ width: 170, height: 170 }}
+              resizeMode="contain"
+            />
+          </Animated.View>
+        )}
+
         {/* ── Status Banner ── */}
         <View
           style={{
             marginHorizontal: 16,
             marginTop: 8,
             backgroundColor: statusColor.bg,
-            borderRadius: 16,
-            padding: 16,
+            borderRadius: 18,
+            padding: 18,
             flexDirection: "row",
             alignItems: "center",
           }}
@@ -187,89 +267,121 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
               height: 10,
               borderRadius: 5,
               backgroundColor: statusColor.dot,
-              marginRight: 10,
+              marginRight: 12,
             }}
           />
-          <Text style={{ fontSize: 15, fontWeight: "800", color: statusColor.text, flex: 1 }}>
-            {isCancelled ? "Order Cancelled" : order.orderStatus?.replace(/_/g, " ")}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: "900", color: statusColor.text }}>
+              {isCancelled ? "Order Cancelled" : TIMELINE_STEPS[Math.min(activeIdx, TIMELINE_STEPS.length - 1)]?.label}
+            </Text>
+            {!isCancelled && (
+              <Text style={{ fontSize: 12, color: statusColor.text, fontWeight: "500", marginTop: 2, opacity: 0.8 }}>
+                {TIMELINE_STEPS[Math.min(activeIdx, TIMELINE_STEPS.length - 1)]?.subtitle}
+              </Text>
+            )}
+          </View>
           {order.estimatedDeliveryTime && !isCancelled && order.orderStatus !== "DELIVERED" && (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Clock size={14} color={statusColor.text} strokeWidth={2.5} />
-              <Text style={{ fontSize: 13, fontWeight: "700", color: statusColor.text, marginLeft: 4 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#fff", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 }}>
+              <Clock size={13} color={statusColor.text} strokeWidth={2.5} />
+              <Text style={{ fontSize: 12, fontWeight: "800", color: statusColor.text, marginLeft: 4 }}>
                 {order.estimatedDeliveryTime}
               </Text>
             </View>
           )}
         </View>
 
-        {/* ── Status Timeline ── */}
+        {/* ── Pixar Timeline ── */}
         {!isCancelled && (
-          <View style={{ marginHorizontal: 16, marginTop: 24, marginBottom: 8 }}>
+          <View style={{ marginHorizontal: 16, marginTop: 28, marginBottom: 8 }}>
             <Text
               style={{
                 fontSize: 11,
                 fontWeight: "800",
                 color: "#9CA3AF",
                 letterSpacing: 1.5,
-                marginBottom: 16,
+                marginBottom: 20,
               }}
             >
               ORDER TIMELINE
             </Text>
+
             {TIMELINE_STEPS.map((step, idx) => {
               const isCompleted = idx <= activeIdx;
               const isActive = idx === activeIdx;
               const isLast = idx === TIMELINE_STEPS.length - 1;
-              const StepIcon = step.icon;
+              const anim = stepAnims[idx];
 
               return (
-                <View key={step.key} style={{ flexDirection: "row", minHeight: isLast ? 40 : 56 }}>
-                  {/* Left: dot + line */}
-                  <View style={{ width: 40, alignItems: "center" }}>
-                    <View
+                <View key={step.key} style={{ flexDirection: "row", minHeight: isLast ? 60 : 80 }}>
+                  {/* Left: Sticker-style illustration + connecting line */}
+                  <View style={{ width: 60, alignItems: "center" }}>
+                    <Animated.View
                       style={{
-                        width: isActive ? 32 : 24,
-                        height: isActive ? 32 : 24,
-                        borderRadius: isActive ? 16 : 12,
-                        backgroundColor: isCompleted ? "#16A34A" : "#E5E7EB",
+                        width: isActive ? 56 : 44,
+                        height: isActive ? 56 : 44,
+                        borderRadius: isActive ? 28 : 22,
+                        backgroundColor: isCompleted ? "#ECFDF5" : "#F9FAFB",
                         alignItems: "center",
                         justifyContent: "center",
-                        borderWidth: isActive ? 3 : 0,
-                        borderColor: isActive ? "#BBF7D0" : "transparent",
+                        opacity: isCompleted ? anim.opacity : 0.35,
+                        transform: [{ scale: isCompleted ? anim.scale : 1 }],
+                        overflow: "hidden",
+                        // Sticker-style soft shadow
+                        shadowColor: isActive ? "#16A34A" : "#000",
+                        shadowOffset: { width: 0, height: isActive ? 3 : 1 },
+                        shadowOpacity: isActive ? 0.15 : 0.05,
+                        shadowRadius: isActive ? 8 : 4,
+                        elevation: isActive ? 4 : 1,
                       }}
                     >
-                      <StepIcon
-                        size={isActive ? 14 : 12}
-                        color={isCompleted ? "#fff" : "#9CA3AF"}
-                        strokeWidth={2.5}
+                      <Image
+                        source={TIMELINE_IMAGES[step.key]}
+                        style={{
+                          width: isActive ? 50 : 38,
+                          height: isActive ? 50 : 38,
+                        }}
+                        resizeMode="cover"
                       />
-                    </View>
+                    </Animated.View>
+
                     {!isLast && (
                       <View
                         style={{
                           flex: 1,
-                          width: 2,
+                          width: 2.5,
                           backgroundColor: idx < activeIdx ? "#16A34A" : "#E5E7EB",
                           marginVertical: 4,
+                          borderRadius: 2,
                         }}
                       />
                     )}
                   </View>
 
-                  {/* Right: label */}
-                  <View style={{ flex: 1, paddingLeft: 12, paddingBottom: isLast ? 0 : 16, justifyContent: "center" }}>
+                  {/* Right: label + subtitle */}
+                  <View
+                    style={{
+                      flex: 1,
+                      paddingLeft: 14,
+                      paddingBottom: isLast ? 0 : 16,
+                      justifyContent: "center",
+                    }}
+                  >
                     <Text
                       style={{
-                        fontSize: isActive ? 15 : 14,
-                        fontWeight: isActive ? "800" : "600",
-                        color: isCompleted ? "#111827" : "#9CA3AF",
+                        fontSize: isActive ? 16 : 14,
+                        fontWeight: isActive ? "900" : "600",
+                        color: isCompleted ? "#111827" : "#C0C0C0",
                       }}
                     >
                       {step.label}
                     </Text>
+                    {isActive && (
+                      <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 3, fontWeight: "500" }}>
+                        {step.subtitle}
+                      </Text>
+                    )}
                     {isActive && createdAt && idx === 0 && (
-                      <Text style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+                      <Text style={{ fontSize: 11, color: "#9CA3AF", marginTop: 4 }}>
                         {createdAt.toLocaleString("en-IN", {
                           day: "numeric",
                           month: "short",
@@ -293,39 +405,36 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
               marginHorizontal: 16,
               marginTop: 20,
               backgroundColor: "#FEF2F2",
-              borderRadius: 12,
-              padding: 16,
+              borderRadius: 16,
+              padding: 18,
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: "700", color: "#DC2626", marginBottom: 4 }}>
+            <Text style={{ fontSize: 15, fontWeight: "800", color: "#DC2626", marginBottom: 6 }}>
               This order was cancelled
             </Text>
-            <Text style={{ fontSize: 12, color: "#6B7280" }}>
+            <Text style={{ fontSize: 13, color: "#6B7280", lineHeight: 18 }}>
               If you were charged, a refund will be processed within 3-5 business days.
             </Text>
           </View>
         )}
 
         {/* ── Order Items ── */}
-        <View style={{ marginHorizontal: 16, marginTop: 24 }}>
-          <Text
-            style={{
-              fontSize: 11,
-              fontWeight: "800",
-              color: "#9CA3AF",
-              letterSpacing: 1.5,
-              marginBottom: 12,
-            }}
-          >
+        <View style={{ marginHorizontal: 16, marginTop: 28 }}>
+          <Text style={{ fontSize: 11, fontWeight: "800", color: "#9CA3AF", letterSpacing: 1.5, marginBottom: 12 }}>
             ORDER ITEMS ({order.orderItems?.length || 0})
           </Text>
           <View
             style={{
-              backgroundColor: "#F9FAFB",
-              borderRadius: 16,
+              backgroundColor: "#fff",
+              borderRadius: 18,
               padding: 16,
               borderWidth: 1,
-              borderColor: "#F3F4F6",
+              borderColor: "#E5E7EB",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.03,
+              shadowRadius: 6,
+              elevation: 1,
             }}
           >
             {(order.orderItems || []).map((item, idx) => (
@@ -335,17 +444,17 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
                   flexDirection: "row",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  paddingVertical: 10,
+                  paddingVertical: 12,
                   borderBottomWidth: idx < (order.orderItems?.length || 0) - 1 ? 1 : 0,
-                  borderBottomColor: "#E5E7EB",
+                  borderBottomColor: "#F3F4F6",
                 }}
               >
                 <View style={{ flex: 1, paddingRight: 12 }}>
                   <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>
                     {item.orderName || "Item"}
                   </Text>
-                  <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>
-                    Qty: {item.quantity} × ₹{Number(item.unitPrice || 0).toFixed(2)}
+                  <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 3 }}>
+                    {item.quantity} × ₹{Number(item.unitPrice || 0).toFixed(2)}
                   </Text>
                 </View>
                 <Text style={{ fontSize: 14, fontWeight: "800", color: "#111827" }}>
@@ -358,27 +467,26 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
 
         {/* ── Bill Summary ── */}
         <View style={{ marginHorizontal: 16, marginTop: 24 }}>
-          <Text
-            style={{
-              fontSize: 11,
-              fontWeight: "800",
-              color: "#9CA3AF",
-              letterSpacing: 1.5,
-              marginBottom: 12,
-            }}
-          >
+          <Text style={{ fontSize: 11, fontWeight: "800", color: "#9CA3AF", letterSpacing: 1.5, marginBottom: 12 }}>
             BILL SUMMARY
           </Text>
           <View
             style={{
-              backgroundColor: "#F9FAFB",
-              borderRadius: 16,
+              backgroundColor: "#fff",
+              borderRadius: 18,
               padding: 16,
               borderWidth: 1,
-              borderColor: "#F3F4F6",
+              borderColor: "#E5E7EB",
             }}
           >
-            <BillRow label="Subtotal" value={`₹${(Number(order.totalAmount || 0) + Number(order.discountAmount || 0) - Number(order.deliveryFee || 0)).toFixed(2)}`} />
+            <BillRow
+              label="Subtotal"
+              value={`₹${(
+                Number(order.totalAmount || 0) +
+                Number(order.discountAmount || 0) -
+                Number(order.deliveryFee || 0)
+              ).toFixed(2)}`}
+            />
             {Number(order.discountAmount || 0) > 0 && (
               <BillRow
                 label="Discount"
@@ -388,13 +496,17 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
             )}
             <BillRow
               label="Delivery Fee"
-              value={Number(order.deliveryFee || 0) === 0 ? "FREE" : `₹${Number(order.deliveryFee).toFixed(2)}`}
+              value={
+                Number(order.deliveryFee || 0) === 0
+                  ? "FREE"
+                  : `₹${Number(order.deliveryFee).toFixed(2)}`
+              }
               valueColor={Number(order.deliveryFee || 0) === 0 ? "#16A34A" : "#111827"}
             />
-            <View style={{ height: 1, backgroundColor: "#E5E7EB", marginVertical: 12 }} />
+            <View style={{ height: 1, backgroundColor: "#F3F4F6", marginVertical: 14 }} />
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ fontSize: 15, fontWeight: "900", color: "#111827" }}>Total Paid</Text>
-              <Text style={{ fontSize: 15, fontWeight: "900", color: "#111827" }}>
+              <Text style={{ fontSize: 16, fontWeight: "900", color: "#111827" }}>Total Paid</Text>
+              <Text style={{ fontSize: 16, fontWeight: "900", color: "#111827" }}>
                 ₹{Number(order.totalAmount || 0).toFixed(2)}
               </Text>
             </View>
@@ -404,40 +516,32 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
         {/* ── Payment Info ── */}
         {order.payment && (
           <View style={{ marginHorizontal: 16, marginTop: 24 }}>
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: "800",
-                color: "#9CA3AF",
-                letterSpacing: 1.5,
-                marginBottom: 12,
-              }}
-            >
+            <Text style={{ fontSize: 11, fontWeight: "800", color: "#9CA3AF", letterSpacing: 1.5, marginBottom: 12 }}>
               PAYMENT
             </Text>
             <View
               style={{
-                backgroundColor: "#F9FAFB",
-                borderRadius: 16,
+                backgroundColor: "#fff",
+                borderRadius: 18,
                 padding: 16,
                 flexDirection: "row",
                 alignItems: "center",
                 borderWidth: 1,
-                borderColor: "#F3F4F6",
+                borderColor: "#E5E7EB",
               }}
             >
               <View
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
                   backgroundColor: "#ECFDF5",
                   alignItems: "center",
                   justifyContent: "center",
-                  marginRight: 12,
+                  marginRight: 14,
                 }}
               >
-                <CreditCard size={20} color="#16A34A" strokeWidth={2} />
+                <CreditCard size={22} color="#16A34A" strokeWidth={2} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>
@@ -459,16 +563,8 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
         {/* ── Order placed date ── */}
         {createdAt && (
           <View style={{ marginHorizontal: 16, marginTop: 24 }}>
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: "800",
-                color: "#9CA3AF",
-                letterSpacing: 1.5,
-                marginBottom: 12,
-              }}
-            >
-              ORDER PLACED
+            <Text style={{ fontSize: 11, fontWeight: "800", color: "#9CA3AF", letterSpacing: 1.5, marginBottom: 8 }}>
+              ORDERED ON
             </Text>
             <Text style={{ fontSize: 14, fontWeight: "600", color: "#374151" }}>
               {createdAt.toLocaleString("en-IN", {
@@ -488,8 +584,8 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
           <TouchableOpacity
             style={{
               backgroundColor: "#F3F4F6",
-              borderRadius: 14,
-              height: 50,
+              borderRadius: 16,
+              height: 52,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
@@ -515,36 +611,39 @@ const Header = ({ orderNumber, onBack }) => (
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 14,
       borderBottomWidth: 1,
       borderBottomColor: "#F3F4F6",
+      backgroundColor: "#FAFFFE",
     }}
   >
     <TouchableOpacity
       onPress={onBack}
       style={{
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 38,
+        height: 38,
+        borderRadius: 14,
         backgroundColor: "#F3F4F6",
         alignItems: "center",
         justifyContent: "center",
-        marginRight: 12,
+        marginRight: 14,
       }}
     >
       <ChevronLeft size={20} color="#111827" strokeWidth={2.5} />
     </TouchableOpacity>
     <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 16, fontWeight: "800", color: "#111827" }}>Order Details</Text>
+      <Text style={{ fontSize: 17, fontWeight: "900", color: "#111827" }}>Track Order</Text>
       {orderNumber ? (
-        <Text style={{ fontSize: 12, color: "#6B7280", fontWeight: "500" }}>#{orderNumber}</Text>
+        <Text style={{ fontSize: 12, color: "#6B7280", fontWeight: "500", marginTop: 1 }}>
+          #{orderNumber}
+        </Text>
       ) : null}
     </View>
   </View>
 );
 
 const BillRow = ({ label, value, valueColor }) => (
-  <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
+  <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
     <Text style={{ fontSize: 13, color: "#6B7280", fontWeight: "500" }}>{label}</Text>
     <Text style={{ fontSize: 13, fontWeight: "700", color: valueColor || "#111827" }}>{value}</Text>
   </View>
