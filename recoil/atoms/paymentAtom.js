@@ -7,7 +7,7 @@ import { atom } from "recoil";
 export const paymentAtom = atom({
   key: "paymentAtom",
   default: {
-    /** IDLE | CREATING_ORDER | AWAITING_PAYMENT | VERIFYING | SUCCESS | FAILED */
+    /** IDLE | CREATING_ORDER | AWAITING_PAYMENT | VERIFYING | SUCCESS | FAILED | CANCELLED */
     checkoutState: "IDLE",
     /** The order response from the backend */
     currentOrder: null,

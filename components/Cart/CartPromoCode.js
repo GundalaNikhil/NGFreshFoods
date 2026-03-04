@@ -156,6 +156,7 @@ const CartPromoCode = ({
             <TouchableOpacity
               onPress={handleApplyPromo}
               disabled={!promoCode.trim() || loading || isApplying}
+              style={{ width: 60, alignItems: "center", justifyContent: "center" }}
               className="ml-3"
             >
               {loading || isApplying ? (

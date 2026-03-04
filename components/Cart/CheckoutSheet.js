@@ -10,8 +10,10 @@ import {
   View,
 } from "react-native";
 import {
+  AlertTriangle,
   CheckCircle,
   CreditCard,
+  RefreshCw,
   ShieldCheck,
   Truck,
   Wallet,
@@ -25,6 +27,7 @@ const CheckoutSheet = ({
   visible,
   onClose,
   onPayOnline,
+  onRetry,
   totalPayable,
   itemCount,
   checkoutState,
@@ -73,6 +76,17 @@ const CheckoutSheet = ({
     checkoutState === "CREATING_ORDER" || checkoutState === "VERIFYING";
   const isSuccess = checkoutState === "SUCCESS";
   const isFailed = checkoutState === "FAILED";
+  const isCancelled = checkoutState === "CANCELLED";
+  const isAwaitingPayment = checkoutState === "AWAITING_PAYMENT";
+
+  // Can close the sheet? — Not during processing
+  const canClose = !isProcessing;
+
+  const handleSafeClose = () => {
+    if (!canClose) return;
+    if (!isSuccess) onReset(); // Don't reset on SUCCESS — preserve order data
+    onClose();
+  };
 
   const renderContent = () => {
     // ── Success State ──
@@ -132,37 +146,109 @@ const CheckoutSheet = ({
 
     // ── Failed State ──
     if (isFailed) {
+      const isTimeoutError = (error || "").includes("timed out");
+      const isVerifyError = (error || "").includes("Do NOT retry");
+
       return (
         <View className="items-center py-10 px-6">
-          <View className="w-20 h-20 rounded-full bg-red-50 items-center justify-center mb-5">
-            <XCircle size={44} color="#DC2626" strokeWidth={2} />
+          <View className={`w-20 h-20 rounded-full items-center justify-center mb-5 ${
+            isVerifyError ? "bg-amber-50" : "bg-red-50"
+          }`}>
+            {isVerifyError ? (
+              <AlertTriangle size={44} color="#D97706" strokeWidth={2} />
+            ) : (
+              <XCircle size={44} color="#DC2626" strokeWidth={2} />
+            )}
           </View>
           <Text className="text-2xl font-black text-gray-900 mb-2">
-            Payment Failed
+            {isVerifyError ? "Payment Uncertain" : isTimeoutError ? "Connection Timeout" : "Payment Failed"}
           </Text>
-          <Text className="text-sm text-gray-500 text-center leading-relaxed mb-8">
+          <Text className="text-sm text-gray-500 text-center leading-relaxed mb-2">
             {error || "Something went wrong. Please try again."}
+          </Text>
+
+          {/* Helpful context based on error type */}
+          {isTimeoutError && (
+            <View className="bg-amber-50 rounded-xl p-3 mb-4 w-full">
+              <Text className="text-xs text-amber-700 text-center leading-relaxed">
+                💡 Check your internet connection and try again. No charges have been made.
+              </Text>
+            </View>
+          )}
+          {isVerifyError && (
+            <View className="bg-amber-50 rounded-xl p-3 mb-4 w-full">
+              <Text className="text-xs text-amber-700 text-center leading-relaxed font-semibold">
+                ⚠️ Your payment may have been deducted. Please check your bank statement or order history before retrying.
+              </Text>
+            </View>
+          )}
+
+          <View className="flex-row gap-3 mt-2">
+            <TouchableOpacity
+              className="bg-gray-100 rounded-xl py-4 px-8"
+              activeOpacity={0.9}
+              onPress={handleSafeClose}
+            >
+              <Text className="text-gray-700 font-bold text-sm">
+                {isVerifyError ? "Check Orders" : "Cancel"}
+              </Text>
+            </TouchableOpacity>
+            {!isVerifyError && (
+              <TouchableOpacity
+                className="bg-green-600 rounded-xl py-4 px-8 shadow-sm flex-row items-center"
+                activeOpacity={0.9}
+                onPress={() => {
+                  onReset();
+                  if (onRetry) {
+                    onRetry();
+                  } else {
+                    onPayOnline();
+                  }
+                }}
+              >
+                <RefreshCw size={14} color="#fff" strokeWidth={2.5} />
+                <Text className="text-white font-black text-sm ml-1.5">Retry</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      );
+    }
+
+    // ── Cancelled State (user dismissed Razorpay) ──
+    if (isCancelled) {
+      return (
+        <View className="items-center py-10 px-6">
+          <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
+            <X size={32} color="#6B7280" strokeWidth={2} />
+          </View>
+          <Text className="text-xl font-black text-gray-900 mb-2">
+            Payment Cancelled
+          </Text>
+          <Text className="text-sm text-gray-500 text-center leading-relaxed mb-6">
+            No worries! Your cart is safe. You can try again whenever you're ready.
           </Text>
           <View className="flex-row gap-3">
             <TouchableOpacity
               className="bg-gray-100 rounded-xl py-4 px-8"
               activeOpacity={0.9}
-              onPress={() => {
-                onReset();
-                onClose();
-              }}
+              onPress={handleSafeClose}
             >
-              <Text className="text-gray-700 font-bold text-sm">Cancel</Text>
+              <Text className="text-gray-700 font-bold text-sm">Back to Cart</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="bg-green-600 rounded-xl py-4 px-8 shadow-sm"
               activeOpacity={0.9}
               onPress={() => {
                 onReset();
-                onPayOnline();
+                if (onRetry) {
+                  onRetry();
+                } else {
+                  onPayOnline();
+                }
               }}
             >
-              <Text className="text-white font-black text-sm">Retry</Text>
+              <Text className="text-white font-black text-sm">Try Again</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -171,16 +257,22 @@ const CheckoutSheet = ({
 
     // ── Processing State ──
     if (isProcessing) {
+      const stageInfo =
+        checkoutState === "CREATING_ORDER"
+          ? { title: "Creating your order...", subtitle: "Setting up your order with the best prices." }
+          : { title: "Verifying payment...", subtitle: "Confirming with your bank. Almost there!" };
+
       return (
         <View className="items-center py-14 px-6">
           <ActivityIndicator size="large" color="#16A34A" />
           <Text className="text-lg font-bold text-gray-900 mt-5 mb-1">
-            {checkoutState === "CREATING_ORDER"
-              ? "Creating your order..."
-              : "Verifying payment..."}
+            {stageInfo.title}
           </Text>
           <Text className="text-sm text-gray-500 text-center">
-            Please wait, do not close the app.
+            {stageInfo.subtitle}
+          </Text>
+          <Text className="text-xs text-gray-400 mt-3 text-center">
+            Please don't close the app or press back.
           </Text>
         </View>
       );
@@ -200,7 +292,7 @@ const CheckoutSheet = ({
           </View>
           <TouchableOpacity
             className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center"
-            onPress={onClose}
+            onPress={handleSafeClose}
           >
             <X size={18} color="#6B7280" strokeWidth={2.5} />
           </TouchableOpacity>
@@ -351,20 +443,14 @@ const CheckoutSheet = ({
       animationType="none"
       statusBarTranslucent
       onRequestClose={() => {
-        if (!isProcessing) {
-          onReset();
-          onClose();
-        }
+        if (canClose) handleSafeClose();
       }}
     >
       <View className="flex-1 justify-end">
         {/* Backdrop */}
         <TouchableWithoutFeedback
           onPress={() => {
-            if (!isProcessing) {
-              onReset();
-              onClose();
-            }
+            if (canClose) handleSafeClose();
           }}
         >
           <Animated.View

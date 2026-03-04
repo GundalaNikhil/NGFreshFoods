@@ -21,10 +21,12 @@ const Cart = () => {
     error: paymentError,
     currentOrder,
     startCheckout,
+    retryCheckout,
     resetPayment,
     setPaymentMethod,
     clearCartAfterSuccess,
     resetProcessingFlag,
+    isCancelled: isPaymentCancelled,
   } = usePayment();
 
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
@@ -169,16 +171,22 @@ const Cart = () => {
   };
 
   const handlePayOnline = async () => {
-    if (isCheckoutInProgress) return; // Guard against double-click
+    if (isCheckoutInProgress) return;
     setIsCheckoutInProgress(true);
     try {
-      const result = await startCheckout();
-      if (result?.success) {
-        // CheckoutSheet will show success state, then navigate to success screen
-      }
+      await startCheckout();
     } finally {
       // Keep isCheckoutInProgress true until we navigate away or reset
-      // It resets when the checkout sheet closes or order is viewed
+    }
+  };
+
+  const handleRetryPayment = async () => {
+    if (isCheckoutInProgress) return;
+    setIsCheckoutInProgress(true);
+    try {
+      await retryCheckout();
+    } finally {
+      // Resets when sheet closes or success
     }
   };
 
@@ -186,7 +194,7 @@ const Cart = () => {
     if (checkoutState !== "CREATING_ORDER" && checkoutState !== "VERIFYING") {
       setIsCheckoutVisible(false);
       setIsCheckoutInProgress(false);
-      resetProcessingFlag(); // Release so user can retry
+      resetProcessingFlag();
     }
   };
 
@@ -201,6 +209,7 @@ const Cart = () => {
     // Clear cart AFTER we've navigated away from the cart view
     setTimeout(() => {
       clearCartAfterSuccess();
+      loadCoupons(true); // Immediate refresh to hide first-order-only coupons like WELCOME50
     }, 300);
   };
 
@@ -273,7 +282,7 @@ const Cart = () => {
         </TouchableOpacity>
       </View>
 
-      {cart.length > 0 || checkoutState === "SUCCESS" || isCheckoutInProgress ? (
+      {cart.length > 0 || checkoutState === "SUCCESS" || isCheckoutInProgress || isPaymentCancelled ? (
         <>
           <ScrollView
             className="flex-1 bg-gray-50"
@@ -357,6 +366,7 @@ const Cart = () => {
             visible={isCheckoutVisible}
             onClose={handleCheckoutClose}
             onPayOnline={handlePayOnline}
+            onRetry={handleRetryPayment}
             totalPayable={grandTotal}
             itemCount={itemCount}
             checkoutState={checkoutState}

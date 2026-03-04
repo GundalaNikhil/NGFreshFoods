@@ -167,11 +167,13 @@ const OffersModal = ({
           )}
         </ScrollView>
         {isApplying && (
-          <View className="absolute inset-0 bg-white/60 items-center justify-center z-50">
-            <View className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 items-center">
+          <View 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.7)', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
+          >
+            <View className="bg-white p-6 rounded-3xl shadow-2xl border border-emerald-100 items-center w-[220px]">
               <ActivityIndicator size="large" color="#107A4A" />
-              <Text className="text-emerald-900 font-bold mt-4 text-base">Applying Coupon...</Text>
-              <Text className="text-gray-500 text-xs mt-1">Checking for the best savings</Text>
+              <Text className="text-emerald-900 font-black mt-4 text-base tracking-tight">Applying Coupon...</Text>
+              <Text className="text-gray-500 text-[11px] font-bold mt-1 uppercase tracking-wider">Optimizing Savings</Text>
             </View>
           </View>
         )}
