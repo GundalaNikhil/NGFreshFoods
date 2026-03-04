@@ -81,14 +81,19 @@ function RootNavigator() {
 
   const initRef = useRef(true);
 
+  useEffect(() => {
+    console.log("[Root] State - initializing:", initializing, "isHydrated:", authState?.isHydrated, "isAuthenticated:", authState?.isAuthenticated);
+  }, [initializing, authState?.isHydrated, authState?.isAuthenticated]);
+
   // Listen for Firebase Auth state changes — subscribe ONCE
   useEffect(() => {
     const subscriber = onAuthStateChanged(auth(), (user) => {
+      console.log("[Root] Firebase onAuthStateChanged - User:", user ? user.email || user.phoneNumber : "null");
       if (!user) {
         // User is signed out in Firebase
         setAuthState((prev) => {
           if (prev.isAuthenticated) {
-            return { isAuthenticated: false, token: null, refreshToken: null };
+            return { ...prev, isAuthenticated: false, token: null, refreshToken: null };
           }
           return prev;
         });
@@ -110,7 +115,7 @@ function RootNavigator() {
           text1: "Session updated",
           text2: "Please log in again to continue.",
         });
-        setAuthState({ isAuthenticated: false, token: null, refreshToken: null });
+        setAuthState({ isAuthenticated: false, token: null, refreshToken: null, isHydrated: true });
         AsyncStorage.removeItem("auth");
         return;
       }
@@ -132,7 +137,7 @@ function RootNavigator() {
         text1: "Session expired",
         text2: "Please log in again.",
       });
-      setAuthState({ isAuthenticated: false, token: null, refreshToken: null });
+      setAuthState({ isAuthenticated: false, token: null, refreshToken: null, isHydrated: true });
       AsyncStorage.removeItem("auth");
     });
     setAuthUpdateHandler(({ token, refreshToken }) => {
@@ -145,7 +150,7 @@ function RootNavigator() {
     });
   }, [setAuthState]);
 
-  if (initializing) {
+  if (initializing || !authState.isHydrated) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
         <ActivityIndicator size="large" color="#1F2B24" />

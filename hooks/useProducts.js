@@ -6,6 +6,7 @@ import {
   productsState,
   selectedCategoryState,
   productsLoadingState,
+  productsErrorState,
 } from "../recoil/atoms/productsAtom";
 import { filteredProductsSelector } from "../recoil/selectors/productSelector";
 import { fetchCategories, fetchProducts } from "../services/bff/productsBff";
@@ -75,17 +76,18 @@ export const useProducts = () => {
     selectedCategoryState
   );
   const [loading, setLoading] = useRecoilState(productsLoadingState);
+  const [error, setError] = useRecoilState(productsErrorState);
   const filteredProducts = useRecoilValue(filteredProductsSelector);
   const normalizedProducts = useMemo(
-    () => products.map(normalizeProduct),
+    () => (Array.isArray(products) ? products.map(normalizeProduct) : []),
     [products]
   );
   const normalizedFilteredProducts = useMemo(
-    () => filteredProducts.map(normalizeProduct),
+    () => (Array.isArray(filteredProducts) ? filteredProducts.map(normalizeProduct) : []),
     [filteredProducts]
   );
   const normalizedCategories = useMemo(
-    () => dedupeByCategoryId(categories.map(normalizeCategory)),
+    () => (Array.isArray(categories) ? dedupeByCategoryId(categories.map(normalizeCategory)) : []),
     [categories]
   );
 
@@ -95,15 +97,17 @@ export const useProducts = () => {
 
     let isActive = true;
 
-    const loadCatalog = async () => {
-      setLoading(true);
+    const loadCatalog = async (retryCount = 0) => {
+      // Don't show full-screen loader on background retries if we already have some data
+      if (products.length === 0 || categories.length === 0) {
+        setLoading(true);
+      }
+      
       try {
         const [productsResponse, categoriesResponse] = await Promise.all([
           fetchProducts(),
           fetchCategories(),
         ]);
-
-        // if (!isActive) return; // REMOVED: Always commit to global store
 
         if (Array.isArray(productsResponse)) {
           setProducts(productsResponse);
@@ -123,8 +127,21 @@ export const useProducts = () => {
             : normalized;
           setCategories(dedupeByCategoryId(filtered));
         }
-      } catch (error) {
-        console.warn("Failed to load catalog from API", error);
+        
+        // Success!
+        setError(false);
+        _catalogLoaded = true;
+      } catch (err) {
+        console.warn(`[useProducts] Load failed (Attempt ${retryCount + 1}):`, err.message);
+        setError(true);
+        _catalogLoaded = false; // Allow future retries/triggers
+        
+        // Auto-retry after 5 seconds
+        if (isActive) {
+          setTimeout(() => {
+            if (isActive) loadCatalog(retryCount + 1);
+          }, 5000);
+        }
       } finally {
         setLoading(false);
       }
@@ -135,7 +152,7 @@ export const useProducts = () => {
     return () => {
       isActive = false;
     };
-  }, [setProducts, setCategories]);
+  }, [setProducts, setCategories, setLoading, setError]);
 
   const hasNormalizedProducts = useMemo(() => ({ done: false }), []);
   const hasNormalizedCategories = useMemo(() => ({ done: false }), []);
@@ -214,6 +231,7 @@ export const useProducts = () => {
     selectedCategory,
     setSelectedCategory,
     loading,
+    error,
     updateProduct,
     updateStock,
   };

@@ -8,7 +8,7 @@ import ProductList from "./ProductList";
 import ProductModal from "./ProductModal";
 
 const Products = () => {
-  const { products, loading } = useProducts();
+  const { products, loading, error } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -31,7 +31,9 @@ const Products = () => {
         {loading ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#107A4A" />
-            <Text className="text-gray-400 mt-4 font-medium italic">Fetching fresh farm foods...</Text>
+            <Text className="text-gray-400 mt-4 font-medium italic">
+              {error ? "Reconnecting to server..." : "Fetching fresh farm foods..."}
+            </Text>
           </View>
         ) : (
           <>

@@ -7,13 +7,15 @@ import SearchBar from "./SearchBar/SearchBar";
 import Slideshow from "./Slideshow/Slideshow";
 
 const HomePage = () => {
-  const { loading } = useProducts();
+  const { loading, error } = useProducts();
 
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white items-center justify-center">
         <ActivityIndicator size="large" color="#107A4A" />
-        <Text className="text-gray-400 mt-4 font-medium italic">Preparing your fresh experience...</Text>
+        <Text className="text-gray-400 mt-4 font-medium italic">
+          {error ? "Reconnecting to server..." : "Preparing your fresh experience..."}
+        </Text>
       </SafeAreaView>
     );
   }

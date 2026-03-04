@@ -7,6 +7,7 @@ export const authAtom = atom({
     isAuthenticated: false,
     token: null,
     refreshToken: null,
+    isHydrated: false,
   },
   ...persistAtom("auth"),
 });

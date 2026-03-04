@@ -22,3 +22,8 @@ export const productsLoadingState = atom({
   key: "productsLoadingState",
   default: false,
 });
+
+export const productsErrorState = atom({
+  key: "productsErrorState",
+  default: false,
+});
