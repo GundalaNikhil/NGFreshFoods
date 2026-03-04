@@ -5,6 +5,7 @@ import {
   categoriesState,
   productsState,
   selectedCategoryState,
+  productsLoadingState,
 } from "../recoil/atoms/productsAtom";
 import { filteredProductsSelector } from "../recoil/selectors/productSelector";
 import { fetchCategories, fetchProducts } from "../services/bff/productsBff";
@@ -73,6 +74,7 @@ export const useProducts = () => {
   const [selectedCategory, setSelectedCategory] = useRecoilState(
     selectedCategoryState
   );
+  const [loading, setLoading] = useRecoilState(productsLoadingState);
   const filteredProducts = useRecoilValue(filteredProductsSelector);
   const normalizedProducts = useMemo(
     () => products.map(normalizeProduct),
@@ -94,13 +96,14 @@ export const useProducts = () => {
     let isActive = true;
 
     const loadCatalog = async () => {
+      setLoading(true);
       try {
         const [productsResponse, categoriesResponse] = await Promise.all([
           fetchProducts(),
           fetchCategories(),
         ]);
 
-        if (!isActive) return;
+        // if (!isActive) return; // REMOVED: Always commit to global store
 
         if (Array.isArray(productsResponse)) {
           setProducts(productsResponse);
@@ -122,6 +125,8 @@ export const useProducts = () => {
         }
       } catch (error) {
         console.warn("Failed to load catalog from API", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -208,6 +213,7 @@ export const useProducts = () => {
     categories: normalizedCategories,
     selectedCategory,
     setSelectedCategory,
+    loading,
     updateProduct,
     updateStock,
   };

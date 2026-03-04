@@ -1,18 +1,24 @@
 import { Minus, Plus } from "lucide-react-native";
-import React from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, Image, Text, TouchableOpacity, View } from "react-native";
 import { useCart } from "../../hooks/useCart";
 import { getEntityImageUrl } from "../../utils/imageUrl";
 
 const CartItems = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
+  const [updatingKey, setUpdatingKey] = useState(null);
 
   const handleQuantityChange = (item, newQuantity) => {
-    if (newQuantity === 0) {
-      removeFromCart(item.cartKey);
-    } else {
-      updateQuantity(item.cartKey, newQuantity);
-    }
+    setUpdatingKey(item.cartKey);
+    // Simulate/Ensure visual feedback for 500ms
+    setTimeout(() => {
+      if (newQuantity === 0) {
+        removeFromCart(item.cartKey);
+      } else {
+        updateQuantity(item.cartKey, newQuantity);
+      }
+      setUpdatingKey(null);
+    }, 500);
   };
 
   return (
@@ -79,23 +85,29 @@ const CartItems = () => {
 
           {/* Right: Quantity & Price */}
           <View className="items-end">
-            <View className="bg-white border border-gray-200 rounded-lg h-7 flex-row items-center shadow-sm shadow-black/5 min-w-[70px] justify-between mb-2">
+            <View className="bg-white border border-rose-100 rounded-lg h-8 flex-row items-center shadow-sm shadow-black/5 min-w-[80px] justify-between mb-2">
               <TouchableOpacity
                 onPress={() => handleQuantityChange(item, item.quantity - 1)}
-                className="w-6 items-center justify-center h-full"
+                className="w-7 items-center justify-center h-full"
+                disabled={updatingKey === item.cartKey}
               >
-                <Minus size={12} color="#1C1C1C" strokeWidth={4} />
+                <Minus size={14} color="#E23744" strokeWidth={4} />
               </TouchableOpacity>
               
-              <Text className="text-[12px] font-black text-gray-900">
-                {item.quantity}
-              </Text>
+              {updatingKey === item.cartKey ? (
+                <ActivityIndicator size="small" color="#E23744" />
+              ) : (
+                <Text className="text-[13px] font-black text-gray-900">
+                  {item.quantity}
+                </Text>
+              )}
 
               <TouchableOpacity
                 onPress={() => handleQuantityChange(item, item.quantity + 1)}
-                className="w-6 items-center justify-center h-full"
+                className="w-7 items-center justify-center h-full"
+                disabled={updatingKey === item.cartKey}
               >
-                <Plus size={12} color="#1C1C1C" strokeWidth={4} />
+                <Plus size={14} color="#E23744" strokeWidth={4} />
               </TouchableOpacity>
             </View>
             

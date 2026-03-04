@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SafeAreaView, View } from "react-native";
+import { ActivityIndicator, SafeAreaView, Text, View } from "react-native";
 import { useProducts } from "../../hooks/useProducts";
 import AddressHeader from "../Home/AddressHeader";
 import SearchBar from "../Home/SearchBar/SearchBar";
@@ -8,7 +8,7 @@ import ProductList from "./ProductList";
 import ProductModal from "./ProductModal";
 
 const Products = () => {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -28,8 +28,17 @@ const Products = () => {
         </View>
       </View>
       <View className="flex-1 bg-gray-50 mt-3">
-        <ProductFilter />
-        <ProductList products={products} onAddToCart={handleAddToCart} />
+        {loading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#107A4A" />
+            <Text className="text-gray-400 mt-4 font-medium italic">Fetching fresh farm foods...</Text>
+          </View>
+        ) : (
+          <>
+            <ProductFilter />
+            <ProductList products={products} onAddToCart={handleAddToCart} />
+          </>
+        )}
       </View>
       <ProductModal
         visible={modalVisible}

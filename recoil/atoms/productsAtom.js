@@ -17,3 +17,8 @@ export const selectedCategoryState = atom({
   key: "selectedCategoryState",
   default: "ALL",
 });
+
+export const productsLoadingState = atom({
+  key: "productsLoadingState",
+  default: false,
+});

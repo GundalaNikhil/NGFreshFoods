@@ -1,7 +1,5 @@
-import React from "react";
-import { Clock3 } from "lucide-react-native";
-import { SafeAreaView, ScrollView, View } from "react-native";
-import { Text } from "react-native";
+import { ActivityIndicator, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { useProducts } from "../../hooks/useProducts";
 import AddressHeader from "./AddressHeader";
 import CategoriesList from "./Categories/CategoriesList";
 import HomePageBanner from "./HomePageBanner";
@@ -9,6 +7,17 @@ import SearchBar from "./SearchBar/SearchBar";
 import Slideshow from "./Slideshow/Slideshow";
 
 const HomePage = () => {
+  const { loading } = useProducts();
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#107A4A" />
+        <Text className="text-gray-400 mt-4 font-medium italic">Preparing your fresh experience...</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-[#f3f7ef]">
       <ScrollView

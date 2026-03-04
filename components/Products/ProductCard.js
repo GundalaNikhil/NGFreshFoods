@@ -1,12 +1,20 @@
-import { ShoppingCart } from "lucide-react-native";
-import React, { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Minus, Plus, ShoppingCart } from "lucide-react-native";
+import React, { useState, useMemo } from "react";
+import { ActivityIndicator, Image, Text, TouchableOpacity, View } from "react-native";
 import { useCart } from "../../hooks/useCart";
 import ChickenCustomizationModal from "./ChickenCustomizationModal";
 
 const ProductCard = ({ product, onAddToCart }) => {
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
-  const { addToCart } = useCart();
+  const { cart, addToCart, updateQuantity } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
+
+  const productId = product.productId || product.id;
+  
+  // Find if this specific BASE product is in cart (for non-customizable items)
+  const cartItem = useMemo(() => {
+    return cart.find(item => item.productId === productId && !item.variantId);
+  }, [cart, productId]);
 
   const discountPercentage = Math.round(
     ((product.mrp - product.base_price) / product.mrp) * 100
@@ -20,9 +28,22 @@ const ProductCard = ({ product, onAddToCart }) => {
     if (hasCustomizations) {
       setQuantityModalVisible(true);
     } else {
-      // Non-customizable product (eggs, dairy, etc.) — add directly
-      addToCart(product, null, []);
+      setIsAdding(true);
+      // Simulate/Ensure visual feedback
+      setTimeout(() => {
+        addToCart(product, null, []);
+        setIsAdding(false);
+      }, 500);
     }
+  };
+
+  const handleUpdateQuantity = (newQty) => {
+    if (!cartItem) return;
+    setIsAdding(true);
+    setTimeout(() => {
+      updateQuantity(cartItem.cartKey, newQty);
+      setIsAdding(false);
+    }, 400);
   };
 
   const handleCustomizedAddToCart = (prod, selectedVariant, selectedAddons) => {
@@ -72,27 +93,65 @@ const ProductCard = ({ product, onAddToCart }) => {
               className="w-32 h-32 rounded-xl"
               resizeMode="cover"
             />
-            {/* Swiggy-style ADD Button */}
-            <TouchableOpacity
-              onPress={handleAddToCartClick}
-              className="absolute -bottom-3 self-center bg-white border border-gray-200 rounded-lg shadow-sm px-6 py-2"
-              activeOpacity={0.8}
-            >
-              <Text className="text-red-600 font-bold text-[14px]">ADD</Text>
-              <View className="absolute top-1 right-2">
-                <Text className="text-[10px] text-red-600 font-bold">+</Text>
-              </View>
-            </TouchableOpacity>
+            
+            {/* Swiggy-style ADD/Stepper Button */}
+            <View className="absolute -bottom-3 self-center bg-white border border-rose-100 rounded-lg shadow-md shadow-rose-200/50 min-w-[90px] h-9 items-center justify-center">
+              {cartItem && !hasCustomizations ? (
+                <View className="flex-row items-center justify-between w-full px-2">
+                  <TouchableOpacity 
+                    onPress={() => handleUpdateQuantity(cartItem.quantity - 1)}
+                    className="w-7 h-7 items-center justify-center"
+                    disabled={isAdding}
+                  >
+                    <Minus size={14} color="#E23744" strokeWidth={3} />
+                  </TouchableOpacity>
+                  
+                  {isAdding ? (
+                    <ActivityIndicator size="small" color="#E23744" />
+                  ) : (
+                    <Text className="text-[14px] font-black text-rose-600">
+                      {cartItem.quantity}
+                    </Text>
+                  )}
+                  
+                  <TouchableOpacity 
+                    onPress={() => handleUpdateQuantity(cartItem.quantity + 1)}
+                    className="w-7 h-7 items-center justify-center"
+                    disabled={isAdding}
+                  >
+                    <Plus size={14} color="#E23744" strokeWidth={3} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleAddToCartClick}
+                  className="w-full h-full items-center justify-center px-6"
+                  activeOpacity={0.8}
+                  disabled={isAdding}
+                >
+                  {isAdding ? (
+                    <ActivityIndicator size="small" color="#E23744" />
+                  ) : (
+                    <>
+                      <Text className="text-rose-600 font-extrabold text-[14px] tracking-tight">ADD</Text>
+                      <View className="absolute top-1 right-2">
+                        <Text className="text-[10px] text-rose-600 font-black">+</Text>
+                      </View>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           {hasCustomizations && (
-            <Text className="text-[10px] text-gray-400 mt-4 text-center">
+            <Text className="text-[10px] text-gray-400 mt-4 text-center font-bold uppercase tracking-tighter">
               Customizable
             </Text>
           )}
         </View>
       </View>
 
-      {/* Customization Modal — now data-driven from API */}
+      {/* Customization Modal */}
       {hasCustomizations && (
         <ChickenCustomizationModal
           visible={quantityModalVisible}
