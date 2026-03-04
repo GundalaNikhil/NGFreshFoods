@@ -243,8 +243,10 @@ export const usePayment = () => {
         currentOrder: { ...order, payment: verifyResult.data },
       }));
 
-      await clearCart();
-      return { success: true, order, payment: verifyResult.data };
+      // NOTE: clearCart is NOT called here anymore.
+      // Cart.js calls clearCartAfterSuccess() AFTER navigating to the success screen
+      // to prevent the empty cart view from flashing.
+      return { success: true, order: { ...order, payment: verifyResult.data } };
     } catch (error) {
       const errorMessage =
         error?.description || error?.message || "Payment failed";
@@ -290,5 +292,6 @@ export const usePayment = () => {
     startCheckout,
     resetPayment,
     setPaymentMethod,
+    clearCartAfterSuccess: clearCart,
   };
 };

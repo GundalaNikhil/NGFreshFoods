@@ -37,6 +37,7 @@ import {
   updateMyProfile,
 } from "../../services/bff/accountBff";
 import { setAuthTokens } from "../../services/http/apiClient";
+import OrderDetailScreen from "../Cart/OrderDetailScreen";
 
 const SectionButton = ({ title, subtitle, icon: IconCmp, onPress }) => (
   <TouchableOpacity
@@ -93,36 +94,89 @@ const EmptyState = ({ title, subtitle, actionLabel, onAction, image }) => (
   </View>
 );
 
-const OrderCard = ({ order }) => {
+const OrderCard = ({ order, onPress }) => {
   const createdAt = order?.createdAt ? new Date(order.createdAt) : null;
   const orderLabel = order?.orderNumber || order?.orderId || "Order";
   const orderIdShort =
     orderLabel && orderLabel.length > 10 ? orderLabel.slice(0, 10) : orderLabel;
 
+  // Status color coding
+  const statusConfig = (() => {
+    switch (order?.orderStatus) {
+      case "CONFIRMED":
+      case "PREPARING":
+      case "OUT_FOR_DELIVERY":
+        return { bg: "bg-green-50", text: "text-green-700", label: order.orderStatus.replace(/_/g, " ") };
+      case "DELIVERED":
+        return { bg: "bg-blue-50", text: "text-blue-700", label: "Delivered" };
+      case "CANCELLED":
+        return { bg: "bg-red-50", text: "text-red-600", label: "Cancelled" };
+      default: // PENDING
+        return { bg: "bg-amber-50", text: "text-amber-700", label: "Processing" };
+    }
+  })();
+
+  // Items preview
+  const itemNames = (order?.orderItems || [])
+    .slice(0, 2)
+    .map((i) => i.orderName || "Item")
+    .join(", ");
+  const extraCount = (order?.orderItems?.length || 0) - 2;
+  const itemsPreview = itemNames + (extraCount > 0 ? ` +${extraCount} more` : "");
+
+  // Payment method
+  const paymentMethod = order?.payment?.paymentMethod || order?.payment?.transactionType || null;
+
   return (
-    <View className="bg-white rounded-2xl p-4 mb-3 shadow-sm">
+    <TouchableOpacity
+      className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+      activeOpacity={0.85}
+      onPress={() => onPress && onPress(order)}
+    >
       <View className="flex-row items-center justify-between">
         <Text className="text-sm font-semibold text-gray-900">
           {orderIdShort}
         </Text>
-        <View className="px-3 py-1 rounded-full bg-amber-50">
-          <Text className="text-[11px] text-amber-700 font-semibold">
-            {order?.orderStatus || "Processing"}
+        <View className={`px-3 py-1 rounded-full ${statusConfig.bg}`}>
+          <Text className={`text-[11px] font-semibold ${statusConfig.text}`}>
+            {statusConfig.label}
           </Text>
         </View>
       </View>
-      <Text className="text-[12px] text-gray-500 mt-1">
+
+      {/* Items preview */}
+      {itemsPreview ? (
+        <Text className="text-[12px] text-gray-600 mt-2" numberOfLines={1}>
+          {itemsPreview}
+        </Text>
+      ) : null}
+
+      <Text className="text-[12px] text-gray-400 mt-1">
         {createdAt ? createdAt.toDateString() : "Order date unavailable"}
       </Text>
-      <View className="flex-row justify-between mt-3">
-        <Text className="text-[12px] text-gray-600">
-          Items: {order?.orderItems?.length || 0}
-        </Text>
-        <Text className="text-[13px] font-semibold text-gray-900">
-          ₹{Number(order?.totalAmount || 0).toFixed(2)}
-        </Text>
+
+      <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-50">
+        <View className="flex-row items-center">
+          {paymentMethod ? (
+            <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-full mr-2">
+              <CreditCard size={12} color="#6B7280" strokeWidth={2} />
+              <Text className="text-[10px] text-gray-500 font-semibold ml-1">
+                {paymentMethod}
+              </Text>
+            </View>
+          ) : null}
+          <Text className="text-[12px] text-gray-500">
+            {order?.orderItems?.length || 0} items
+          </Text>
+        </View>
+        <View className="flex-row items-center">
+          <Text className="text-[14px] font-bold text-gray-900 mr-1">
+            ₹{Number(order?.totalAmount || 0).toFixed(2)}
+          </Text>
+          <ChevronRight size={14} color="#9CA3AF" strokeWidth={2} />
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -141,6 +195,7 @@ const AccountHub = () => {
   const [addressesError, setAddressesError] = useState("");
   const [orders, setOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const displayName = useMemo(() => {
     if (profile.fullName?.trim()) return profile.fullName;
@@ -257,6 +312,19 @@ const AccountHub = () => {
     },
   ];
 
+  if (section === "orderDetail" && selectedOrder) {
+    return (
+      <OrderDetailScreen
+        orderId={selectedOrder?.orderId}
+        order={selectedOrder}
+        onBack={() => {
+          setSelectedOrder(null);
+          setSection("orders");
+        }}
+      />
+    );
+  }
+
   if (section === "orders") {
     return (
       <ScrollView className="flex-1">
@@ -284,7 +352,14 @@ const AccountHub = () => {
           />
         ) : (
           orders.map((order) => (
-            <OrderCard key={order.orderId || order.razorPayOrderId} order={order} />
+            <OrderCard
+              key={order.orderId || order.razorPayOrderId}
+              order={order}
+              onPress={(o) => {
+                setSelectedOrder(o);
+                setSection("orderDetail");
+              }}
+            />
           ))
         )}
       </ScrollView>

@@ -29,6 +29,8 @@ export const API_ENDPOINTS = {
   // Orders
   ORDERS_ME: `${API_BASE_URL}/api/${API_VERSION}/orders/my`,
   ORDER_CREATE: `${API_BASE_URL}/api/${API_VERSION}/orders/create`,
+  ORDER_DETAIL: (orderId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/orders/${orderId}`,
 
   // Payments
   PAYMENT_VERIFY: `${API_BASE_URL}/api/${API_VERSION}/payments/confirmPayment`,

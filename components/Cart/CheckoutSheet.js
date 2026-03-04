@@ -32,6 +32,8 @@ const CheckoutSheet = ({
   paymentMethod,
   onSelectMethod,
   onReset,
+  onViewOrder,
+  currentOrder,
 }) => {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
@@ -75,28 +77,55 @@ const CheckoutSheet = ({
   const renderContent = () => {
     // ── Success State ──
     if (isSuccess) {
+      const orderNumber = currentOrder?.orderNumber || currentOrder?.orderId?.slice(0, 10) || "";
+      const totalPaid = Number(currentOrder?.totalAmount || totalPayable || 0).toFixed(2);
       return (
         <View className="items-center py-10 px-6">
-          <View className="w-20 h-20 rounded-full bg-green-50 items-center justify-center mb-5">
+          <View className="w-20 h-20 rounded-full bg-green-50 items-center justify-center mb-4">
             <CheckCircle size={44} color="#16A34A" strokeWidth={2} />
           </View>
-          <Text className="text-2xl font-black text-gray-900 mb-2">
-            Payment Successful!
+          <Text className="text-2xl font-black text-gray-900 mb-1">
+            Payment Successful! 🎉
           </Text>
-          <Text className="text-sm text-gray-500 text-center leading-relaxed mb-8">
-            Your order has been placed and is being prepared. You'll receive
-            updates on your order status.
+          {orderNumber ? (
+            <Text className="text-sm text-green-700 font-bold mb-2">
+              Order #{orderNumber}
+            </Text>
+          ) : null}
+          <Text className="text-sm text-gray-500 text-center leading-relaxed mb-2">
+            ₹{totalPaid} paid successfully
           </Text>
-          <TouchableOpacity
-            className="bg-green-600 rounded-xl py-4 px-10 shadow-sm"
-            activeOpacity={0.9}
-            onPress={() => {
-              onReset();
-              onClose();
-            }}
-          >
-            <Text className="text-white font-black text-base">Done</Text>
-          </TouchableOpacity>
+          <Text className="text-xs text-gray-400 text-center leading-relaxed mb-6">
+            Your order is confirmed and being prepared.{"\n"}
+            Taking you to order details...
+          </Text>
+          <View className="flex-row gap-3">
+            <TouchableOpacity
+              className="bg-gray-100 rounded-xl py-4 px-6"
+              activeOpacity={0.9}
+              onPress={() => {
+                onReset();
+                onClose();
+              }}
+            >
+              <Text className="text-gray-700 font-bold text-sm">Close</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="bg-green-600 rounded-xl py-4 px-8 shadow-sm flex-row items-center"
+              activeOpacity={0.9}
+              onPress={() => {
+                if (onViewOrder && currentOrder) {
+                  onViewOrder(currentOrder);
+                } else {
+                  onReset();
+                  onClose();
+                }
+              }}
+            >
+              <Text className="text-white font-black text-sm mr-1">View Order</Text>
+              <Truck size={16} color="#fff" strokeWidth={2.5} />
+            </TouchableOpacity>
+          </View>
         </View>
       );
     }
@@ -282,9 +311,12 @@ const CheckoutSheet = ({
         {/* CTA Button */}
         <View className="px-5 pb-8">
           <TouchableOpacity
-            className="bg-[#16A34A] rounded-xl h-14 flex-row items-center justify-between px-5 shadow-lg shadow-green-200"
+            className={`rounded-xl h-14 flex-row items-center justify-between px-5 shadow-lg ${
+              isProcessing ? "bg-gray-400" : "bg-[#16A34A] shadow-green-200"
+            }`}
             activeOpacity={0.9}
             onPress={onPayOnline}
+            disabled={isProcessing}
           >
             <View>
               <Text className="text-white font-black text-lg">
@@ -295,10 +327,16 @@ const CheckoutSheet = ({
               </Text>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-white font-black text-[16px] mr-1 uppercase">
-                {paymentMethod === "COD" ? "Place Order" : "Pay Now"}
-              </Text>
-              <CreditCard size={18} color="#fff" strokeWidth={2.5} />
+              {isProcessing ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Text className="text-white font-black text-[16px] mr-1 uppercase">
+                    {paymentMethod === "COD" ? "Place Order" : "Pay Now"}
+                  </Text>
+                  <CreditCard size={18} color="#fff" strokeWidth={2.5} />
+                </>
+              )}
             </View>
           </TouchableOpacity>
         </View>

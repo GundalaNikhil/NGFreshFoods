@@ -194,3 +194,16 @@ export const fetchMyOrders = async ({ token }) => {
     return normalizeError(error);
   }
 };
+
+export const fetchOrderById = async (orderId) => {
+  try {
+    const response = await apiClient.get(API_ENDPOINTS.ORDER_DETAIL(orderId));
+
+    return {
+      success: true,
+      data: response?.data || null,
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};

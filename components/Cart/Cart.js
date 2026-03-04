@@ -10,6 +10,8 @@ import CartPromoCode from "./CartPromoCode";
 import CartSummary from "./CartSummary";
 import CheckoutSheet from "./CheckoutSheet";
 import OffersModal from "./Offers/OffersModal";
+import OrderSuccessScreen from "./OrderSuccessScreen";
+import OrderDetailScreen from "./OrderDetailScreen";
 
 const Cart = () => {
   const { cart, cartData, cartTotal, cartDiscount, applyCoupon, removeCoupon } = useCart();
@@ -17,9 +19,11 @@ const Cart = () => {
     checkoutState,
     paymentMethod,
     error: paymentError,
+    currentOrder,
     startCheckout,
     resetPayment,
     setPaymentMethod,
+    clearCartAfterSuccess,
   } = usePayment();
 
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
@@ -30,6 +34,12 @@ const Cart = () => {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const lastValidatedTotalRef = useRef(null);
   const inFlightRef = useRef(false);
+
+  // ── Screen navigation state ──
+  // "cart" | "success" | "detail"
+  const [activeScreen, setActiveScreen] = useState("cart");
+  const [viewingOrder, setViewingOrder] = useState(null);
+  const [isCheckoutInProgress, setIsCheckoutInProgress] = useState(false);
 
   // Get current promo/offer state from cart
   const selectedOffer = cartData?.offer || null;
@@ -158,28 +168,81 @@ const Cart = () => {
   };
 
   const handlePayOnline = async () => {
-    const result = await startCheckout();
-    if (result?.success) {
-      // CheckoutSheet will show success state
+    if (isCheckoutInProgress) return; // Guard against double-click
+    setIsCheckoutInProgress(true);
+    try {
+      const result = await startCheckout();
+      if (result?.success) {
+        // CheckoutSheet will show success state, then navigate to success screen
+      }
+    } finally {
+      // Keep isCheckoutInProgress true until we navigate away or reset
+      // It resets when the checkout sheet closes or order is viewed
     }
   };
 
   const handleCheckoutClose = () => {
     if (checkoutState !== "CREATING_ORDER" && checkoutState !== "VERIFYING") {
       setIsCheckoutVisible(false);
+      setIsCheckoutInProgress(false);
     }
   };
 
-  // Close checkout sheet on success after a delay
+  // ── Navigate to Order Success Screen after payment ──
+  const handleViewOrder = (order) => {
+    setIsCheckoutVisible(false);
+    setViewingOrder(order);
+    setActiveScreen("success");
+    resetPayment();
+    setIsCheckoutInProgress(false);
+    // Clear cart AFTER we've navigated away from the cart view
+    // This prevents the empty cart from flashing
+    setTimeout(() => {
+      clearCartAfterSuccess();
+    }, 300);
+  };
+
+  // ── Auto-trigger navigation on payment success ──
   useEffect(() => {
-    if (checkoutState === "SUCCESS") {
+    if (checkoutState === "SUCCESS" && currentOrder) {
       const timer = setTimeout(() => {
-        // Sheet stays visible showing success state, user closes manually via "Done"
-      }, 500);
+        handleViewOrder(currentOrder);
+      }, 1800); // Show checkmark briefly in sheet, then navigate
       return () => clearTimeout(timer);
     }
-  }, [checkoutState]);
+  }, [checkoutState, currentOrder]);
 
+  // ── Render OrderSuccessScreen ──
+  if (activeScreen === "success" && viewingOrder) {
+    return (
+      <OrderSuccessScreen
+        order={viewingOrder}
+        onTrackOrder={() => {
+          setActiveScreen("detail");
+        }}
+        onGoHome={() => {
+          setViewingOrder(null);
+          setActiveScreen("cart");
+        }}
+      />
+    );
+  }
+
+  // ── Render OrderDetailScreen ──
+  if (activeScreen === "detail" && viewingOrder) {
+    return (
+      <OrderDetailScreen
+        orderId={viewingOrder?.orderId}
+        order={viewingOrder}
+        onBack={() => {
+          setViewingOrder(null);
+          setActiveScreen("cart");
+        }}
+      />
+    );
+  }
+
+  // ── Render Cart ──
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Stylish Address Header */}
@@ -208,7 +271,7 @@ const Cart = () => {
         </TouchableOpacity>
       </View>
 
-      {cart.length > 0 ? (
+      {cart.length > 0 || checkoutState === "SUCCESS" || isCheckoutInProgress ? (
         <>
           <ScrollView
             className="flex-1 bg-gray-50"
@@ -299,6 +362,8 @@ const Cart = () => {
             paymentMethod={paymentMethod}
             onSelectMethod={setPaymentMethod}
             onReset={resetPayment}
+            onViewOrder={handleViewOrder}
+            currentOrder={currentOrder}
           />
 
           <OffersModal
