@@ -19,6 +19,8 @@ import {
   Wallet,
   X,
   XCircle,
+  MapPin,
+  ChevronRight,
 } from "lucide-react-native";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -37,6 +39,8 @@ const CheckoutSheet = ({
   onReset,
   onViewOrder,
   currentOrder,
+  selectedAddress,
+  onSelectAddress,
 }) => {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
@@ -301,6 +305,37 @@ const CheckoutSheet = ({
         {/* Divider */}
         <View className="h-[1px] bg-gray-100 mx-5" />
 
+        {/* Delivery Address Section */}
+        <View className="px-5 pt-5 pb-2">
+          <Text className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
+            Delivery Address
+          </Text>
+          <TouchableOpacity 
+            onPress={onSelectAddress}
+            className={`flex-row items-center p-4 rounded-2xl border-2 ${
+              selectedAddress ? "border-gray-100 bg-gray-50" : "border-amber-200 bg-amber-50"
+            }`}
+            activeOpacity={0.8}
+          >
+            <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${
+              selectedAddress ? "bg-white" : "bg-amber-100"
+            }`}>
+              <MapPin size={20} color={selectedAddress ? "#107A4A" : "#D97706"} strokeWidth={2.5} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[15px] font-bold text-gray-900">
+                {selectedAddress ? selectedAddress.label : "Provide Delivery Address"}
+              </Text>
+              <Text numberOfLines={1} className="text-xs text-gray-500 mt-0.5 font-medium">
+                {selectedAddress 
+                  ? selectedAddress.addressLine1
+                  : "Tap to add or select an address"}
+              </Text>
+            </View>
+            <ChevronRight size={18} color="#9CA3AF" strokeWidth={2.5} />
+          </TouchableOpacity>
+        </View>
+
         {/* Payment Methods */}
         <View className="px-5 pt-5 pb-3">
           <Text className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
@@ -404,11 +439,11 @@ const CheckoutSheet = ({
         <View className="px-5 pb-8">
           <TouchableOpacity
             className={`rounded-xl h-14 flex-row items-center justify-between px-5 shadow-lg ${
-              isProcessing ? "bg-gray-400" : "bg-[#16A34A] shadow-green-200"
+              isProcessing || !selectedAddress ? "bg-gray-400" : "bg-[#16A34A] shadow-green-200"
             }`}
             activeOpacity={0.9}
             onPress={onPayOnline}
-            disabled={isProcessing}
+            disabled={isProcessing || !selectedAddress}
           >
             <View>
               <Text className="text-white font-black text-lg">

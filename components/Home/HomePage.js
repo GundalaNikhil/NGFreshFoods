@@ -1,13 +1,24 @@
 import { ActivityIndicator, SafeAreaView, ScrollView, Text, View } from "react-native";
+import React, { useState, useEffect } from "react";
 import { useProducts } from "../../hooks/useProducts";
+import { useAddress } from "../../hooks/useAddress";
 import AddressHeader from "./AddressHeader";
 import CategoriesList from "./Categories/CategoriesList";
 import HomePageBanner from "./HomePageBanner";
 import SearchBar from "./SearchBar/SearchBar";
 import Slideshow from "./Slideshow/Slideshow";
+import AddressSelectionSheet from "./AddressSelectionSheet";
+import AddAddressModal from "./AddAddressModal";
 
 const HomePage = () => {
   const { loading, error } = useProducts();
+  const { refreshAddresses, addAddress } = useAddress();
+  const [showAddressSheet, setShowAddressSheet] = useState(false);
+  const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+
+  useEffect(() => {
+    refreshAddresses();
+  }, [refreshAddresses]);
 
   if (loading) {
     return (
@@ -28,7 +39,7 @@ const HomePage = () => {
         contentContainerStyle={{ paddingBottom: 90 }}
       >
         <View className="px-4 mt-2">
-          <AddressHeader />
+          <AddressHeader onAddressPress={() => setShowAddressSheet(true)} />
         </View>
         <View className="px-4 mt-3">
           <SearchBar />
@@ -54,6 +65,18 @@ const HomePage = () => {
           <HomePageBanner />
         </View>
       </ScrollView>
+
+      <AddressSelectionSheet
+        visible={showAddressSheet}
+        onClose={() => setShowAddressSheet(false)}
+        onAddPress={() => setShowAddAddressModal(true)}
+      />
+
+      <AddAddressModal
+        visible={showAddAddressModal}
+        onClose={() => setShowAddAddressModal(false)}
+        onAdd={addAddress}
+      />
     </SafeAreaView>
   );
 };

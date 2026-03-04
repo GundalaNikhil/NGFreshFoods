@@ -19,15 +19,7 @@ const Products = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="px-4">
-        <View className="mt-1">
-          <AddressHeader />
-        </View>
-        <View className="mt-2">
-          <SearchBar />
-        </View>
-      </View>
-      <View className="flex-1 bg-gray-50 mt-3">
+      <View className="flex-1 bg-gray-50">
         {loading ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#107A4A" />

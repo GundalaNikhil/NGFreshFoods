@@ -1,4 +1,3 @@
-import { ChevronDown, ChevronLeft, MapPin } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useCart } from "../../hooks/useCart";
@@ -12,6 +11,10 @@ import CheckoutSheet from "./CheckoutSheet";
 import OffersModal from "./Offers/OffersModal";
 import OrderSuccessScreen from "./OrderSuccessScreen";
 import OrderDetailScreen from "./OrderDetailScreen";
+import AddressHeader from "../Home/AddressHeader";
+import AddressSelectionSheet from "../Home/AddressSelectionSheet";
+import AddAddressModal from "../Home/AddAddressModal";
+import { useAddress } from "../../hooks/useAddress";
 
 const Cart = () => {
   const { cart, cartData, cartTotal, cartDiscount, applyCoupon, removeCoupon } = useCart();
@@ -28,10 +31,14 @@ const Cart = () => {
     resetProcessingFlag,
     isCancelled: isPaymentCancelled,
   } = usePayment();
+  const { addAddress, selectedAddress } = useAddress();
 
   const [isOffersModalVisible, setIsOffersModalVisible] = useState(false);
   const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
+  const [showAddressSheet, setShowAddressSheet] = useState(false);
+  const [showAddAddressModal, setShowAddAddressModal] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState([]);
+  // ... rest of the component state ...
   const [couponsLoading, setCouponsLoading] = useState(false);
   const [couponsError, setCouponsError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
@@ -256,30 +263,11 @@ const Cart = () => {
   // ── Render Cart ──
   return (
     <SafeAreaView className="flex-1 bg-white">
-      {/* Stylish Address Header */}
-      <View className="px-4 py-3 flex-row items-center border-b border-gray-100 bg-white shadow-sm z-10">
-        <TouchableOpacity 
-          onPress={() => console.log("Go Back")} 
-          className="w-10 h-10 items-center justify-center rounded-full bg-gray-50 mr-3 border border-gray-100"
-        >
-          <ChevronLeft size={22} color="#1C1C1C" strokeWidth={2.5} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity className="flex-1 justify-center">
-          <View className="flex-row items-center mb-0.5">
-            <Text className="text-[14px] font-black text-gray-900 mr-1 tracking-tight">
-              Home
-            </Text>
-            <ChevronDown size={16} color="#E23744" strokeWidth={3} />
-            </View>
-          <Text className="text-[12px] text-gray-500 font-medium tracking-tight" numberOfLines={1}>
-            123, Fresh Farms Street, NG Layout...
-          </Text>
-          </TouchableOpacity>
-
-        <TouchableOpacity className="w-10 h-10 rounded-full bg-red-50 items-center justify-center border border-red-100 ml-2">
-          <MapPin size={18} color="#E23744" strokeWidth={2.5} />
-        </TouchableOpacity>
+      {/* Dynamic Address Header */}
+      <View className="px-5 py-2 border-b border-gray-50 bg-white">
+        <AddressHeader 
+          onAddressPress={() => setShowAddressSheet(true)} 
+        />
       </View>
 
       {cart.length > 0 || checkoutState === "SUCCESS" || isCheckoutInProgress || isPaymentCancelled ? (
@@ -376,6 +364,20 @@ const Cart = () => {
             onReset={resetPayment}
             onViewOrder={handleViewOrder}
             currentOrder={currentOrder}
+            selectedAddress={selectedAddress}
+            onSelectAddress={() => setShowAddressSheet(true)}
+          />
+
+          <AddressSelectionSheet
+            visible={showAddressSheet}
+            onClose={() => setShowAddressSheet(false)}
+            onAddPress={() => setShowAddAddressModal(true)}
+          />
+
+          <AddAddressModal
+            visible={showAddAddressModal}
+            onClose={() => setShowAddAddressModal(false)}
+            onAdd={addAddress}
           />
 
           <OffersModal
