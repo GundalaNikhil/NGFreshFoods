@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useFonts, PlayfairDisplay_800ExtraBold } from '@expo-google-fonts/playfair-display';
 import { useSetRecoilState } from 'recoil';
 import { authAtom } from '../../recoil/atoms/authAtom';
 import { profileAtom } from '../../recoil/atoms/profileAtom';
@@ -19,10 +18,6 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) =>
 
   const setAuth = useSetRecoilState(authAtom);
   const setProfile = useSetRecoilState(profileAtom);
-
-  const [fontsLoaded] = useFonts({
-    PlayfairDisplay_800ExtraBold,
-  });
 
   const handleCompleteProfile = async () => {
     if (!firstName.trim()) {
@@ -81,11 +76,7 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) =>
   return (
     <View style={styles.container}>
       {/* Typography */}
-      {fontsLoaded ? (
-        <Text style={styles.headingPlayfair}>Almost there</Text>
-      ) : (
-        <Text style={styles.headingFallback}>Almost there</Text>
-      )}
+      <Text style={styles.headingPlayfair}>Almost there</Text>
       
       <Text style={styles.subheading}>
         We just need a few details to setup your fresh foods account
@@ -108,11 +99,11 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) =>
               focusedField === 'firstName' ? styles.inputContainerFocused : null,
               error && !firstName.trim() ? styles.inputContainerError : null
             ]}>
-              <User size={18} color={focusedField === 'firstName' ? '#1E2B24' : '#637469'} style={styles.inputIcon} />
+              <User size={18} color={focusedField === 'firstName' ? '#1E2B24' : '#4a5c52'} style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
                 placeholder="First Name"
-                placeholderTextColor="#A0AFA6"
+                placeholderTextColor="#7a8a80"
                 value={firstName}
                 onChangeText={(text) => { setFirstName(text); setError(''); }}
                 onFocus={() => setFocusedField('firstName')}
@@ -129,11 +120,11 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) =>
               styles.inputContainer,
               focusedField === 'lastName' ? styles.inputContainerFocused : null
             ]}>
-              <User size={18} color={focusedField === 'lastName' ? '#1E2B24' : '#637469'} style={styles.inputIcon} />
+              <User size={18} color={focusedField === 'lastName' ? '#1E2B24' : '#4a5c52'} style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
                 placeholder="Last Name"
-                placeholderTextColor="#A0AFA6"
+                placeholderTextColor="#7a8a80"
                 value={lastName}
                 onChangeText={setLastName}
                 onFocus={() => setFocusedField('lastName')}
@@ -151,11 +142,11 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) =>
             styles.inputContainer,
             focusedField === 'email' ? styles.inputContainerFocused : null
           ]}>
-            <Mail size={18} color={focusedField === 'email' ? '#1E2B24' : '#637469'} style={styles.inputIcon} />
+            <Mail size={18} color={focusedField === 'email' ? '#1E2B24' : '#4a5c52'} style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
               placeholder="Email Address (Optional)"
-              placeholderTextColor="#A0AFA6"
+              placeholderTextColor="#7a8a80"
               value={email}
               onChangeText={setEmail}
               onFocus={() => setFocusedField('email')}
@@ -195,7 +186,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   headingPlayfair: {
-    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    fontFamily: 'Poppins_800ExtraBold',
     fontSize: 32,
     color: '#131916',
     marginBottom: 8,

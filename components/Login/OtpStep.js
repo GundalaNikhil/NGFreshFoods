@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useFonts, PlayfairDisplay_800ExtraBold } from '@expo-google-fonts/playfair-display';
 import { useSetRecoilState } from 'recoil';
 import { authAtom } from '../../recoil/atoms/authAtom';
 import { profileAtom } from '../../recoil/atoms/profileAtom';
@@ -18,10 +17,6 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
   const inputRefs = useRef([]);
   const setAuth = useSetRecoilState(authAtom);
   const setProfile = useSetRecoilState(profileAtom);
-
-  const [fontsLoaded] = useFonts({
-    PlayfairDisplay_800ExtraBold,
-  });
 
   // Handle Resend Countdown
   useEffect(() => {
@@ -140,11 +135,7 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
       </TouchableOpacity>
 
       {/* Typography */}
-      {fontsLoaded ? (
-        <Text style={styles.headingPlayfair}>Verify Number</Text>
-      ) : (
-        <Text style={styles.headingFallback}>Verify Number</Text>
-      )}
+      <Text style={styles.headingPlayfair}>Verify Number</Text>
       
       <Text style={styles.subheading}>
         We sent a 6-digit secure code to <Text style={styles.boldText}>{phoneNumber}</Text>
@@ -230,7 +221,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   headingPlayfair: {
-    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    fontFamily: 'Poppins_800ExtraBold',
     fontSize: 28,
     color: '#131916',
     marginBottom: 6,

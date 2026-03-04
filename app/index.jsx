@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Icon } from "@rneui/themed";
 import React, { useEffect, useRef, useState } from "react";
-import { Dimensions, Pressable, Text, View, ActivityIndicator, Platform } from "react-native";
+import { Dimensions, Pressable, Text, TextInput, View, ActivityIndicator, Platform } from "react-native";
 import Reanimated, {
   useAnimatedStyle,
   useSharedValue,
@@ -28,9 +28,18 @@ import {
 } from "../services/http/apiClient";
 import CartSyncManager from "../providers/CartSyncManager";
 import { Home, CircleUserRound, ShoppingCart } from "lucide-react-native";
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
+} from "@expo-google-fonts/poppins";
 
 // Material icon wrappers for filled, dark style
 const LICIOUS_RED = "#E41D2D";
+const BASE_FONT = "Poppins_500Medium";
 
 const HomeIcon = ({ size, color }) => <Home size={size} color={color} strokeWidth={2.2} />;
 const DrumstickIcon = ({ size, color }) => (
@@ -289,6 +298,38 @@ function RootNavigator() {
 }
 
 export default function Index() {
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_800ExtraBold,
+  });
+
+  useEffect(() => {
+    if (!fontsLoaded) return;
+
+    const baseTextStyle = {
+      fontFamily: BASE_FONT,
+      color: "#111827",
+      letterSpacing: 0.1,
+    };
+
+    Text.defaultProps = Text.defaultProps || {};
+    Text.defaultProps.style = [baseTextStyle, Text.defaultProps.style];
+
+    TextInput.defaultProps = TextInput.defaultProps || {};
+    TextInput.defaultProps.style = [baseTextStyle, TextInput.defaultProps.style];
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
+        <ActivityIndicator size="large" color="#111827" />
+      </View>
+    );
+  }
+
   return (
     <>
       <RecoilRoot>

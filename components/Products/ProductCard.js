@@ -144,7 +144,7 @@ const ProductCard = ({ product, onAddToCart }) => {
             </View>
           </View>
           {hasCustomizations && (
-            <Text className="text-[10px] text-gray-400 mt-4 text-center font-bold uppercase tracking-tighter">
+            <Text className="text-[10px] text-gray-500 mt-4 text-center font-bold uppercase tracking-tighter">
               Customizable
             </Text>
           )}

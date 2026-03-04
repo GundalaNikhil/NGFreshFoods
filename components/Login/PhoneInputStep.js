@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useFonts, PlayfairDisplay_800ExtraBold } from '@expo-google-fonts/playfair-display';
 import { auth } from '../../services/firebaseConfig';
 import authFirebase from '@react-native-firebase/auth';
 import { Phone, ChevronRight } from 'lucide-react-native';
@@ -10,10 +9,6 @@ const PhoneInputStep = ({ onSuccess }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const [fontsLoaded] = useFonts({
-    PlayfairDisplay_800ExtraBold,
-  });
 
   const handleSendOtp = async () => {
     // Basic validation
@@ -52,11 +47,7 @@ const PhoneInputStep = ({ onSuccess }) => {
   return (
     <View style={styles.container}>
       {/* Dynamic typography loading */}
-      {fontsLoaded ? (
-        <Text style={styles.headingPlayfair}>Welcome to FreshFarms</Text>
-      ) : (
-        <Text style={styles.headingFallback}>Welcome to FreshFarms</Text>
-      )}
+      <Text style={styles.headingPlayfair}>Welcome to FreshFarms</Text>
       
       <Text style={styles.subheading}>
         Enter your mobile number to get the freshest groceries delivered to your door.
@@ -78,7 +69,7 @@ const PhoneInputStep = ({ onSuccess }) => {
         <TextInput
           style={styles.phoneNumberInput}
           placeholder="Mobile Number"
-          placeholderTextColor="#A9B3AB"
+          placeholderTextColor="#7a8a80"
           keyboardType="phone-pad"
           maxLength={10}
           value={phoneNumber}
@@ -123,7 +114,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headingPlayfair: {
-    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    fontFamily: 'Poppins_800ExtraBold',
     fontSize: 28,
     color: '#131916',
     marginBottom: 6,

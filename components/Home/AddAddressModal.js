@@ -106,14 +106,14 @@ const AddAddressModal = ({ visible, onClose, onAdd }) => {
               <TextInput
                 className="bg-[#F5F5F5] rounded-xl px-4 py-3.5 text-[14px] text-gray-900 font-medium mb-3"
                 placeholder="House / Flat / Block No. *"
-                placeholderTextColor="#ACACAC"
+                placeholderTextColor="#787878"
                 value={form.addressLine1}
                 onChangeText={(t) => update("addressLine1", t)}
               />
               <TextInput
                 className="bg-[#F5F5F5] rounded-xl px-4 py-3.5 text-[14px] text-gray-900 font-medium mb-3"
                 placeholder="Apartment / Road / Area"
-                placeholderTextColor="#ACACAC"
+                placeholderTextColor="#787878"
                 value={form.addressLine2}
                 onChangeText={(t) => update("addressLine2", t)}
               />
@@ -121,14 +121,14 @@ const AddAddressModal = ({ visible, onClose, onAdd }) => {
                 <TextInput
                   className="flex-1 bg-[#F5F5F5] rounded-xl px-4 py-3.5 text-[14px] text-gray-900 font-medium mr-2"
                   placeholder="City *"
-                  placeholderTextColor="#ACACAC"
+                  placeholderTextColor="#787878"
                   value={form.city}
                   onChangeText={(t) => update("city", t)}
                 />
                 <TextInput
                   className="flex-1 bg-[#F5F5F5] rounded-xl px-4 py-3.5 text-[14px] text-gray-900 font-medium"
                   placeholder="State"
-                  placeholderTextColor="#ACACAC"
+                  placeholderTextColor="#787878"
                   value={form.state}
                   onChangeText={(t) => update("state", t)}
                 />
@@ -137,7 +137,7 @@ const AddAddressModal = ({ visible, onClose, onAdd }) => {
                 <TextInput
                   className="flex-1 bg-[#F5F5F5] rounded-xl px-4 py-3.5 text-[14px] text-gray-900 font-medium mr-2"
                   placeholder="Pincode *"
-                  placeholderTextColor="#ACACAC"
+                  placeholderTextColor="#787878"
                   keyboardType="number-pad"
                   value={form.postalCode}
                   onChangeText={(t) => update("postalCode", t)}
@@ -145,7 +145,7 @@ const AddAddressModal = ({ visible, onClose, onAdd }) => {
                 <TextInput
                   className="flex-1 bg-[#F5F5F5] rounded-xl px-4 py-3.5 text-[14px] text-gray-900 font-medium"
                   placeholder="Phone (optional)"
-                  placeholderTextColor="#ACACAC"
+                  placeholderTextColor="#787878"
                   keyboardType="phone-pad"
                   value={form.contactPhone}
                   onChangeText={(t) => update("contactPhone", t)}

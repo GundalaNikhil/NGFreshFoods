@@ -24,7 +24,7 @@ const Products = () => {
         {loading ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color="#107A4A" />
-            <Text className="text-gray-400 mt-4 font-medium italic">
+            <Text className="text-gray-500 mt-4 font-medium italic">
               {error ? "Reconnecting to server..." : "Fetching fresh farm foods..."}
             </Text>
           </View>

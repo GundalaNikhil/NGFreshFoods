@@ -22,7 +22,7 @@ const SearchBar = () => {
 
   return (
     <View style={[styles.bar, isFocused && styles.barFocused]}>
-      <Search size={18} color="#93959f" strokeWidth={2} style={styles.icon} />
+      <Search size={18} color="#686b78" strokeWidth={2.2} style={styles.icon} />
       <TextInput
         ref={inputRef}
         value={searchQuery}
@@ -38,7 +38,7 @@ const SearchBar = () => {
           if (!searchQuery) setIsFocused(false);
         }}
         placeholder="Search for chicken, eggs, mutton..."
-        placeholderTextColor="#93959f"
+        placeholderTextColor="#686b78"
         style={styles.input}
         returnKeyType="search"
         autoCorrect={false}
