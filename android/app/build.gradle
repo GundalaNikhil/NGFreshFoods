@@ -134,20 +134,6 @@ android {
     }
 }
 
-def googleServicesJson = System.getenv("GOOGLE_SERVICES_JSON")
-if (googleServicesJson) {
-    tasks.register("copyGoogleServicesJson", Copy) {
-        from googleServicesJson
-        into projectDir
-        rename { "google-services.json" }
-    }
-    tasks.matching { task ->
-        task.name.startsWith("process") && task.name.endsWith("GoogleServices")
-    }.configureEach {
-        dependsOn("copyGoogleServicesJson")
-    }
-}
-
 // Apply static values from `gradle.properties` to the `android.packagingOptions`
 // Accepts values in comma delimited lists, example:
 // android.packagingOptions.pickFirsts=/LICENSE,**/picasa.ini
