@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>myapp</string>
+          <string>ngfreshfoods</string>
           <string>com.nick.ngfreshfoods</string>
         </array>
       </dict>

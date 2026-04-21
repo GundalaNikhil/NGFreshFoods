@@ -11,6 +11,7 @@ import Reanimated, {
 import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
 import { authAtom } from "../recoil/atoms/authAtom";
 import { cartState } from "../recoil/atoms/cartAtom";
+import { notificationAtom } from "../recoil/atoms/notificationAtom";
 import { auth } from "../services/firebaseConfig";
 import { onAuthStateChanged } from "@react-native-firebase/auth";
 import Toast from "react-native-toast-message";
@@ -18,6 +19,7 @@ import AccountScreen from "../components/bottomNavScreens/AccountScreen";
 import CartScreen from "../components/bottomNavScreens/CartScreen";
 import HomeScreen from "../components/bottomNavScreens/HomeScreen";
 import ProductsScreen from "../components/bottomNavScreens/ProductsScreen";
+import PushNotificationsManager from "../components/Notifications/PushNotificationsManager";
 import "../global.css";
 import AuthScreen from "../components/Login/AuthScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -192,9 +194,51 @@ const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
 // The main App routing logic inside RecoilRoot
 function RootNavigator() {
   const [authState, setAuthState] = useRecoilState(authAtom);
+  const notificationState = useRecoilValue(notificationAtom);
   const [initializing, setInitializing] = useState(true);
 
   const initRef = useRef(true);
+  const tabNavigatorRef = useRef(null);
+
+  useEffect(() => {
+    const intent = notificationState.intent;
+    if (!intent || !tabNavigatorRef.current?.navigate) {
+      return;
+    }
+
+    const normalizedTarget = String(
+      intent.targetScreen || intent.deepLink || ""
+    ).toLowerCase();
+
+    if (
+      intent.orderId ||
+      normalizedTarget.includes("orders") ||
+      normalizedTarget.includes("order") ||
+      normalizedTarget.includes("notifications") ||
+      normalizedTarget.includes("notification") ||
+      normalizedTarget.includes("account")
+    ) {
+      tabNavigatorRef.current.navigate("Account");
+      return;
+    }
+
+    if (normalizedTarget.includes("cart")) {
+      tabNavigatorRef.current.navigate("Cart");
+      return;
+    }
+
+    if (
+      normalizedTarget.includes("products") ||
+      normalizedTarget.includes("product")
+    ) {
+      tabNavigatorRef.current.navigate("Products");
+      return;
+    }
+
+    if (normalizedTarget.includes("home")) {
+      tabNavigatorRef.current.navigate("Home");
+    }
+  }, [notificationState.intentUpdatedAt]);
 
   useEffect(() => {
     console.log("[Root] State - initializing:", initializing, "isHydrated:", authState?.isHydrated, "isAuthenticated:", authState?.isAuthenticated);
@@ -282,7 +326,9 @@ function RootNavigator() {
   return (
     <>
     <CartSyncManager />
+    <PushNotificationsManager />
     <Tab.Navigator
+        ref={tabNavigatorRef}
         tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,

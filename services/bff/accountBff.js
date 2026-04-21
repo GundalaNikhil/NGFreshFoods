@@ -207,3 +207,83 @@ export const fetchOrderById = async (orderId) => {
     return normalizeError(error);
   }
 };
+
+export const registerDevicePushToken = async ({ token, payload }) => {
+  const missing = requireToken(token);
+  if (missing) return missing;
+
+  try {
+    const response = await apiClient.post(
+      API_ENDPOINTS.NOTIFICATION_REGISTER_DEVICE,
+      payload
+    );
+    return {
+      success: true,
+      data: response?.data || null,
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
+
+export const unregisterCurrentDevice = async ({ token }) => {
+  const missing = requireToken(token);
+  if (missing) return missing;
+
+  try {
+    await apiClient.delete(API_ENDPOINTS.NOTIFICATION_UNREGISTER_DEVICE);
+    return { success: true };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
+
+export const fetchNotificationPreferences = async ({ token }) => {
+  const missing = requireToken(token);
+  if (missing) return missing;
+
+  try {
+    const response = await apiClient.get(API_ENDPOINTS.NOTIFICATION_PREFERENCES);
+    return {
+      success: true,
+      data: response?.data || null,
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
+
+export const updateNotificationPreferences = async ({ token, payload }) => {
+  const missing = requireToken(token);
+  if (missing) return missing;
+
+  try {
+    const response = await apiClient.put(
+      API_ENDPOINTS.NOTIFICATION_PREFERENCES,
+      payload
+    );
+    return {
+      success: true,
+      data: response?.data || null,
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
+
+export const fetchNotificationFeed = async ({ token }) => {
+  const missing = requireToken(token);
+  if (missing) return missing;
+
+  try {
+    const response = await apiClient.get(API_ENDPOINTS.NOTIFICATION_FEED);
+    return {
+      success: true,
+      data: {
+        notifications: response?.data || [],
+      },
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};

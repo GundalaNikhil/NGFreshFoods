@@ -103,6 +103,11 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
       
     } catch (err) {
       console.log("Firebase OTP Verification Error: ", err);
+      if (err?.code === 'auth/session-expired' || err?.code === 'auth/code-expired') {
+        setOtp(['', '', '', '', '', '']);
+        setTimer(0);
+        inputRefs.current[0]?.focus();
+      }
       const errorMessage = handleGlobalError(err, "OTP Verification");
       setError(errorMessage);
     } finally {

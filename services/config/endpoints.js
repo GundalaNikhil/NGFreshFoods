@@ -26,6 +26,12 @@ export const API_ENDPOINTS = {
   ADDRESS_DELETE: (addressId) =>
     `${API_BASE_URL}/api/${API_VERSION}/users/me/addresses/${addressId}`,
 
+  // Notifications
+  NOTIFICATION_REGISTER_DEVICE: `${API_BASE_URL}/api/${API_VERSION}/notifications/devices/register`,
+  NOTIFICATION_UNREGISTER_DEVICE: `${API_BASE_URL}/api/${API_VERSION}/notifications/devices/current`,
+  NOTIFICATION_PREFERENCES: `${API_BASE_URL}/api/${API_VERSION}/notifications/preferences`,
+  NOTIFICATION_FEED: `${API_BASE_URL}/api/${API_VERSION}/notifications/feed`,
+
   // Orders
   ORDERS_ME: `${API_BASE_URL}/api/${API_VERSION}/orders/my`,
   ORDER_CREATE: `${API_BASE_URL}/api/${API_VERSION}/orders/create`,

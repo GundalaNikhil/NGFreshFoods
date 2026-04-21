@@ -4,11 +4,16 @@
     "slug": "NGFreshFoods",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "myapp",
+    "scheme": "ngfreshfoods",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      },
       "splash": {
         "image": "./assets/images/user_splash_v9.png",
         "resizeMode": "cover",
@@ -20,8 +25,10 @@
     "android": {
       "package": "com.nick.ngfreshfoods",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 1,
-      "permissions": [],
+      "versionCode": 6,
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ],
       "splash": {
         "image": "./assets/images/user_splash_v9.png",
         "resizeMode": "cover",
@@ -45,6 +52,7 @@
     "plugins": [
       "expo-router",
       "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
       [
         "expo-splash-screen",
         {

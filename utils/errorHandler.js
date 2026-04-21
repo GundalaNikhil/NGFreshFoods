@@ -26,6 +26,12 @@ export const handleGlobalError = (error, context = "App") => {
       case 'auth/invalid-verification-code':
         userFriendlyMessage = "The OTP entered is incorrect. Please try again.";
         break;
+      case 'auth/session-expired':
+        userFriendlyMessage = "This OTP session expired. Please resend the verification code and try again.";
+        break;
+      case 'auth/code-expired':
+        userFriendlyMessage = "This OTP has expired. Please resend the verification code and try again.";
+        break;
       case 'auth/network-request-failed':
         userFriendlyMessage = "Network error. Please check your internet connection.";
         break;

@@ -26,14 +26,17 @@ import {
 } from "lucide-react-native";
 import authFirebase from "@react-native-firebase/auth";
 import { authAtom } from "../../recoil/atoms/authAtom";
+import { notificationAtom } from "../../recoil/atoms/notificationAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
 import {
-  createAddress,
   deleteAddress,
-  fetchMyAddresses,
+  fetchNotificationFeed,
+  fetchNotificationPreferences,
   fetchMyOrders,
   fetchMyProfile,
+  unregisterCurrentDevice,
   updateAddress,
+  updateNotificationPreferences,
   updateMyProfile,
 } from "../../services/bff/accountBff";
 import { setAuthTokens } from "../../services/http/apiClient";
@@ -182,17 +185,43 @@ const OrderCard = ({ order, onPress }) => {
   );
 };
 
+const NotificationCard = ({ item, onPress }) => (
+  <TouchableOpacity
+    className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+    activeOpacity={0.85}
+    onPress={() => onPress && onPress(item)}
+  >
+    <View className="flex-row items-start justify-between">
+      <View className="flex-1 pr-3">
+        <Text className="text-[14px] font-semibold text-gray-900">{item.title}</Text>
+        <Text className="text-[12px] text-gray-600 mt-1 leading-5">{item.body}</Text>
+      </View>
+      <View className="px-2 py-1 rounded-full bg-emerald-50">
+        <Text className="text-[10px] font-semibold text-emerald-700">
+          {(item.eventType || "UPDATE").replace(/_/g, " ")}
+        </Text>
+      </View>
+    </View>
+    <Text className="text-[11px] text-gray-400 mt-3">
+      {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Just now"}
+    </Text>
+  </TouchableOpacity>
+);
+
 const AccountHub = () => {
   const auth = useRecoilValue(authAtom);
   const resetAuth = useResetRecoilState(authAtom);
   const resetProfile = useResetRecoilState(profileAtom);
   const [profile, setProfile] = useRecoilState(profileAtom);
+  const [notificationState, setNotificationState] = useRecoilState(notificationAtom);
 
   const [section, setSection] = useState("home");
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [ordersError, setOrdersError] = useState("");
+  const [notificationsError, setNotificationsError] = useState("");
   const [orders, setOrders] = useState([]);
   const { addresses, refreshAddresses, deleteAddress, addAddress } = useAddress();
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -228,6 +257,36 @@ const AccountHub = () => {
     setLoadingOrders(false);
   };
 
+  const loadNotifications = async () => {
+    setLoadingNotifications(true);
+    setNotificationsError("");
+
+    const [prefsResponse, feedResponse] = await Promise.all([
+      fetchNotificationPreferences({ token: auth.token }),
+      fetchNotificationFeed({ token: auth.token }),
+    ]);
+
+    if (!prefsResponse.success) {
+      setNotificationsError(
+        prefsResponse.error.message || "Failed to load notification preferences."
+      );
+    }
+
+    if (!feedResponse.success) {
+      setNotificationsError(
+        feedResponse.error.message || "Failed to load notifications."
+      );
+    }
+
+    setNotificationState((prev) => ({
+      ...prev,
+      preferences: prefsResponse.success ? prefsResponse.data : prev.preferences,
+      feed: feedResponse.success ? feedResponse.data.notifications || [] : prev.feed,
+    }));
+
+    setLoadingNotifications(false);
+  };
+
 
   useEffect(() => {
     loadProfile();
@@ -236,9 +295,43 @@ const AccountHub = () => {
   useEffect(() => {
     if (section === "orders") loadOrders();
     if (section === "addresses") refreshAddresses();
+    if (section === "notifications") loadNotifications();
   }, [section]);
 
+  useEffect(() => {
+    const intent = notificationState.intent;
+    if (!intent) {
+      return;
+    }
+
+    const normalizedTarget = String(
+      intent.targetScreen || intent.deepLink || ""
+    ).toLowerCase();
+
+    if (
+      intent.orderId ||
+      normalizedTarget.includes("orders") ||
+      normalizedTarget.includes("order")
+    ) {
+      setSection("orders");
+      return;
+    }
+
+    if (
+      normalizedTarget.includes("notifications") ||
+      normalizedTarget.includes("notification")
+    ) {
+      setSection("notifications");
+    }
+  }, [notificationState.intentUpdatedAt]);
+
   const handleLogout = async () => {
+    try {
+      await unregisterCurrentDevice({ token: auth.token });
+    } catch (_error) {
+      // Device cleanup is best effort.
+    }
+
     try {
       await authFirebase().signOut();
     } catch (error) {
@@ -248,6 +341,82 @@ const AccountHub = () => {
     resetAuth();
     resetProfile();
     setAuthTokens({});
+  };
+
+  const handlePreferenceToggle = async (key, value) => {
+    const nextPreferences = {
+      ...(notificationState.preferences || {}),
+      [key]: value,
+    };
+
+    setNotificationState((prev) => ({
+      ...prev,
+      preferences: nextPreferences,
+    }));
+
+    const response = await updateNotificationPreferences({
+      token: auth.token,
+      payload: nextPreferences,
+    });
+
+    if (!response.success) {
+      setNotificationsError(
+        response.error.message || "Failed to update notification preferences."
+      );
+      loadNotifications();
+      return;
+    }
+
+    setNotificationState((prev) => ({
+      ...prev,
+      preferences: response.data,
+    }));
+  };
+
+  const openNotificationItem = (item) => {
+    let payload = {};
+    try {
+      payload = item.payloadJson ? JSON.parse(item.payloadJson) : {};
+    } catch (_error) {
+      payload = {};
+    }
+
+    if (payload.orderId) {
+      setNotificationState((prev) => ({
+        ...prev,
+        intent: {
+          orderId: payload.orderId,
+          targetScreen: payload.targetScreen || "orders",
+          deepLink: payload.deepLink || item.deepLink || null,
+        },
+        intentUpdatedAt: new Date().toISOString(),
+      }));
+      setSection("orders");
+      return;
+    }
+
+    const targetScreen = String(
+      payload.targetScreen || item.targetScreen || item.deepLink || ""
+    ).toLowerCase();
+
+    if (
+      targetScreen.includes("notifications") ||
+      targetScreen.includes("notification")
+    ) {
+      setNotificationState((prev) => ({
+        ...prev,
+        intent: {
+          orderId: null,
+          targetScreen: "notifications",
+          deepLink: payload.deepLink || item.deepLink || null,
+        },
+        intentUpdatedAt: new Date().toISOString(),
+      }));
+      setSection("notifications");
+      return;
+    }
+
+    Alert.alert(item.title || "Notification", item.body || "No additional details.");
   };
 
   const quickCommerceItems = [
@@ -482,6 +651,96 @@ const AccountHub = () => {
           onAdd={addAddress}
         />
       </View>
+    );
+  }
+
+  if (section === "notifications") {
+    const preferences = notificationState.preferences || {
+      orderUpdates: true,
+      offersAndPromos: true,
+      reminders: true,
+      systemMessages: true,
+    };
+
+    return (
+      <ScrollView className="flex-1">
+        <SectionHeader title="Notifications" onBack={() => setSection("home")} />
+
+        <View className="bg-white rounded-2xl p-5 shadow-sm mb-4">
+          <Text className="text-[15px] font-semibold text-gray-900 mb-1">
+            Push preferences
+          </Text>
+          <Text className="text-[12px] text-gray-500 mb-4">
+            Order updates stay fast. Offers and reminders can be tuned anytime.
+          </Text>
+
+          {[
+            ["orderUpdates", "Order updates"],
+            ["offersAndPromos", "Offers and promos"],
+            ["reminders", "Reminders"],
+            ["systemMessages", "System messages"],
+          ].map(([key, label]) => (
+            <View
+              key={key}
+              className="flex-row items-center justify-between py-3 border-t border-gray-100"
+            >
+              <View className="pr-3 flex-1">
+                <Text className="text-[14px] font-medium text-gray-900">{label}</Text>
+                <Text className="text-[11px] text-gray-500 mt-0.5">
+                  {key === "offersAndPromos"
+                    ? "Campaigns, launches, and seasonal deals."
+                    : key === "orderUpdates"
+                    ? "Real-time progress for active orders."
+                    : key === "reminders"
+                    ? "Cart and reorder nudges."
+                    : "Service and account updates."}
+                </Text>
+              </View>
+              <Switch
+                value={Boolean(preferences[key])}
+                onValueChange={(value) => handlePreferenceToggle(key, value)}
+                trackColor={{ false: "#D1D5DB", true: "#A7F3D0" }}
+                thumbColor={preferences[key] ? "#107A4A" : "#F9FAFB"}
+              />
+            </View>
+          ))}
+
+          <Text className="text-[11px] text-gray-400 mt-4">
+            Permission: {notificationState.permissionStatus || "UNDETERMINED"}
+          </Text>
+        </View>
+
+        <Text className="text-sm font-semibold text-gray-700 mb-3">
+          Recent updates
+        </Text>
+
+        {notificationsError ? (
+          <Text className="text-[12px] text-red-600 mb-3">{notificationsError}</Text>
+        ) : null}
+
+        {loadingNotifications ? (
+          <View className="flex-1 items-center justify-center p-10">
+            <ActivityIndicator size="large" color="#107A4A" />
+            <Text className="text-gray-400 mt-4 font-medium">
+              Loading notifications...
+            </Text>
+          </View>
+        ) : notificationState.feed.length === 0 ? (
+          <EmptyState
+            title="No notifications yet"
+            subtitle="Order progress, reminders, and campaigns will land here."
+            image={require("../../assets/images/characters/orders/empty.png")}
+          />
+        ) : (
+          notificationState.feed.map((item) => (
+            <NotificationCard
+              key={item.notificationEventId}
+              item={item}
+              onPress={openNotificationItem}
+            />
+          ))
+        )}
+      </ScrollView>
     );
   }
 

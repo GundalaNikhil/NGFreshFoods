@@ -53,10 +53,8 @@ const AuthScreen = () => {
         }
 
         if (parsed.step === 'OTP') {
-          const confirmResult = await authFirebase().signInWithPhoneNumber(parsed.phoneNumber);
-          if (!mounted) return;
-          setConfirmationResult(confirmResult);
-          setStep('OTP');
+          await AsyncStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
+          return;
         }
       } catch (_error) {
         await AsyncStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
@@ -79,6 +77,11 @@ const AuthScreen = () => {
         }
 
         if (!phoneNumber) return;
+
+        if (step === 'OTP') {
+          await AsyncStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
+          return;
+        }
 
         await AsyncStorage.setItem(
           AUTH_FLOW_STORAGE_KEY,
