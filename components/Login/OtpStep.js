@@ -7,6 +7,7 @@ import { loginWithFirebaseOtpBff } from '../../services/bff/authBff';
 import { setAuthTokens } from '../../services/http/apiClient';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { handleGlobalError } from '../../utils/errorHandler';
+import authFirebase from '@react-native-firebase/auth';
 
 const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequiresProfile, onAuthSuccess }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -17,6 +18,53 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
   const inputRefs = useRef([]);
   const setAuth = useSetRecoilState(authAtom);
   const setProfile = useSetRecoilState(profileAtom);
+
+  // Handle Auto-Verification by Android SMS Retriever
+  useEffect(() => {
+    let mounted = true;
+    const unsubscribe = authFirebase().onAuthStateChanged(async (user) => {
+      // If user is natively authenticated and matches the phone number we are verifying, progress automatically!
+      if (user && user.phoneNumber === phoneNumber) {
+        setLoading(true);
+        try {
+          const token = await user.getIdToken();
+          const backendResponse = await loginWithFirebaseOtpBff({ idToken: token });
+
+          if (!mounted) return;
+
+          if (backendResponse.success) {
+            if (backendResponse.data.profile.isNewUser) {
+              onRequiresProfile(token);
+              return;
+            }
+            await onAuthSuccess?.();
+            setAuth({
+              isAuthenticated: true,
+              token: backendResponse.data.token,
+              refreshToken: backendResponse.data.refreshToken,
+            });
+            setAuthTokens({
+              token: backendResponse.data.token,
+              refreshToken: backendResponse.data.refreshToken,
+            });
+            setProfile(backendResponse.data.profile);
+          } else {
+            setError(backendResponse.error.message || "Failed to authenticate with backend on auto-verify");
+            setLoading(false);
+          }
+        } catch (err) {
+          console.log("Auto-Verification Error:", err);
+          if (mounted) setLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phoneNumber]);
 
   // Handle Resend Countdown
   useEffect(() => {
@@ -71,9 +119,25 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
        * If successful, it updates the local Firebase state. Then we extract the Bearer token
        * and update the Recoil State, which unmounts the Auth screen and redirects to Home!
        */
-      const userCredential = await confirmationResult.confirm(code);
-      
-      const token = await userCredential.user.getIdToken();
+      let token = null;
+      try {
+        const userCredential = await confirmationResult.confirm(code);
+        token = await userCredential.user.getIdToken();
+      } catch (confirmError) {
+        // Fallback: If Android Auto-retriever already verified this natively in the background, 
+        // confirm() throws auth/session-expired. We can safely retrieve the native auth state.
+        const currentUser = authFirebase().currentUser;
+        if (
+          currentUser && 
+          currentUser.phoneNumber === phoneNumber &&
+          (confirmError.code === 'auth/session-expired' || confirmError.code === 'auth/code-expired' || confirmError.code === 'auth/invalid-verification-code')
+        ) {
+          console.log("User was auto-verified by Play Services. Bypassing manual confirm error.");
+          token = await currentUser.getIdToken();
+        } else {
+          throw confirmError;
+        }
+      }
       
       // Send the Firebase ID Token to the Spring Boot Backend for validation & user sync
       const backendResponse = await loginWithFirebaseOtpBff({ idToken: token });
