@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRecoilState, useRecoilValue, useResetRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import {
   Bell,
   ChevronLeft,
@@ -210,13 +210,14 @@ const NotificationCard = ({ item, onPress }) => (
 
 const AccountHub = () => {
   const auth = useRecoilValue(authAtom);
-  const resetAuth = useResetRecoilState(authAtom);
+  const setAuth = useSetRecoilState(authAtom);
   const resetProfile = useResetRecoilState(profileAtom);
   const [profile, setProfile] = useRecoilState(profileAtom);
   const [notificationState, setNotificationState] = useRecoilState(notificationAtom);
 
   const [section, setSection] = useState("home");
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [profileError, setProfileError] = useState("");
@@ -326,6 +327,8 @@ const AccountHub = () => {
   }, [notificationState.intentUpdatedAt]);
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
     try {
       await unregisterCurrentDevice({ token: auth.token });
     } catch (_error) {
@@ -338,9 +341,15 @@ const AccountHub = () => {
       console.error("Firebase logout error:", error);
     }
 
-    resetAuth();
+    setAuth((prev) => ({
+      ...prev,
+      isAuthenticated: false,
+      token: null,
+      refreshToken: null,
+    }));
     resetProfile();
     setAuthTokens({});
+    setIsLoggingOut(false);
   };
 
   const handlePreferenceToggle = async (key, value) => {
@@ -781,12 +790,19 @@ const AccountHub = () => {
           </View>
           <TouchableOpacity
             onPress={handleLogout}
+            disabled={isLoggingOut}
             className="px-3 py-2 rounded-full bg-red-50 flex-row items-center"
           >
-            <LogOut size={16} color="#DC2626" />
-            <Text className="ml-2 text-[11px] font-semibold text-red-600">
-              Logout
-            </Text>
+            {isLoggingOut ? (
+              <ActivityIndicator size="small" color="#DC2626" />
+            ) : (
+              <>
+                <LogOut size={16} color="#DC2626" />
+                <Text className="ml-2 text-[11px] font-semibold text-red-600">
+                  Logout
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
         {profileError ? (

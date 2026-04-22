@@ -62,6 +62,7 @@ const toUserProfile = (payload) => {
 
 export const loginWithFirebaseOtpBff = async ({ idToken }) => {
   try {
+    console.log("SENDING OTP REQUEST TO BASE URL:", API_ENDPOINTS.FIREBASE_LOGIN_OTP);
     const response = await apiClient.post(API_ENDPOINTS.FIREBASE_LOGIN_OTP, {
       idToken: normalizeText(idToken),
     });

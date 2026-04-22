@@ -1,4 +1,5 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
 import { Icon } from "@rneui/themed";
 import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, Pressable, Text, TextInput, View, ActivityIndicator, Platform } from "react-native";
@@ -198,11 +199,11 @@ function RootNavigator() {
   const [initializing, setInitializing] = useState(true);
 
   const initRef = useRef(true);
-  const tabNavigatorRef = useRef(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const intent = notificationState.intent;
-    if (!intent || !tabNavigatorRef.current?.navigate) {
+    if (!intent || !navigation) {
       return;
     }
 
@@ -218,12 +219,12 @@ function RootNavigator() {
       normalizedTarget.includes("notification") ||
       normalizedTarget.includes("account")
     ) {
-      tabNavigatorRef.current.navigate("Account");
+      navigation.navigate("Account");
       return;
     }
 
     if (normalizedTarget.includes("cart")) {
-      tabNavigatorRef.current.navigate("Cart");
+      navigation.navigate("Cart");
       return;
     }
 
@@ -231,14 +232,14 @@ function RootNavigator() {
       normalizedTarget.includes("products") ||
       normalizedTarget.includes("product")
     ) {
-      tabNavigatorRef.current.navigate("Products");
+      navigation.navigate("Products");
       return;
     }
 
     if (normalizedTarget.includes("home")) {
-      tabNavigatorRef.current.navigate("Home");
+      navigation.navigate("Home");
     }
-  }, [notificationState.intentUpdatedAt]);
+  }, [notificationState.intentUpdatedAt, navigation]);
 
   useEffect(() => {
     console.log("[Root] State - initializing:", initializing, "isHydrated:", authState?.isHydrated, "isAuthenticated:", authState?.isAuthenticated);
@@ -328,7 +329,6 @@ function RootNavigator() {
     <CartSyncManager />
     <PushNotificationsManager />
     <Tab.Navigator
-        ref={tabNavigatorRef}
         tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,

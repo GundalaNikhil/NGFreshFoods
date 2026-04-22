@@ -127,6 +127,9 @@ const AuthScreen = () => {
 
   const handleResend = async () => {
     try {
+      if (authFirebase().currentUser) {
+        await authFirebase().signOut();
+      }
       const confirmResult = await authFirebase().signInWithPhoneNumber(phoneNumber);
       setConfirmationResult(confirmResult);
       return { success: true };

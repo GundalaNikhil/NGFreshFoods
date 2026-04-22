@@ -1,13 +1,13 @@
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { useRecoilValue, useResetRecoilState } from "recoil";
+import { useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
 import authFirebase from '@react-native-firebase/auth';
 
 const Profile = () => {
   const profile = useRecoilValue(profileAtom);
-  const resetAuth = useResetRecoilState(authAtom);
+  const setAuth = useSetRecoilState(authAtom);
   const resetProfile = useResetRecoilState(profileAtom);
 
   const handleLogout = async () => {
@@ -18,7 +18,12 @@ const Profile = () => {
     }
     
     // Clear local state routing even if Firebase fails
-    resetAuth();
+    setAuth((prev) => ({
+      ...prev,
+      isAuthenticated: false,
+      token: null,
+      refreshToken: null,
+    }));
     resetProfile();
   };
 

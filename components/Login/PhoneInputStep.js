@@ -24,6 +24,11 @@ const PhoneInputStep = ({ onSuccess }) => {
     const formattedNumber = `+91${phoneNumber}`;
 
     try {
+      // Reset any stale phone-auth session before starting a new OTP flow.
+      if (authFirebase().currentUser) {
+        await authFirebase().signOut();
+      }
+
       /**
        * Calls Firebase Auth to send an SMS to the user's phone.
        * If successful, it returns a ConfirmationResult object containing verificationId.

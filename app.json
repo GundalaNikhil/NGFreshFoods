@@ -2,7 +2,7 @@
   "expo": {
     "name": "NGFreshFoods",
     "slug": "NGFreshFoods",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "scheme": "ngfreshfoods",
     "userInterfaceStyle": "automatic",
@@ -10,9 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
+        "UIBackgroundModes": ["remote-notification"]
       },
       "splash": {
         "image": "./assets/images/user_splash_v9.png",
@@ -25,10 +23,8 @@
     "android": {
       "package": "com.nick.ngfreshfoods",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 6,
-      "permissions": [
-        "POST_NOTIFICATIONS"
-      ],
+      "versionCode": 9,
+      "permissions": ["POST_NOTIFICATIONS"],
       "splash": {
         "image": "./assets/images/user_splash_v9.png",
         "resizeMode": "cover",

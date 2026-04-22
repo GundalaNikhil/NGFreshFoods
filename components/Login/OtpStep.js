@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSetRecoilState } from 'recoil';
 import { authAtom } from '../../recoil/atoms/authAtom';
@@ -9,62 +9,94 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { handleGlobalError } from '../../utils/errorHandler';
 import authFirebase from '@react-native-firebase/auth';
 
+/**
+ * Normalize phone numbers to digits-only for comparison,
+ * e.g. "+91 98765 43210" → "919876543210"
+ */
+const normalizePhone = (phone) => (phone || '').replace(/[^0-9]/g, '');
+
 const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequiresProfile, onAuthSuccess }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(30);
+  const [autoVerifying, setAutoVerifying] = useState(false);
 
   const inputRefs = useRef([]);
   const setAuth = useSetRecoilState(authAtom);
   const setProfile = useSetRecoilState(profileAtom);
+  // Guard to prevent double-processing (manual verify + auto-verify race)
+  const isProcessingRef = useRef(false);
 
-  // Handle Auto-Verification by Android SMS Retriever
+  /**
+   * Shared function to complete the login flow once we have a valid Firebase ID token.
+   * Used by both manual OTP verify and the auto-verification listener.
+   */
+  const completeLoginWithToken = useCallback(async (token) => {
+    // Send the Firebase ID Token to the Spring Boot Backend for validation & user sync
+    const backendResponse = await loginWithFirebaseOtpBff({ idToken: token });
+
+    if (backendResponse.success) {
+      // If the backend returns 200 OK but flags the user as new, route them to profile completion setup!
+      if (backendResponse.data.profile.isNewUser) {
+        onRequiresProfile(token);
+        return;
+      }
+      
+      // Otherwise, hydrate Recoil state with Backend's JWT and Profile and enter the app!
+      await onAuthSuccess?.();
+      setAuth((prev) => ({
+        ...prev,
+        isAuthenticated: true,
+        token: backendResponse.data.token,
+        refreshToken: backendResponse.data.refreshToken,
+      }));
+      setAuthTokens({
+        token: backendResponse.data.token,
+        refreshToken: backendResponse.data.refreshToken,
+      });
+      setProfile(backendResponse.data.profile);
+    } else {
+      throw new Error(backendResponse.error.message || "Failed to authenticate with backend");
+    }
+  }, [onRequiresProfile, onAuthSuccess, setAuth, setProfile]);
+
+  /**
+   * Listen for Firebase auth state changes to detect auto-verification.
+   * On real Android devices, Google Play Services can automatically read the SMS
+   * and verify the phone number in the background — without the user typing the OTP.
+   * When that happens, Firebase emits an auth state change with a signed-in user.
+   * We catch that here and proceed directly.
+   */
   useEffect(() => {
-    let mounted = true;
     const unsubscribe = authFirebase().onAuthStateChanged(async (user) => {
-      // If user is natively authenticated and matches the phone number we are verifying, progress automatically!
-      if (user && user.phoneNumber === phoneNumber) {
+      if (
+        user &&
+        normalizePhone(user.phoneNumber) === normalizePhone(phoneNumber) &&
+        !isProcessingRef.current
+      ) {
+        // Play Services auto-verified in the background!
+        isProcessingRef.current = true;
+        setAutoVerifying(true);
         setLoading(true);
+        setError('');
+
         try {
+          console.log("Auto-verification detected via onAuthStateChanged. Proceeding automatically.");
           const token = await user.getIdToken();
-          const backendResponse = await loginWithFirebaseOtpBff({ idToken: token });
-
-          if (!mounted) return;
-
-          if (backendResponse.success) {
-            if (backendResponse.data.profile.isNewUser) {
-              onRequiresProfile(token);
-              return;
-            }
-            await onAuthSuccess?.();
-            setAuth({
-              isAuthenticated: true,
-              token: backendResponse.data.token,
-              refreshToken: backendResponse.data.refreshToken,
-            });
-            setAuthTokens({
-              token: backendResponse.data.token,
-              refreshToken: backendResponse.data.refreshToken,
-            });
-            setProfile(backendResponse.data.profile);
-          } else {
-            setError(backendResponse.error.message || "Failed to authenticate with backend on auto-verify");
-            setLoading(false);
-          }
+          await completeLoginWithToken(token);
         } catch (err) {
-          console.log("Auto-Verification Error:", err);
-          if (mounted) setLoading(false);
+          console.log("Auto-verification backend error:", err);
+          // Don't block the user — they can still verify manually
+          isProcessingRef.current = false;
+          setAutoVerifying(false);
+          setLoading(false);
         }
       }
     });
 
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phoneNumber]);
+    return () => unsubscribe();
+  }, [phoneNumber, completeLoginWithToken]);
 
   // Handle Resend Countdown
   useEffect(() => {
@@ -100,12 +132,15 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
   };
 
   const handleVerifyOtp = async () => {
+    if (isProcessingRef.current) return; // Already auto-verifying
+    
     const code = otp.join('');
     if (code.length < 6) {
       setError('Please enter the full 6-digit OTP');
       return;
     }
 
+    isProcessingRef.current = true;
     setLoading(true);
     setError('');
 
@@ -125,11 +160,12 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
         token = await userCredential.user.getIdToken();
       } catch (confirmError) {
         // Fallback: If Android Auto-retriever already verified this natively in the background, 
-        // confirm() throws auth/session-expired. We can safely retrieve the native auth state.
+        // confirm() throws auth/session-expired or auth/invalid-verification-code.
+        // We can safely retrieve the native auth state if the user matches.
         const currentUser = authFirebase().currentUser;
         if (
           currentUser && 
-          currentUser.phoneNumber === phoneNumber &&
+          normalizePhone(currentUser.phoneNumber) === normalizePhone(phoneNumber) &&
           (confirmError.code === 'auth/session-expired' || confirmError.code === 'auth/code-expired' || confirmError.code === 'auth/invalid-verification-code')
         ) {
           console.log("User was auto-verified by Play Services. Bypassing manual confirm error.");
@@ -139,42 +175,22 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
         }
       }
       
-      // Send the Firebase ID Token to the Spring Boot Backend for validation & user sync
-      const backendResponse = await loginWithFirebaseOtpBff({ idToken: token });
-
-      if (backendResponse.success) {
-        // If the backend returns 200 OK but flags the user as new, route them to profile completion setup!
-        if (backendResponse.data.profile.isNewUser) {
-          onRequiresProfile(token);
-          return;
-        }
-        
-        // Otherwise, hydrate Recoil state with Backend's JWT and Profile and enter the app!
-        await onAuthSuccess?.();
-        setAuth({
-          isAuthenticated: true,
-          token: backendResponse.data.token,
-          refreshToken: backendResponse.data.refreshToken,
-        });
-        setAuthTokens({
-          token: backendResponse.data.token,
-          refreshToken: backendResponse.data.refreshToken,
-        });
-        setProfile(backendResponse.data.profile);
-      } else {
-        throw new Error(backendResponse.error.message || "Failed to authenticate with backend");
-      }
+      await completeLoginWithToken(token);
       
     } catch (err) {
       console.log("Firebase OTP Verification Error: ", err);
       if (err?.code === 'auth/session-expired' || err?.code === 'auth/code-expired') {
         setOtp(['', '', '', '', '', '']);
         setTimer(0);
-        inputRefs.current[0]?.focus();
+        setTimeout(() => {
+          inputRefs.current.forEach((ref) => ref?.clear?.());
+          inputRefs.current[0]?.focus();
+        }, 50);
       }
       const errorMessage = handleGlobalError(err, "OTP Verification");
       setError(errorMessage);
     } finally {
+      isProcessingRef.current = false;
       setLoading(false);
     }
   };
@@ -185,15 +201,20 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
     
     // Call the Firebase integration passed from AuthScreen
     const result = await onResend();
+    
+    // Set loading to false BEFORE focusing so inputs become editable
+    setLoading(false);
+    
     if (result.success) {
       setTimer(30);
       setOtp(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus(); // refocus first input
+      setTimeout(() => {
+        inputRefs.current.forEach((ref) => ref?.clear?.());
+        inputRefs.current[0]?.focus(); // refocus first input after it's editable
+      }, 50);
     } else {
       setError(result.error || "Failed to resend OTP. Please try again.");
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -209,6 +230,14 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
       <Text style={styles.subheading}>
         We sent a 6-digit secure code to <Text style={styles.boldText}>{phoneNumber}</Text>
       </Text>
+
+      {/* Auto-verification status */}
+      {autoVerifying ? (
+        <View style={styles.autoVerifyContainer}>
+          <ActivityIndicator color="#4A875D" size="small" />
+          <Text style={styles.autoVerifyText}>Auto-verifying... Please wait.</Text>
+        </View>
+      ) : null}
 
       {/* Error Message Box */}
       {error ? (
@@ -313,6 +342,22 @@ const styles = StyleSheet.create({
   boldText: {
     fontWeight: '800',
     color: '#1F2B24',
+  },
+  autoVerifyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF6F1',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4A875D',
+    marginBottom: 16,
+  },
+  autoVerifyText: {
+    color: '#4A875D',
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   errorContainer: {
     backgroundColor: '#FFF4F3',
