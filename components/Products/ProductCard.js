@@ -1,8 +1,29 @@
-import { Minus, Plus, ShoppingCart } from "lucide-react-native";
+import { Minus, Plus } from "lucide-react-native";
 import React, { useState, useMemo } from "react";
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { Image } from "expo-image";
 import { useCart } from "../../hooks/useCart";
 import ChickenCustomizationModal from "./ChickenCustomizationModal";
+
+const PLACEHOLDER_IMAGE = "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513962/ffw/Fresh%20Whole%20Chicken/ri4imwvokptjrw6hcqpq.jpg";
+
+/**
+ * Infer veg/non-veg from category name or product name.
+ * Eggs, dairy, paneer → veg (green). Chicken, mutton, fish, seafood, prawn → non-veg (red).
+ */
+const isVegProduct = (product) => {
+  const catName = (product?.categoryName || product?.category?.name || "").toLowerCase();
+  const prodName = (product?.name || "").toLowerCase();
+  const combined = `${catName} ${prodName}`;
+  // Non-veg indicators
+  const nonVegKeywords = ["chicken", "mutton", "fish", "seafood", "prawn", "meat", "lamb", "goat", "shrimp", "crab"];
+  if (nonVegKeywords.some((kw) => combined.includes(kw))) return false;
+  // Veg indicators (eggs in Indian FSSAI labeling are veg, but for this store they are sold alongside meat)
+  const vegKeywords = ["egg", "dairy", "paneer", "cheese", "milk", "butter", "curd"];
+  if (vegKeywords.some((kw) => combined.includes(kw))) return true;
+  // Default to non-veg for a meat store
+  return false;
+};
 
 const ProductCard = ({ product, onAddToCart }) => {
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
@@ -10,15 +31,12 @@ const ProductCard = ({ product, onAddToCart }) => {
   const [isAdding, setIsAdding] = useState(false);
 
   const productId = product.productId || product.id;
+  const isVeg = isVegProduct(product);
   
   // Find if this specific BASE product is in cart (for non-customizable items)
   const cartItem = useMemo(() => {
     return cart.find(item => item.productId === productId && !item.variantId);
   }, [cart, productId]);
-
-  const discountPercentage = Math.round(
-    ((product.mrp - product.base_price) / product.mrp) * 100
-  );
 
   const hasCustomizations =
     (product.variants && product.variants.length > 0) ||
@@ -29,21 +47,20 @@ const ProductCard = ({ product, onAddToCart }) => {
       setQuantityModalVisible(true);
     } else {
       setIsAdding(true);
-      // Simulate/Ensure visual feedback
-      setTimeout(() => {
-        addToCart(product, null, []);
+      addToCart(product, null, []);
+      globalThis.setTimeout(() => {
         setIsAdding(false);
-      }, 500);
+      }, 150);
     }
   };
 
   const handleUpdateQuantity = (newQty) => {
     if (!cartItem) return;
     setIsAdding(true);
-    setTimeout(() => {
-      updateQuantity(cartItem.cartKey, newQty);
+    updateQuantity(cartItem.cartKey, newQty);
+    globalThis.setTimeout(() => {
       setIsAdding(false);
-    }, 400);
+    }, 120);
   };
 
   const handleCustomizedAddToCart = (prod, selectedVariant, selectedAddons) => {
@@ -57,8 +74,8 @@ const ProductCard = ({ product, onAddToCart }) => {
         {/* Left Info Section */}
         <View className="flex-1 pr-4">
           <View className="flex-row items-center mb-1">
-            <View className="w-4 h-4 border border-green-600 items-center justify-center mr-2">
-              <View className="w-2 h-2 rounded-full bg-green-600" />
+            <View className={`w-4 h-4 border ${isVeg ? 'border-green-600' : 'border-red-600'} items-center justify-center mr-2`}>
+              <View className={`w-2 h-2 rounded-full ${isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
             </View>
             {product.tags?.[0] && (
               <Text className="text-[11px] font-bold text-orange-500 uppercase">
@@ -89,9 +106,12 @@ const ProductCard = ({ product, onAddToCart }) => {
         <View className="items-center">
           <View className="relative">
             <Image
-              source={{ uri: product.image_url }}
+              source={{ uri: product.image_url || product.imageUrl || product.image || PLACEHOLDER_IMAGE }}
               className="w-32 h-32 rounded-xl"
-              resizeMode="cover"
+              contentFit="cover"
+              transition={120}
+              cachePolicy="memory-disk"
+              placeholder={require("../../assets/images/icon.png")}
             />
             
             {/* Swiggy-style ADD/Stepper Button */}
@@ -164,4 +184,4 @@ const ProductCard = ({ product, onAddToCart }) => {
   );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);

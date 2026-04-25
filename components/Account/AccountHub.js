@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
+  FlatList,
+  InteractionManager,
   ScrollView,
   Switch,
   Text,
@@ -10,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import {
   Bell,
@@ -29,13 +31,11 @@ import { authAtom } from "../../recoil/atoms/authAtom";
 import { notificationAtom } from "../../recoil/atoms/notificationAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
 import {
-  deleteAddress,
   fetchNotificationFeed,
   fetchNotificationPreferences,
   fetchMyOrders,
   fetchMyProfile,
   unregisterCurrentDevice,
-  updateAddress,
   updateNotificationPreferences,
   updateMyProfile,
 } from "../../services/bff/accountBff";
@@ -234,7 +234,7 @@ const AccountHub = () => {
     return stitched || "Fresh Shopper";
   }, [profile.firstName, profile.lastName, profile.fullName]);
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     setLoadingProfile(true);
     setProfileError("");
     const response = await fetchMyProfile({ token: auth.token });
@@ -244,9 +244,9 @@ const AccountHub = () => {
       setProfileError(response.error.message || "Failed to load profile.");
     }
     setLoadingProfile(false);
-  };
+  }, [auth.token, setProfile]);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     setLoadingOrders(true);
     setOrdersError("");
     const response = await fetchMyOrders({ token: auth.token });
@@ -256,9 +256,9 @@ const AccountHub = () => {
       setOrdersError(response.error.message || "Failed to load orders.");
     }
     setLoadingOrders(false);
-  };
+  }, [auth.token]);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     setLoadingNotifications(true);
     setNotificationsError("");
 
@@ -286,18 +286,30 @@ const AccountHub = () => {
     }));
 
     setLoadingNotifications(false);
-  };
+  }, [auth.token, setNotificationState]);
 
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    const task = InteractionManager.runAfterInteractions(() => {
+      loadProfile();
+    });
+
+    return () => {
+      task?.cancel?.();
+    };
+  }, [loadProfile]);
 
   useEffect(() => {
-    if (section === "orders") loadOrders();
-    if (section === "addresses") refreshAddresses();
-    if (section === "notifications") loadNotifications();
-  }, [section]);
+    const task = InteractionManager.runAfterInteractions(() => {
+      if (section === "orders") loadOrders();
+      if (section === "addresses") refreshAddresses();
+      if (section === "notifications") loadNotifications();
+    });
+
+    return () => {
+      task?.cancel?.();
+    };
+  }, [loadNotifications, loadOrders, refreshAddresses, section]);
 
   useEffect(() => {
     const intent = notificationState.intent;
@@ -324,7 +336,7 @@ const AccountHub = () => {
     ) {
       setSection("notifications");
     }
-  }, [notificationState.intentUpdatedAt]);
+  }, [notificationState.intent, notificationState.intentUpdatedAt]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -494,7 +506,7 @@ const AccountHub = () => {
 
   if (section === "orders") {
     return (
-      <ScrollView className="flex-1">
+      <View className="flex-1">
         <SectionHeader title="Your Orders" onBack={() => setSection("home")} />
         {loadingOrders ? (
           <View className="flex-1 items-center justify-center p-20">
@@ -518,18 +530,28 @@ const AccountHub = () => {
             image={require("../../assets/images/characters/orders/active.png")}
           />
         ) : (
-          orders.map((order) => (
-            <OrderCard
-              key={order.orderId || order.razorPayOrderId}
-              order={order}
-              onPress={(o) => {
-                setSelectedOrder(o);
-                setSection("orderDetail");
-              }}
-            />
-          ))
+          <FlatList
+            data={orders}
+            keyExtractor={(order) => order.orderId?.toString() || order.razorPayOrderId}
+            initialNumToRender={5}
+            windowSize={5}
+            maxToRenderPerBatch={5}
+            updateCellsBatchingPeriod={30}
+            removeClippedSubviews={true}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            renderItem={({ item: order }) => (
+              <OrderCard
+                order={order}
+                onPress={(o) => {
+                  setSelectedOrder(o);
+                  setSection("orderDetail");
+                }}
+              />
+            )}
+          />
         )}
-      </ScrollView>
+      </View>
     );
   }
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image } from "expo-image";
 import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
 import { fetchActiveCoupons, validateCoupon } from "../../services/bff/couponsBff";

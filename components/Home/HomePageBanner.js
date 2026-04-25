@@ -8,9 +8,11 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const HomePageBanner = () => {
   const { width } = useWindowDimensions();
+  const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
 
@@ -109,6 +111,7 @@ const HomePageBanner = () => {
             </Animated.View>
             <Pressable
               className="bg-[#f8fafc] py-3 px-5 rounded-full flex-row items-center justify-center self-start"
+              onPress={() => navigation.navigate("Products")}
               style={({ pressed }) => [
                 {
                   transform: [{ scale: pressed ? 0.985 : 1 }],

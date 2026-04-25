@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { Dimensions, ScrollView, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useProducts } from "../../../hooks/useProducts";
@@ -20,12 +20,12 @@ const CategoriesList = () => {
   const navigation = useNavigation();
   const { categories, setSelectedCategory } = useProducts();
   const screenWidth = Dimensions.get("window").width;
-  const itemSize = Math.min(116, screenWidth / 3.15);
+  const itemSize = useMemo(() => Math.min(116, screenWidth / 3.15), [screenWidth]);
 
-  const handleCategoryPress = (categoryId) => {
+  const handleCategoryPress = useCallback((categoryId) => {
     setSelectedCategory(categoryId);
     navigation.navigate("Products");
-  };
+  }, [navigation, setSelectedCategory]);
 
   return (
     <View>

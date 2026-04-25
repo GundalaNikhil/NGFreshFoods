@@ -1,5 +1,5 @@
 import { SearchX } from "lucide-react-native";
-import React from "react";
+import React, { useCallback } from "react";
 import { FlatList, Text, View } from "react-native";
 import { useProducts } from "../../hooks/useProducts";
 import ProductCard from "./ProductCard";
@@ -32,18 +32,27 @@ const EmptyState = ({ searchQuery }) => (
 
 const ProductList = ({ products, onAddToCart }) => {
   const { searchQuery } = useProducts();
+  const renderItem = useCallback(
+    ({ item }) => (
+      <ProductCard
+        product={item}
+        onAddToCart={onAddToCart}
+      />
+    ),
+    [onAddToCart]
+  );
+  const keyExtractor = useCallback((item) => item.product_id.toString(), []);
 
   return (
     <FlatList
       data={products}
-      renderItem={({ item }) => (
-        <ProductCard
-          key={item.product_id}
-          product={item}
-          onAddToCart={onAddToCart}
-        />
-      )}
-      keyExtractor={(item) => item.product_id.toString()}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      initialNumToRender={6}
+      windowSize={5}
+      maxToRenderPerBatch={6}
+      updateCellsBatchingPeriod={40}
+      removeClippedSubviews={true}
       contentContainerStyle={{ padding: 16, flexGrow: 1 }}
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={<EmptyState searchQuery={searchQuery} />}

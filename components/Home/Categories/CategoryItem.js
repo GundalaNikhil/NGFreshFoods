@@ -41,4 +41,4 @@ const CategoryItem = ({ title, image, itemSize, onPress }) => {
   );
 };
 
-export default CategoryItem;
+export default React.memo(CategoryItem);

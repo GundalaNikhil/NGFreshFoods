@@ -1,6 +1,7 @@
-import { ActivityIndicator, FlatList, SafeAreaView, ScrollView, Text, View } from "react-native";
-import React, { useState, useEffect } from "react";
+import { ActivityIndicator, FlatList, SafeAreaView, ScrollView, Text, View, InteractionManager } from "react-native";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { SearchX } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useProducts } from "../../hooks/useProducts";
 import { useAddress } from "../../hooks/useAddress";
 import AddressHeader from "./AddressHeader";
@@ -36,8 +37,25 @@ const SearchEmptyState = ({ searchQuery }) => (
   </View>
 );
 
+const HomePageSkeleton = memo(function HomePageSkeleton() {
+  return (
+  <View className="px-4 mt-4">
+    <View className="h-52 rounded-3xl bg-[#e6ecdf]" />
+    <View className="mt-6 flex-row">
+      {[0, 1, 2].map((item) => (
+        <View key={item} className="mr-3 flex-1">
+          <View className="h-28 rounded-2xl bg-[#e6ecdf]" />
+          <View className="mt-3 h-3 rounded-full bg-[#d7dfcf]" />
+        </View>
+      ))}
+    </View>
+  </View>
+  );
+});
+
 const HomePage = () => {
-  const { loading, error, products, searchQuery } = useProducts();
+  const navigation = useNavigation();
+  const { error, products, searchQuery, categories, isBootstrapping, isRefreshing } = useProducts();
   const { refreshAddresses, addAddress } = useAddress();
   const [showAddressSheet, setShowAddressSheet] = useState(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
@@ -45,45 +63,67 @@ const HomePage = () => {
   const isSearching = searchQuery.trim().length > 0;
 
   useEffect(() => {
-    refreshAddresses();
+    const task = InteractionManager.runAfterInteractions(() => {
+      refreshAddresses();
+    });
+
+    return () => {
+      task?.cancel?.();
+    };
   }, [refreshAddresses]);
 
-  if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#107A4A" />
-        <Text className="text-gray-400 mt-4 font-medium italic">
-          {error ? "Reconnecting to server..." : "Preparing your fresh experience..."}
-        </Text>
-      </SafeAreaView>
-    );
-  }
+  const renderSearchResult = useCallback(
+    ({ item }) => <ProductCard product={item} onAddToCart={() => {}} />,
+    []
+  );
+
+  const keyExtractor = useCallback((item) => item.product_id?.toString(), []);
+
+  const shouldShowSkeleton = isBootstrapping && !isSearching && categories.length === 0;
 
   return (
     <SafeAreaView className="flex-1 bg-[#f3f7ef]">
       {/* Address + Search bar always visible */}
       <View className="px-4 mt-2">
-        <AddressHeader onAddressPress={() => setShowAddressSheet(true)} />
+        <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
       </View>
       <View className="px-4 mt-3">
         <SearchBar />
       </View>
 
+      {isRefreshing ? (
+        <View className="px-4 mt-2 flex-row items-center">
+          <ActivityIndicator size="small" color="#107A4A" />
+          <Text className="ml-2 text-xs text-[#5f6b61]">
+            {error ? "Reconnecting catalog..." : "Refreshing today’s stock..."}
+          </Text>
+        </View>
+      ) : null}
+
       {isSearching ? (
-        /* Search results take over the whole screen */
         <FlatList
           data={products}
-          renderItem={({ item }) => (
-            <ProductCard product={item} onAddToCart={() => {}} />
-          )}
-          keyExtractor={(item) => item.product_id?.toString()}
+          renderItem={renderSearchResult}
+          keyExtractor={keyExtractor}
+          initialNumToRender={5}
+          windowSize={5}
+          maxToRenderPerBatch={5}
+          updateCellsBatchingPeriod={40}
+          removeClippedSubviews={true}
           contentContainerStyle={{ padding: 16, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<SearchEmptyState searchQuery={searchQuery} />}
           keyboardShouldPersistTaps="handled"
         />
+      ) : shouldShowSkeleton ? (
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 90 }}
+        >
+          <HomePageSkeleton />
+        </ScrollView>
       ) : (
-        /* Normal homepage content */
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}

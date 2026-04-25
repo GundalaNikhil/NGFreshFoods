@@ -1,13 +1,13 @@
 import { X } from "lucide-react-native";
 import React from "react";
 import {
-  Image,
   Modal,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { getEntityImageUrl } from "../../utils/imageUrl";
 
 const ProductModal = ({ visible, product, onClose, onAddToCart }) => {

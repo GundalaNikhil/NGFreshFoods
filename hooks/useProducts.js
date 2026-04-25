@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { InteractionManager } from "react-native";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { getEntityImageUrl } from "../utils/imageUrl";
 import {
@@ -69,6 +70,7 @@ const dedupeByCategoryId = (items = []) => {
 
 // Module-level flag — shared across ALL hook instances so API is called only once
 let _catalogLoaded = false;
+let _catalogPromise = null;
 
 export const useProducts = () => {
   const [products, setProducts] = useRecoilState(productsState);
@@ -80,6 +82,8 @@ export const useProducts = () => {
   const [error, setError] = useRecoilState(productsErrorState);
   const [searchQuery, setSearchQuery] = useRecoilState(searchQueryState);
   const filteredProducts = useRecoilValue(filteredProductsSelector);
+  const hasNormalizedProducts = useRef(false);
+  const hasNormalizedCategories = useRef(false);
   const normalizedProducts = useMemo(
     () => (Array.isArray(products) ? products.map(normalizeProduct) : []),
     [products]
@@ -92,24 +96,34 @@ export const useProducts = () => {
     () => (Array.isArray(categories) ? dedupeByCategoryId(categories.map(normalizeCategory)) : []),
     [categories]
   );
+  const hasCachedCatalog = products.length > 0 && categories.length > 0;
+  const isBootstrapping = loading && !hasCachedCatalog;
+  const isRefreshing = loading && hasCachedCatalog;
 
   useEffect(() => {
-    if (_catalogLoaded) return;
-    _catalogLoaded = true;
-
     let isActive = true;
+    let retryTimer = null;
+    let interactionTask = null;
+
+    if (_catalogLoaded && hasCachedCatalog) {
+      return () => {
+        isActive = false;
+      };
+    }
 
     const loadCatalog = async (retryCount = 0) => {
-      // Don't show full-screen loader on background retries if we already have some data
-      if (products.length === 0 || categories.length === 0) {
+      if (!hasCachedCatalog && isActive) {
         setLoading(true);
       }
-      
+
       try {
-        const [productsResponse, categoriesResponse] = await Promise.all([
-          fetchProducts(),
-          fetchCategories(),
-        ]);
+        if (!_catalogPromise) {
+          _catalogPromise = Promise.all([fetchProducts(), fetchCategories()]).finally(() => {
+            _catalogPromise = null;
+          });
+        }
+
+        const [productsResponse, categoriesResponse] = await _catalogPromise;
 
         if (Array.isArray(productsResponse)) {
           setProducts(productsResponse);
@@ -139,28 +153,37 @@ export const useProducts = () => {
         _catalogLoaded = false; // Allow future retries/triggers
         
         // Auto-retry after 5 seconds
-        if (isActive) {
-          setTimeout(() => {
+        if (retryCount < 3) {
+          retryTimer = globalThis.setTimeout(() => {
             if (isActive) loadCatalog(retryCount + 1);
-          }, 5000);
+          }, 3000 * Math.pow(2, retryCount)); // Exponential backoff (3s, 6s, 12s)
         }
       } finally {
-        setLoading(false);
+        if (isActive) setLoading(false);
       }
     };
 
-    loadCatalog();
+    if (!hasCachedCatalog) {
+      loadCatalog();
+    } else {
+      interactionTask = InteractionManager.runAfterInteractions(() => {
+        if (isActive) {
+          loadCatalog();
+        }
+      });
+    }
 
     return () => {
       isActive = false;
+      if (retryTimer) {
+        globalThis.clearTimeout(retryTimer);
+      }
+      interactionTask?.cancel?.();
     };
-  }, [setProducts, setCategories, setLoading, setError]);
-
-  const hasNormalizedProducts = useMemo(() => ({ done: false }), []);
-  const hasNormalizedCategories = useMemo(() => ({ done: false }), []);
+  }, [hasCachedCatalog, setLoading, setProducts, setCategories, setError]);
 
   useEffect(() => {
-    if (hasNormalizedProducts.done || products.length === 0) return;
+    if (hasNormalizedProducts.current || products.length === 0) return;
     const hasLegacySchema = products.some(
       (product) =>
         (product?.product_id && !product?.id) ||
@@ -174,11 +197,11 @@ export const useProducts = () => {
     if (hasLegacySchema) {
       setProducts((current) => current.map(normalizeProduct));
     }
-    hasNormalizedProducts.done = true;
+    hasNormalizedProducts.current = true;
   }, [products, setProducts]);
 
   useEffect(() => {
-    if (hasNormalizedCategories.done || categories.length === 0) return;
+    if (hasNormalizedCategories.current || categories.length === 0) return;
     const hasLegacyCategories = categories.some(
       (category) => !category?.category_id && category?.categoryId
     );
@@ -186,7 +209,7 @@ export const useProducts = () => {
     if (hasLegacyCategories) {
       setCategories((current) => dedupeByCategoryId(current.map(normalizeCategory)));
     }
-    hasNormalizedCategories.done = true;
+    hasNormalizedCategories.current = true;
   }, [categories, setCategories]);
 
   useEffect(() => {
@@ -233,6 +256,8 @@ export const useProducts = () => {
     selectedCategory,
     setSelectedCategory,
     loading,
+    isBootstrapping,
+    isRefreshing,
     error,
     updateProduct,
     updateStock,

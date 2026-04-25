@@ -1,6 +1,7 @@
 import { Minus, Plus } from "lucide-react-native";
 import React, { useState } from "react";
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { Image } from "expo-image";
 import { useCart } from "../../hooks/useCart";
 import { getEntityImageUrl } from "../../utils/imageUrl";
 
@@ -10,15 +11,14 @@ const CartItems = () => {
 
   const handleQuantityChange = (item, newQuantity) => {
     setUpdatingKey(item.cartKey);
-    // Simulate/Ensure visual feedback for 500ms
-    setTimeout(() => {
-      if (newQuantity === 0) {
-        removeFromCart(item.cartKey);
-      } else {
-        updateQuantity(item.cartKey, newQuantity);
-      }
+    if (newQuantity === 0) {
+      removeFromCart(item.cartKey);
+    } else {
+      updateQuantity(item.cartKey, newQuantity);
+    }
+    globalThis.setTimeout(() => {
       setUpdatingKey(null);
-    }, 500);
+    }, 120);
   };
 
   return (
@@ -38,7 +38,9 @@ const CartItems = () => {
             <Image
               source={{ uri: imageUri }}
               style={{ width: 64, height: 64, borderRadius: 12 }}
-              resizeMode="cover"
+              contentFit="cover"
+              transition={100}
+              cachePolicy="memory-disk"
               onError={(event) =>
                 console.log(
                   "[ImageError][CartItems]",
@@ -121,4 +123,4 @@ const CartItems = () => {
   );
 };
 
-export default CartItems;
+export default React.memo(CartItems);
