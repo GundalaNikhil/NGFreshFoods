@@ -9,6 +9,8 @@ import Reanimated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { Linking } from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
 import { authAtom } from "../recoil/atoms/authAtom";
 import { cartState } from "../recoil/atoms/cartAtom";
@@ -56,6 +58,9 @@ const AccountIcon = ({ size, color }) => (
 );
 const CartIcon = ({ size, color }) => (
   <ShoppingCart size={size} color={color} strokeWidth={2.2} />
+);
+const WhatsAppIcon = ({ size, color }) => (
+  <FontAwesome5 name="whatsapp" size={size + 2} color={color === TAB_INACTIVE ? "#25D366" : color} />
 );
 
 // Screen dimensions for responsive design
@@ -108,7 +113,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             }
           };
 
-          return (
+          const tabEl = (
             <TabItem
               key={route.name}
               focused={focused}
@@ -118,6 +123,29 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               badge={route.name === "Cart" && itemCount > 0 ? itemCount : 0}
             />
           );
+
+          if (route.name === "Products") {
+            return (
+              <React.Fragment key={route.name}>
+                {tabEl}
+                <TabItem
+                  key="WhatsApp"
+                  focused={false}
+                  label="Order on WA"
+                  IconComponent={WhatsAppIcon}
+                  onPress={() => {
+                    const message = encodeURIComponent("Hey NGFreshFarms! 🥩🍗\n\nI'd love to place an order for fresh meat & eggs — delivered straight to my doorstep! 🚀\n\nCould you share today's menu?");
+                    Linking.openURL(`whatsapp://send?phone=919515353625&text=${message}`).catch(() => {
+                      Toast.show({ type: "error", text1: "WhatsApp not installed" });
+                    });
+                  }}
+                  badge={0}
+                />
+              </React.Fragment>
+            );
+          }
+
+          return tabEl;
         })}
       </View>
     </View>
