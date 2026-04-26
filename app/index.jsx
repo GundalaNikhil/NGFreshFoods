@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
-import { Icon } from "@rneui/themed";
+
 import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, Pressable, Text, TextInput, View, ActivityIndicator, Platform } from "react-native";
 import Reanimated, {
@@ -32,7 +32,7 @@ import {
   setAuthUpdateHandler,
 } from "../services/http/apiClient";
 import CartSyncManager from "../providers/CartSyncManager";
-import { Home, CircleUserRound, ShoppingCart } from "lucide-react-native";
+
 import {
   useFonts,
   Poppins_400Regular,
@@ -41,6 +41,8 @@ import {
   Poppins_700Bold,
   Poppins_800ExtraBold,
 } from "@expo-google-fonts/poppins";
+import { Icon } from "@rneui/themed";
+
 
 // ── Brand Design Tokens ──
 const BRAND_RED = "#E23744";
@@ -49,15 +51,17 @@ const TAB_BAR_BG = "#1E1E2E";
 const TAB_INACTIVE = "#7C7C8A";
 const BASE_FONT = "Poppins_500Medium";
 
-const HomeIcon = ({ size, color }) => <Home size={size} color={color} strokeWidth={2.2} />;
+const HomeIcon = ({ size, color }) => (
+  <FontAwesome5 name="home" size={size} color={color === TAB_INACTIVE ? color : "#FF6B6B"} />
+);
 const DrumstickIcon = ({ size, color }) => (
   <Icon type="material-community" name="food-drumstick" size={size} color={color} />
 );
 const AccountIcon = ({ size, color }) => (
-  <CircleUserRound size={size} color={color} strokeWidth={2.2} />
+  <FontAwesome5 name="user-circle" size={size} color={color === TAB_INACTIVE ? color : null} />
 );
 const CartIcon = ({ size, color }) => (
-  <ShoppingCart size={size} color={color} strokeWidth={2.2} />
+  <FontAwesome5 name="shopping-cart" size={size} color={color === TAB_INACTIVE ? color : null} />
 );
 const WhatsAppIcon = ({ size, color }) => (
   <FontAwesome5 name="whatsapp" size={size + 2} color={color === TAB_INACTIVE ? "#25D366" : color} />
