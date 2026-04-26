@@ -1,22 +1,21 @@
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { Image } from "expo-image";
-import { normalizeImageUrl } from "../../../utils/imageUrl";
+import CachedImage from "../../ResuableComponents/CachedImage";
 
-const CategoryItem = ({ title, image, itemSize, onPress }) => {
+const CategoryItem = ({ title, image, itemSize, isLast, onPress }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
-      style={{ width: itemSize }}
-      className="bg-white border border-[#dce6d2] rounded-2xl p-2.5 mr-3"
+      style={{ width: itemSize, marginRight: isLast ? 0 : 12 }}
+      className="bg-white border border-[#dce6d2] rounded-2xl p-2.5"
     >
       <View
         className="rounded-xl overflow-hidden bg-[#eef4e7]"
         style={{ height: itemSize - 12 }}
       >
-        <Image
-          source={{ uri: normalizeImageUrl(image) }}
+        <CachedImage
+          source={image}
           contentFit="cover"
           transition={200}
           style={{

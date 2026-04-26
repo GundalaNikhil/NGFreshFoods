@@ -1,43 +1,18 @@
 import { Minus, Plus } from "lucide-react-native";
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
-import { Image } from "expo-image";
-import { useCart } from "../../hooks/useCart";
+import CachedImage from "../ResuableComponents/CachedImage";
+import { isVegProduct } from "../../utils/productClassification";
 import ChickenCustomizationModal from "./ChickenCustomizationModal";
 
 const PLACEHOLDER_IMAGE = "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513962/ffw/Fresh%20Whole%20Chicken/ri4imwvokptjrw6hcqpq.jpg";
 
-/**
- * Infer veg/non-veg from category name or product name.
- * Eggs, dairy, paneer → veg (green). Chicken, mutton, fish, seafood, prawn → non-veg (red).
- */
-const isVegProduct = (product) => {
-  const catName = (product?.categoryName || product?.category?.name || "").toLowerCase();
-  const prodName = (product?.name || "").toLowerCase();
-  const combined = `${catName} ${prodName}`;
-  // Non-veg indicators
-  const nonVegKeywords = ["chicken", "mutton", "fish", "seafood", "prawn", "meat", "lamb", "goat", "shrimp", "crab"];
-  if (nonVegKeywords.some((kw) => combined.includes(kw))) return false;
-  // Veg indicators (eggs in Indian FSSAI labeling are veg, but for this store they are sold alongside meat)
-  const vegKeywords = ["egg", "dairy", "paneer", "cheese", "milk", "butter", "curd"];
-  if (vegKeywords.some((kw) => combined.includes(kw))) return true;
-  // Default to non-veg for a meat store
-  return false;
-};
-
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductCard = ({ product, cartItem, addToCart, updateQuantity, onAddToCart }) => {
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
-  const { cart, addToCart, updateQuantity } = useCart();
   const [isAdding, setIsAdding] = useState(false);
 
-  const productId = product.productId || product.id;
   const isVeg = isVegProduct(product);
   
-  // Find if this specific BASE product is in cart (for non-customizable items)
-  const cartItem = useMemo(() => {
-    return cart.find(item => item.productId === productId && !item.variantId);
-  }, [cart, productId]);
-
   const hasCustomizations =
     (product.variants && product.variants.length > 0) ||
     (product.addons && product.addons.length > 0);
@@ -105,13 +80,17 @@ const ProductCard = ({ product, onAddToCart }) => {
         {/* Right Image Section */}
         <View className="items-center">
           <View className="relative">
-            <Image
-              source={{ uri: product.image_url || product.imageUrl || product.image || PLACEHOLDER_IMAGE }}
-              className="w-32 h-32 rounded-xl"
-              contentFit="cover"
-              transition={120}
-              cachePolicy="memory-disk"
-              placeholder={require("../../assets/images/icon.png")}
+            <CachedImage
+              source={product}
+              fallbackUrl={PLACEHOLDER_IMAGE}
+              style={{ width: 128, height: 128, borderRadius: 12, backgroundColor: "#f3f4f6" }}
+              onError={(event) =>
+                console.log(
+                  "[ImageError][ProductCard]",
+                  product?.name,
+                  event?.nativeEvent?.error
+                )
+              }
             />
             
             {/* Swiggy-style ADD/Stepper Button */}

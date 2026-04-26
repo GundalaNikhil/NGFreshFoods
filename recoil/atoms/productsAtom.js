@@ -18,6 +18,11 @@ export const selectedCategoryState = atom({
   default: "ALL",
 });
 
+export const selectedFoodTypeState = atom({
+  key: "selectedFoodTypeState",
+  default: "ALL",
+});
+
 export const productsLoadingState = atom({
   key: "productsLoadingState",
   default: false,

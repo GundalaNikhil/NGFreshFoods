@@ -27,6 +27,7 @@ import {
   LifeBuoy,
 } from "lucide-react-native";
 import authFirebase from "@react-native-firebase/auth";
+import { useNavigation } from "@react-navigation/native";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import { notificationAtom } from "../../recoil/atoms/notificationAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
@@ -40,9 +41,12 @@ import {
   updateMyProfile,
 } from "../../services/bff/accountBff";
 import { setAuthTokens } from "../../services/http/apiClient";
+import { clearCachedData, getCachedData, setCachedData } from "../../utils/localCache";
 import OrderDetailScreen from "../Cart/OrderDetailScreen";
 import AddAddressModal from "../Home/AddAddressModal";
 import { useAddress } from "../../hooks/useAddress";
+
+const ACCOUNT_CACHE_TTL_MS = 2 * 60 * 1000;
 
 const SectionButton = ({ title, subtitle, icon: IconCmp, onPress }) => (
   <TouchableOpacity
@@ -209,6 +213,7 @@ const NotificationCard = ({ item, onPress }) => (
 );
 
 const AccountHub = () => {
+  const navigation = useNavigation();
   const auth = useRecoilValue(authAtom);
   const setAuth = useSetRecoilState(authAtom);
   const resetProfile = useResetRecoilState(profileAtom);
@@ -227,6 +232,12 @@ const AccountHub = () => {
   const { addresses, refreshAddresses, deleteAddress, addAddress } = useAddress();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isAddAddressVisible, setIsAddAddressVisible] = useState(false);
+
+  const resetToHome = useCallback(() => {
+    setSelectedOrder(null);
+    setIsAddAddressVisible(false);
+    setSection("home");
+  }, []);
 
   const displayName = useMemo(() => {
     if (profile.fullName?.trim()) return profile.fullName;
@@ -247,20 +258,43 @@ const AccountHub = () => {
   }, [auth.token, setProfile]);
 
   const loadOrders = useCallback(async () => {
-    setLoadingOrders(true);
     setOrdersError("");
+    const cacheKey = `orders:${profile.userId || profile.phoneNumber || "current"}`;
+    const cachedOrders = await getCachedData(cacheKey, ACCOUNT_CACHE_TTL_MS);
+
+    if (cachedOrders) {
+      setOrders(cachedOrders);
+      setLoadingOrders(false);
+    } else {
+      setLoadingOrders(true);
+    }
+
     const response = await fetchMyOrders({ token: auth.token });
     if (response.success) {
-      setOrders(response.data.orders || []);
+      const nextOrders = response.data.orders || [];
+      setOrders(nextOrders);
+      setCachedData(cacheKey, nextOrders);
     } else {
       setOrdersError(response.error.message || "Failed to load orders.");
     }
     setLoadingOrders(false);
-  }, [auth.token]);
+  }, [auth.token, profile.phoneNumber, profile.userId]);
 
   const loadNotifications = useCallback(async () => {
-    setLoadingNotifications(true);
     setNotificationsError("");
+    const cacheKey = `notifications:${profile.userId || profile.phoneNumber || "current"}`;
+    const cachedNotifications = await getCachedData(cacheKey, ACCOUNT_CACHE_TTL_MS);
+
+    if (cachedNotifications) {
+      setNotificationState((prev) => ({
+        ...prev,
+        preferences: cachedNotifications.preferences || prev.preferences,
+        feed: cachedNotifications.feed || prev.feed,
+      }));
+      setLoadingNotifications(false);
+    } else {
+      setLoadingNotifications(true);
+    }
 
     const [prefsResponse, feedResponse] = await Promise.all([
       fetchNotificationPreferences({ token: auth.token }),
@@ -285,9 +319,26 @@ const AccountHub = () => {
       feed: feedResponse.success ? feedResponse.data.notifications || [] : prev.feed,
     }));
 
-    setLoadingNotifications(false);
-  }, [auth.token, setNotificationState]);
+    if (prefsResponse.success && feedResponse.success) {
+      setCachedData(cacheKey, {
+        preferences: prefsResponse.data,
+        feed: feedResponse.data.notifications || [],
+      });
+    }
 
+    setLoadingNotifications(false);
+  }, [
+    auth.token,
+    profile.phoneNumber,
+    profile.userId,
+    setNotificationState,
+  ]);
+
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("tabPress", resetToHome);
+    return unsubscribe;
+  }, [navigation, resetToHome]);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -361,6 +412,8 @@ const AccountHub = () => {
     }));
     resetProfile();
     setAuthTokens({});
+    clearCachedData(`orders:${profile.userId || profile.phoneNumber || "current"}`);
+    clearCachedData(`notifications:${profile.userId || profile.phoneNumber || "current"}`);
     setIsLoggingOut(false);
   };
 

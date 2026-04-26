@@ -8,6 +8,8 @@ import {
   cartTotalSelector,
 } from "../recoil/selectors/cartSelector";
 import { generateCartKey, calculateUnitPrice } from "../utils/cartHelper";
+import { getEntityImageUrl } from "../utils/imageUrl";
+import { getProductFoodType } from "../utils/productClassification";
 import { useProducts } from "./useProducts";
 import { clearCart as clearServerCart } from "../services/bff/cartBff";
 
@@ -83,7 +85,8 @@ export const useCart = () => {
         lineTotal: unitPrice,
         // Display metadata
         name: product.name,
-        imageUrl: product.image_url || product.imageUrl,
+        imageUrl: getEntityImageUrl(product),
+        foodType: getProductFoodType(product),
         variantLabel: selectedVariant?.label || null,
         addonLabels: selectedAddons.map((a) => a.label),
         addonGroups: selectedAddons.reduce((acc, a) => {

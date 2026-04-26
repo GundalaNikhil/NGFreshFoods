@@ -1,9 +1,10 @@
 import { Minus, Plus } from "lucide-react-native";
 import React, { useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
-import { Image } from "expo-image";
 import { useCart } from "../../hooks/useCart";
 import { getEntityImageUrl } from "../../utils/imageUrl";
+import { isVegProduct } from "../../utils/productClassification";
+import CachedImage from "../ResuableComponents/CachedImage";
 
 const CartItems = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
@@ -27,6 +28,7 @@ const CartItems = () => {
         const imageUri =
           getEntityImageUrl(item) ||
           "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=800&auto=format&fit=crop";
+        const isVeg = isVegProduct(item);
 
         return (
         <View
@@ -35,12 +37,11 @@ const CartItems = () => {
         >
           {/* Left: Image */}
           <View className="mr-3">
-            <Image
-              source={{ uri: imageUri }}
+            <CachedImage
+              source={imageUri}
               style={{ width: 64, height: 64, borderRadius: 12 }}
               contentFit="cover"
               transition={100}
-              cachePolicy="memory-disk"
               onError={(event) =>
                 console.log(
                   "[ImageError][CartItems]",
@@ -55,8 +56,10 @@ const CartItems = () => {
           {/* Middle: Name & Details */}
           <View className="flex-1">
             <View className="flex-row items-center mb-0.5">
-              <View className="w-3.5 h-3.5 border border-red-600 items-center justify-center rounded-[2px] mr-2">
-                <View className="w-1.5 h-1.5 rounded-full bg-red-600" />
+              <View
+                className={`w-3.5 h-3.5 border ${isVeg ? "border-green-600" : "border-red-600"} items-center justify-center rounded-[2px] mr-2`}
+              >
+                <View className={`w-1.5 h-1.5 rounded-full ${isVeg ? "bg-green-600" : "bg-red-600"}`} />
               </View>
               <Text className="text-[14px] font-bold text-gray-900 leading-tight flex-1">
                 {item.name}

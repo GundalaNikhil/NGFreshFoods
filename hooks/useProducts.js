@@ -2,10 +2,13 @@ import { useEffect, useMemo, useRef } from "react";
 import { InteractionManager } from "react-native";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { getEntityImageUrl } from "../utils/imageUrl";
+import { prefetchImageUrls } from "../utils/imageCache";
+import { getProductFoodType } from "../utils/productClassification";
 import {
   categoriesState,
   productsState,
   selectedCategoryState,
+  selectedFoodTypeState,
   productsLoadingState,
   productsErrorState,
   searchQueryState,
@@ -45,6 +48,7 @@ const normalizeProduct = (product) => {
     image_url: resolvedImageUrl,
     imageUrl: resolvedImageUrl,
     image: resolvedImageUrl,
+    foodType: getProductFoodType(product),
     tags: Array.isArray(product?.tags) ? product.tags : [],
     nutritional_info: product?.nutritional_info || {},
     // Variant/addon data from API (empty for fallback/static data)
@@ -77,6 +81,9 @@ export const useProducts = () => {
   const [categories, setCategories] = useRecoilState(categoriesState);
   const [selectedCategory, setSelectedCategory] = useRecoilState(
     selectedCategoryState
+  );
+  const [selectedFoodType, setSelectedFoodType] = useRecoilState(
+    selectedFoodTypeState
   );
   const [loading, setLoading] = useRecoilState(productsLoadingState);
   const [error, setError] = useRecoilState(productsErrorState);
@@ -127,6 +134,7 @@ export const useProducts = () => {
 
         if (Array.isArray(productsResponse)) {
           setProducts(productsResponse);
+          prefetchImageUrls(productsResponse);
         }
 
         if (Array.isArray(categoriesResponse)) {
@@ -142,6 +150,7 @@ export const useProducts = () => {
               )
             : normalized;
           setCategories(dedupeByCategoryId(filtered));
+          prefetchImageUrls(filtered);
         }
         
         // Success!
@@ -191,7 +200,8 @@ export const useProducts = () => {
         (product?.price !== undefined && product?.base_price === undefined) ||
         (product?.perQuantity !== undefined && product?.unit === undefined) ||
         (product?.image !== undefined && product?.image_url === undefined) ||
-        (product?.categoryId && !product?.category_id)
+        (product?.categoryId && !product?.category_id) ||
+        !product?.foodType
     );
 
     if (hasLegacySchema) {
@@ -255,6 +265,8 @@ export const useProducts = () => {
     categories: normalizedCategories,
     selectedCategory,
     setSelectedCategory,
+    selectedFoodType,
+    setSelectedFoodType,
     loading,
     isBootstrapping,
     isRefreshing,

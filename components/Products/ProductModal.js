@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Image } from "expo-image";
 import { getEntityImageUrl } from "../../utils/imageUrl";
+import CachedImage from "../ResuableComponents/CachedImage";
 
 const ProductModal = ({ visible, product, onClose, onAddToCart }) => {
   if (!product) return null;
@@ -34,10 +34,10 @@ const ProductModal = ({ visible, product, onClose, onAddToCart }) => {
 
           <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
             <View className="p-4">
-              <Image
-                source={{ uri: imageUri }}
+              <CachedImage
+                source={imageUri}
                 style={{ width: "100%", height: 256, borderRadius: 8 }}
-                resizeMode="cover"
+                contentFit="cover"
                 onError={(event) =>
                   console.log(
                     "[ImageError][ProductModal]",
