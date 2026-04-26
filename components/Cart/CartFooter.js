@@ -18,16 +18,27 @@ const CartFooter = ({ totalPayable, itemCount, onPlaceOrder }) => {
   };
 
   return (
-    <View className="bg-white border-t border-gray-100">
+    <View className="bg-white border-t border-[#E9E9EB]">
       {/* Main CTA */}
       <View className="px-4 py-4 pb-[80px]">
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={handlePress}
           disabled={loading}
-          className={`rounded-xl h-14 flex-row items-center px-5 justify-between shadow-lg ${
-            loading ? "bg-gray-400" : "bg-[#16A34A] shadow-green-200"
+          className={`rounded-xl h-14 flex-row items-center px-5 justify-between ${
+            loading ? "bg-[#93959F]" : "bg-[#E23744]"
           }`}
+          style={
+            !loading
+              ? {
+                  shadowColor: "#E23744",
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 12,
+                  elevation: 8,
+                }
+              : {}
+          }
         >
           <View>
             <Text className="text-white font-black text-[18px]">

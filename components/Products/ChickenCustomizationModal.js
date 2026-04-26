@@ -100,9 +100,9 @@ const ChickenCustomizationModal = ({
       selected: "bg-amber-600 border-amber-600",
     },
     CUT_SIZE: {
-      container: "bg-emerald-50",
-      default: "bg-white border-emerald-200",
-      selected: "bg-emerald-600 border-emerald-600",
+      container: "bg-blue-50",
+      default: "bg-white border-blue-200",
+      selected: "bg-blue-600 border-blue-600",
     },
     FLAVOUR: {
       container: "bg-orange-50",
@@ -228,7 +228,7 @@ const ChickenCustomizationModal = ({
             <TouchableOpacity
               onPress={handleAddToCart}
               disabled={loading}
-              className="bg-red-600 p-4 rounded-lg flex-row justify-center items-center"
+              className="bg-[#E23744] p-4 rounded-lg flex-row justify-center items-center"
             >
               {loading && <ActivityIndicator color="#fff" size="small" className="mr-2" />}
               <Text className="text-white text-center font-semibold text-lg">

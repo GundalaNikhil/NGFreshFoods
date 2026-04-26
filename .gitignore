@@ -45,6 +45,3 @@ yarn-error.*
 app-example
 
 *.md
-!README.md
-!docs/
-!docs/**/*.md

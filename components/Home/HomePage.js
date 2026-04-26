@@ -20,18 +20,18 @@ const SearchEmptyState = ({ searchQuery }) => (
         width: 72,
         height: 72,
         borderRadius: 36,
-        backgroundColor: "#fef2f2",
+        backgroundColor: "#FFF0F1",
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 16,
       }}
     >
-      <SearchX size={28} color="#f87171" strokeWidth={1.8} />
+      <SearchX size={28} color="#E23744" strokeWidth={1.8} />
     </View>
-    <Text style={{ fontSize: 17, fontWeight: "700", color: "#1f2937", marginBottom: 6 }}>
+    <Text style={{ fontSize: 17, fontWeight: "700", color: "#1C1C1C", marginBottom: 6 }}>
       No results found
     </Text>
-    <Text style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", paddingHorizontal: 40 }}>
+    <Text style={{ fontSize: 13, color: "#93959F", textAlign: "center", paddingHorizontal: 40 }}>
       We couldn't find anything for "{searchQuery}"
     </Text>
   </View>
@@ -40,12 +40,12 @@ const SearchEmptyState = ({ searchQuery }) => (
 const HomePageSkeleton = memo(function HomePageSkeleton() {
   return (
   <View className="px-4 mt-4">
-    <View className="h-52 rounded-3xl bg-[#e6ecdf]" />
+    <View className="h-52 rounded-3xl bg-[#E9E9EB]" />
     <View className="mt-6 flex-row">
       {[0, 1, 2].map((item) => (
         <View key={item} className="mr-3 flex-1">
-          <View className="h-28 rounded-2xl bg-[#e6ecdf]" />
-          <View className="mt-3 h-3 rounded-full bg-[#d7dfcf]" />
+          <View className="h-28 rounded-2xl bg-[#E9E9EB]" />
+          <View className="mt-3 h-3 rounded-full bg-[#D5D5D8]" />
         </View>
       ))}
     </View>
@@ -82,7 +82,7 @@ const HomePage = () => {
   const shouldShowSkeleton = isBootstrapping && !isSearching && categories.length === 0;
 
   return (
-    <SafeAreaView className="flex-1 bg-[#f3f7ef]">
+    <SafeAreaView className="flex-1 bg-white">
       {/* Address + Search bar always visible */}
       <View className="px-4 mt-2">
         <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
@@ -93,9 +93,9 @@ const HomePage = () => {
 
       {isRefreshing ? (
         <View className="px-4 mt-2 flex-row items-center">
-          <ActivityIndicator size="small" color="#107A4A" />
-          <Text className="ml-2 text-xs text-[#5f6b61]">
-            {error ? "Reconnecting catalog..." : "Refreshing today’s stock..."}
+          <ActivityIndicator size="small" color="#E23744" />
+          <Text className="ml-2 text-xs text-[#93959F]">
+            {error ? "Reconnecting catalog..." : "Refreshing today's stock..."}
           </Text>
         </View>
       ) : null}
@@ -110,7 +110,7 @@ const HomePage = () => {
           maxToRenderPerBatch={5}
           updateCellsBatchingPeriod={40}
           removeClippedSubviews={true}
-          contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 80, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<SearchEmptyState searchQuery={searchQuery} />}
           keyboardShouldPersistTaps="handled"

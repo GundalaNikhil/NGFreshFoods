@@ -169,10 +169,10 @@ const OrderSuccessScreen = ({ order, onTrackOrder, onGoHome }) => {
 
   const confettiShapes = ["circle", "square", "diamond"];
   const confettiColors = [
-    "#16A34A", "#22C55E", "#4ADE80", "#F59E0B", "#FBBF24",
-    "#EF4444", "#F87171", "#3B82F6", "#60A5FA", "#8B5CF6",
+    "#E23744", "#FC8019", "#F87171", "#FBBF24", "#60B246",
+    "#F59E0B", "#EF4444", "#3B82F6", "#60A5FA", "#8B5CF6",
     "#A78BFA", "#EC4899", "#F472B6", "#14B8A6", "#2DD4BF",
-    "#F97316", "#FB923C", "#06B6D4", "#22D3EE", "#84CC16",
+    "#F97316", "#FB923C", "#06B6D4", "#22D3EE", "#E23744",
   ];
 
   return (
@@ -242,7 +242,7 @@ const OrderSuccessScreen = ({ order, onTrackOrder, onGoHome }) => {
                 width: 160,
                 height: 160,
                 borderRadius: 80,
-                backgroundColor: "rgba(22, 163, 74, 0.06)",
+                backgroundColor: "rgba(226, 55, 68, 0.06)",
               }}
             />
             <View
@@ -251,7 +251,7 @@ const OrderSuccessScreen = ({ order, onTrackOrder, onGoHome }) => {
                 width: 120,
                 height: 120,
                 borderRadius: 60,
-                backgroundColor: "rgba(22, 163, 74, 0.08)",
+                backgroundColor: "rgba(226, 55, 68, 0.08)",
               }}
             />
             <Image
@@ -306,8 +306,8 @@ const OrderSuccessScreen = ({ order, onTrackOrder, onGoHome }) => {
               padding: 20,
               marginBottom: 16,
               borderWidth: 1,
-              borderColor: "#E5E7EB",
-              shadowColor: "#16A34A",
+              borderColor: "#E9E9EB",
+              shadowColor: "#E23744",
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.06,
               shadowRadius: 16,
@@ -360,7 +360,7 @@ const OrderSuccessScreen = ({ order, onTrackOrder, onGoHome }) => {
                     width: 6,
                     height: 6,
                     borderRadius: 3,
-                    backgroundColor: "#16A34A",
+                    backgroundColor: "#E23744",
                     marginRight: 6,
                   }}
                 />
@@ -368,7 +368,7 @@ const OrderSuccessScreen = ({ order, onTrackOrder, onGoHome }) => {
                   style={{
                     fontSize: 11,
                     fontWeight: "800",
-                    color: "#16A34A",
+                    color: "#E23744",
                   }}
                 >
                   CONFIRMED
@@ -459,7 +459,7 @@ const OrderSuccessScreen = ({ order, onTrackOrder, onGoHome }) => {
                     style={{
                       fontSize: 16,
                       fontWeight: "900",
-                      color: "#16A34A",
+                      color: "#E23744",
                       marginLeft: 4,
                     }}
                   >
@@ -518,14 +518,14 @@ const OrderSuccessScreen = ({ order, onTrackOrder, onGoHome }) => {
         >
           <TouchableOpacity
             style={{
-              backgroundColor: "#16A34A",
+              backgroundColor: "#E23744",
               borderRadius: 18,
               height: 58,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 12,
-              shadowColor: "#16A34A",
+              shadowColor: "#E23744",
               shadowOffset: { width: 0, height: 6 },
               shadowOpacity: 0.25,
               shadowRadius: 12,

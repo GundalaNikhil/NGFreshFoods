@@ -36,8 +36,8 @@ const Slideshow = () => {
   return (
     <View className="h-52 px-4">
       <Animated.View
-        className="w-full h-full overflow-hidden rounded-3xl border border-[#d6e2cb]"
-        style={{ opacity: fadeAnim }}
+        className="w-full h-full overflow-hidden rounded-2xl"
+        style={{ opacity: fadeAnim, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 }}
       >
         <Image
           source={{ uri: normalizeImageUrl(images[currentIndex]) }}
@@ -52,9 +52,13 @@ const Slideshow = () => {
         {images.map((_, index) => (
           <View
             key={index}
-            className={`h-2 w-2 rounded-full mx-1 ${
-              currentIndex === index ? "bg-[#f8fafc]" : "bg-white/45"
-            }`}
+            style={{
+              height: 6,
+              width: currentIndex === index ? 20 : 6,
+              borderRadius: 3,
+              marginHorizontal: 3,
+              backgroundColor: currentIndex === index ? "#E23744" : "rgba(255,255,255,0.5)",
+            }}
           />
         ))}
       </View>

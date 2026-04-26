@@ -155,9 +155,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FBF9',
+    backgroundColor: '#F5F5F5',
     borderWidth: 1.5,
-    borderColor: '#E2EBE5',
+    borderColor: '#E9E9EB',
     borderRadius: 16,
     height: 64,
     paddingHorizontal: 16,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRightWidth: 1,
-    borderRightColor: '#D9E6D8',
+    borderRightColor: '#E9E9EB',
     paddingRight: 12,
     marginRight: 12,
   },
@@ -182,23 +182,23 @@ const styles = StyleSheet.create({
   countryCodeText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1F2B24',
+    color: '#1C1C1C',
   },
   phoneNumberInput: {
     flex: 1,
     fontSize: 20,
     fontWeight: '700',
-    color: '#1F2B24',
+    color: '#1C1C1C',
     letterSpacing: 2, // Adds a premium gap between numbers
   },
   mainButton: {
     flexDirection: 'row',
-    backgroundColor: '#CA153A', // Zomato/Swiggy vibrant rich red 
+    backgroundColor: '#E23744',
     height: 58,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#CA153A',
+    shadowColor: '#E23744',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   buttonDisabled: {
-    backgroundColor: '#E2EBE5',
+    backgroundColor: '#E9E9EB',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -221,11 +221,11 @@ const styles = StyleSheet.create({
   disclaimerText: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#889A8F',
+    color: '#93959F',
     lineHeight: 18,
   },
   linkText: {
-    color: '#1F2B24',
+    color: '#E23744',
     fontWeight: '700',
     textDecorationLine: 'underline',
   }

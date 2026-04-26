@@ -12,12 +12,12 @@ const ProductListSkeleton = memo(function ProductListSkeleton() {
     {[0, 1, 2, 3].map((item) => (
       <View key={item} className="mb-4 flex-row rounded-2xl bg-white p-4">
         <View className="mr-4 flex-1">
-          <View className="h-4 w-2/3 rounded-full bg-gray-200" />
-          <View className="mt-3 h-4 w-1/3 rounded-full bg-gray-200" />
-          <View className="mt-3 h-3 w-full rounded-full bg-gray-100" />
-          <View className="mt-2 h-3 w-5/6 rounded-full bg-gray-100" />
+          <View className="h-4 w-2/3 rounded-full bg-[#E9E9EB]" />
+          <View className="mt-3 h-4 w-1/3 rounded-full bg-[#E9E9EB]" />
+          <View className="mt-3 h-3 w-full rounded-full bg-[#F5F5F5]" />
+          <View className="mt-2 h-3 w-5/6 rounded-full bg-[#F5F5F5]" />
         </View>
-        <View className="h-28 w-28 rounded-2xl bg-gray-200" />
+        <View className="h-28 w-28 rounded-2xl bg-[#E9E9EB]" />
       </View>
     ))}
   </View>
@@ -38,13 +38,13 @@ const Products = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-[#F5F5F5]">
         <>
           <ProductSearchBar />
           {isRefreshing ? (
             <View className="px-4 pt-2 flex-row items-center bg-white">
-              <ActivityIndicator size="small" color="#107A4A" />
-              <Text className="ml-2 text-xs text-gray-500">
+              <ActivityIndicator size="small" color="#E23744" />
+              <Text className="ml-2 text-xs text-[#93959F]">
                 {error ? "Reconnecting catalog..." : "Refreshing products..."}
               </Text>
             </View>
@@ -59,7 +59,7 @@ const Products = () => {
           )}
           {loading && products.length === 0 && !isBootstrapping ? (
             <View className="px-4 py-4">
-              <Text className="text-sm text-gray-500">
+              <Text className="text-sm text-[#93959F]">
                 {error ? "Reconnecting to server..." : "Fetching fresh farm foods..."}
               </Text>
             </View>

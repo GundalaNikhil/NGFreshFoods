@@ -99,10 +99,10 @@ const CheckoutSheet = ({
       const totalPaid = Number(currentOrder?.totalAmount || totalPayable || 0).toFixed(2);
       return (
         <View className="items-center py-10 px-6">
-          <View className="w-20 h-20 rounded-full bg-green-50 items-center justify-center mb-4">
-            <CheckCircle size={44} color="#16A34A" strokeWidth={2} />
+          <View className="w-20 h-20 rounded-full bg-[#FFF0F1] items-center justify-center mb-4">
+            <CheckCircle size={44} color="#E23744" strokeWidth={2} />
           </View>
-          <Text className="text-2xl font-black text-gray-900 mb-1">
+          <Text className="text-2xl font-black text-[#1C1C1C] mb-1">
             Payment Successful! 🎉
           </Text>
           {orderNumber ? (
@@ -110,26 +110,26 @@ const CheckoutSheet = ({
               Order #{orderNumber}
             </Text>
           ) : null}
-          <Text className="text-sm text-gray-500 text-center leading-relaxed mb-2">
+          <Text className="text-sm text-[#686B78] text-center leading-relaxed mb-2">
             ₹{totalPaid} paid successfully
           </Text>
-          <Text className="text-xs text-gray-400 text-center leading-relaxed mb-6">
+          <Text className="text-xs text-[#93959F] text-center leading-relaxed mb-6">
             Your order is confirmed and being prepared.{"\n"}
             Taking you to order details...
           </Text>
           <View className="flex-row gap-3">
             <TouchableOpacity
-              className="bg-gray-100 rounded-xl py-4 px-6"
+              className="bg-[#F5F5F5] rounded-xl py-4 px-6"
               activeOpacity={0.9}
               onPress={() => {
                 onReset();
                 onClose();
               }}
             >
-              <Text className="text-gray-700 font-bold text-sm">Close</Text>
+              <Text className="text-[#686B78] font-bold text-sm">Close</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className="bg-green-600 rounded-xl py-4 px-8 shadow-sm flex-row items-center"
+              className="bg-[#E23744] rounded-xl py-4 px-8 shadow-sm flex-row items-center"
               activeOpacity={0.9}
               onPress={() => {
                 if (onViewOrder && currentOrder) {
@@ -164,10 +164,10 @@ const CheckoutSheet = ({
               <XCircle size={44} color="#DC2626" strokeWidth={2} />
             )}
           </View>
-          <Text className="text-2xl font-black text-gray-900 mb-2">
+          <Text className="text-2xl font-black text-[#1C1C1C] mb-2">
             {isVerifyError ? "Payment Uncertain" : isTimeoutError ? "Connection Timeout" : "Payment Failed"}
           </Text>
-          <Text className="text-sm text-gray-500 text-center leading-relaxed mb-2">
+          <Text className="text-sm text-[#686B78] text-center leading-relaxed mb-2">
             {error || "Something went wrong. Please try again."}
           </Text>
 
@@ -189,17 +189,17 @@ const CheckoutSheet = ({
 
           <View className="flex-row gap-3 mt-2">
             <TouchableOpacity
-              className="bg-gray-100 rounded-xl py-4 px-8"
+              className="bg-[#F5F5F5] rounded-xl py-4 px-8"
               activeOpacity={0.9}
               onPress={handleSafeClose}
             >
-              <Text className="text-gray-700 font-bold text-sm">
+              <Text className="text-[#686B78] font-bold text-sm">
                 {isVerifyError ? "Check Orders" : "Cancel"}
               </Text>
             </TouchableOpacity>
             {!isVerifyError && (
               <TouchableOpacity
-                className="bg-green-600 rounded-xl py-4 px-8 shadow-sm flex-row items-center"
+                className="bg-[#E23744] rounded-xl py-4 px-8 shadow-sm flex-row items-center"
                 activeOpacity={0.9}
                 onPress={() => {
                   onReset();
@@ -223,25 +223,25 @@ const CheckoutSheet = ({
     if (isCancelled) {
       return (
         <View className="items-center py-10 px-6">
-          <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
-            <X size={32} color="#6B7280" strokeWidth={2} />
+          <View className="w-16 h-16 rounded-full bg-[#F5F5F5] items-center justify-center mb-4">
+            <X size={32} color="#686B78" strokeWidth={2} />
           </View>
-          <Text className="text-xl font-black text-gray-900 mb-2">
+          <Text className="text-xl font-black text-[#1C1C1C] mb-2">
             Payment Cancelled
           </Text>
-          <Text className="text-sm text-gray-500 text-center leading-relaxed mb-6">
+          <Text className="text-sm text-[#686B78] text-center leading-relaxed mb-6">
             No worries! Your cart is safe. You can try again whenever you're ready.
           </Text>
           <View className="flex-row gap-3">
             <TouchableOpacity
-              className="bg-gray-100 rounded-xl py-4 px-8"
+              className="bg-[#F5F5F5] rounded-xl py-4 px-8"
               activeOpacity={0.9}
               onPress={handleSafeClose}
             >
-              <Text className="text-gray-700 font-bold text-sm">Back to Cart</Text>
+              <Text className="text-[#686B78] font-bold text-sm">Back to Cart</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className="bg-green-600 rounded-xl py-4 px-8 shadow-sm"
+              className="bg-[#E23744] rounded-xl py-4 px-8 shadow-sm"
               activeOpacity={0.9}
               onPress={() => {
                 onReset();
@@ -268,14 +268,14 @@ const CheckoutSheet = ({
 
       return (
         <View className="items-center py-14 px-6">
-          <ActivityIndicator size="large" color="#16A34A" />
-          <Text className="text-lg font-bold text-gray-900 mt-5 mb-1">
+          <ActivityIndicator size="large" color="#E23744" />
+          <Text className="text-lg font-bold text-[#1C1C1C] mt-5 mb-1">
             {stageInfo.title}
           </Text>
-          <Text className="text-sm text-gray-500 text-center">
+          <Text className="text-sm text-[#686B78] text-center">
             {stageInfo.subtitle}
           </Text>
-          <Text className="text-xs text-gray-400 mt-3 text-center">
+          <Text className="text-xs text-[#93959F] mt-3 text-center">
             Please don't close the app or press back.
           </Text>
         </View>
@@ -288,45 +288,45 @@ const CheckoutSheet = ({
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pt-5 pb-3">
           <View>
-            <Text className="text-xl font-black text-gray-900">Checkout</Text>
-            <Text className="text-xs text-gray-500 font-medium mt-0.5">
+            <Text className="text-xl font-black text-[#1C1C1C]">Checkout</Text>
+            <Text className="text-xs text-[#686B78] font-medium mt-0.5">
               {itemCount} item{itemCount !== 1 ? "s" : ""} • ₹
               {totalPayable.toFixed(2)}
             </Text>
           </View>
           <TouchableOpacity
-            className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center"
+            className="w-9 h-9 rounded-full bg-[#F5F5F5] items-center justify-center"
             onPress={handleSafeClose}
           >
-            <X size={18} color="#6B7280" strokeWidth={2.5} />
+            <X size={18} color="#686B78" strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
 
         {/* Divider */}
-        <View className="h-[1px] bg-gray-100 mx-5" />
+        <View className="h-[1px] bg-[#F5F5F5] mx-5" />
 
         {/* Delivery Address Section */}
         <View className="px-5 pt-5 pb-2">
-          <Text className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
+          <Text className="text-xs font-black text-[#93959F] uppercase tracking-widest mb-3">
             Delivery Address
           </Text>
           <TouchableOpacity 
             onPress={onSelectAddress}
             className={`flex-row items-center p-4 rounded-2xl border-2 ${
-              selectedAddress ? "border-gray-100 bg-gray-50" : "border-amber-200 bg-amber-50"
+              selectedAddress ? "border-[#E9E9EB] bg-gray-50" : "border-amber-200 bg-amber-50"
             }`}
             activeOpacity={0.8}
           >
             <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${
               selectedAddress ? "bg-white" : "bg-amber-100"
             }`}>
-              <MapPin size={20} color={selectedAddress ? "#107A4A" : "#D97706"} strokeWidth={2.5} />
+              <MapPin size={20} color={selectedAddress ? "#E23744" : "#D97706"} strokeWidth={2.5} />
             </View>
             <View className="flex-1">
-              <Text className="text-[15px] font-bold text-gray-900">
+              <Text className="text-[15px] font-bold text-[#1C1C1C]">
                 {selectedAddress ? selectedAddress.label : "Provide Delivery Address"}
               </Text>
-              <Text numberOfLines={1} className="text-xs text-gray-500 mt-0.5 font-medium">
+              <Text numberOfLines={1} className="text-xs text-[#686B78] mt-0.5 font-medium">
                 {selectedAddress 
                   ? selectedAddress.addressLine1
                   : "Tap to add or select an address"}
@@ -338,7 +338,7 @@ const CheckoutSheet = ({
 
         {/* Payment Methods */}
         <View className="px-5 pt-5 pb-3">
-          <Text className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
+          <Text className="text-xs font-black text-[#93959F] uppercase tracking-widest mb-4">
             Payment Method
           </Text>
 
@@ -346,15 +346,15 @@ const CheckoutSheet = ({
           <TouchableOpacity
             className={`flex-row items-center p-4 rounded-2xl mb-3 border-2 ${
               paymentMethod === "ONLINE"
-                ? "border-green-500 bg-green-50"
-                : "border-gray-100 bg-white"
+                ? "border-[#E23744] bg-[#FFF0F1]"
+                : "border-[#E9E9EB] bg-white"
             }`}
             activeOpacity={0.8}
             onPress={() => onSelectMethod("ONLINE")}
           >
             <View
               className={`w-11 h-11 rounded-xl items-center justify-center mr-4 ${
-                paymentMethod === "ONLINE" ? "bg-green-100" : "bg-gray-50"
+                paymentMethod === "ONLINE" ? "bg-[#E23744]/10" : "bg-gray-50"
               }`}
             >
               <Wallet
@@ -364,22 +364,22 @@ const CheckoutSheet = ({
               />
             </View>
             <View className="flex-1">
-              <Text className="text-[15px] font-bold text-gray-900">
+              <Text className="text-[15px] font-bold text-[#1C1C1C]">
                 Pay Online
               </Text>
-              <Text className="text-xs text-gray-500 mt-0.5">
+              <Text className="text-xs text-[#686B78] mt-0.5">
                 UPI • Cards • Wallets • Net Banking
               </Text>
             </View>
             <View
               className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
                 paymentMethod === "ONLINE"
-                  ? "border-green-500"
-                  : "border-gray-300"
+                  ? "border-[#E23744]"
+                  : "border-[#D5D5D8]"
               }`}
             >
               {paymentMethod === "ONLINE" && (
-                <View className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                <View className="w-2.5 h-2.5 rounded-full bg-[#E23744]" />
               )}
             </View>
           </TouchableOpacity>
@@ -388,15 +388,15 @@ const CheckoutSheet = ({
           <TouchableOpacity
             className={`flex-row items-center p-4 rounded-2xl border-2 ${
               paymentMethod === "COD"
-                ? "border-green-500 bg-green-50"
-                : "border-gray-100 bg-white"
+                ? "border-[#E23744] bg-[#FFF0F1]"
+                : "border-[#E9E9EB] bg-white"
             }`}
             activeOpacity={0.8}
             onPress={() => onSelectMethod("COD")}
           >
             <View
               className={`w-11 h-11 rounded-xl items-center justify-center mr-4 ${
-                paymentMethod === "COD" ? "bg-green-100" : "bg-gray-50"
+                paymentMethod === "COD" ? "bg-[#E23744]/10" : "bg-gray-50"
               }`}
             >
               <Truck
@@ -406,22 +406,22 @@ const CheckoutSheet = ({
               />
             </View>
             <View className="flex-1">
-              <Text className="text-[15px] font-bold text-gray-900">
+              <Text className="text-[15px] font-bold text-[#1C1C1C]">
                 Cash on Delivery
               </Text>
-              <Text className="text-xs text-gray-500 mt-0.5">
+              <Text className="text-xs text-[#686B78] mt-0.5">
                 Pay when your order arrives
               </Text>
             </View>
             <View
               className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
                 paymentMethod === "COD"
-                  ? "border-green-500"
-                  : "border-gray-300"
+                  ? "border-[#E23744]"
+                  : "border-[#D5D5D8]"
               }`}
             >
               {paymentMethod === "COD" && (
-                <View className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                <View className="w-2.5 h-2.5 rounded-full bg-[#E23744]" />
               )}
             </View>
           </TouchableOpacity>
@@ -429,8 +429,8 @@ const CheckoutSheet = ({
 
         {/* Security Badge */}
         <View className="flex-row items-center justify-center py-3 mx-5 bg-gray-50 rounded-xl mb-4">
-          <ShieldCheck size={14} color="#16A34A" strokeWidth={2.5} />
-          <Text className="text-xs text-gray-500 font-semibold ml-1.5">
+          <ShieldCheck size={14} color="#E23744" strokeWidth={2.5} />
+          <Text className="text-xs text-[#686B78] font-semibold ml-1.5">
             100% Secure & Encrypted Payment
           </Text>
         </View>
@@ -439,7 +439,7 @@ const CheckoutSheet = ({
         <View className="px-5 pb-8">
           <TouchableOpacity
             className={`rounded-xl h-14 flex-row items-center justify-between px-5 shadow-lg ${
-              isProcessing || !selectedAddress ? "bg-gray-400" : "bg-[#16A34A] shadow-green-200"
+              isProcessing || !selectedAddress ? "bg-gray-400" : "bg-[#E23744] shadow-[#E23744]/20"
             }`}
             activeOpacity={0.9}
             onPress={onPayOnline}
@@ -501,7 +501,7 @@ const CheckoutSheet = ({
         >
           {/* Handle */}
           <View className="items-center pt-3 pb-1">
-            <View className="w-10 h-1 rounded-full bg-gray-200" />
+            <View className="w-10 h-1 rounded-full bg-[#E9E9EB]" />
           </View>
 
           {renderContent()}

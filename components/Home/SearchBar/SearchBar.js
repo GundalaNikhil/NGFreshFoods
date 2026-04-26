@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     height: 44,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: "#e5e7e3",
+    borderColor: "#E9E9EB",
   },
   barFocused: {
     borderColor: "#d0d0d0",
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#93959f",
+    backgroundColor: "#686B78",
     alignItems: "center",
     justifyContent: "center",
   },

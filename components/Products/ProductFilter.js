@@ -13,8 +13,8 @@ const ProductFilter = () => {
     setSelectedFoodType,
   } = useProducts();
   const foodTypes = [
-    { id: productFoodTypeOptions.VEG, label: "Veg", icon: Leaf, color: "#15803d" },
-    { id: productFoodTypeOptions.NON_VEG, label: "Non-veg", icon: Drumstick, color: "#dc2626" },
+    { id: productFoodTypeOptions.VEG, label: "Veg", icon: Leaf, color: "#60B246" },
+    { id: productFoodTypeOptions.NON_VEG, label: "Non-veg", icon: Drumstick, color: "#E23744" },
   ];
   const handleAllPress = () => {
     setSelectedCategory("ALL");
@@ -32,7 +32,7 @@ const ProductFilter = () => {
     selectedCategory === "ALL" && selectedFoodType === productFoodTypeOptions.ALL;
 
   return (
-    <View className="border-b border-gray-100 bg-white">
+    <View className="border-b border-[#E9E9EB] bg-white">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -40,15 +40,15 @@ const ProductFilter = () => {
       >
         <TouchableOpacity
           onPress={handleAllPress}
-          className={`mr-2 px-4 h-8 items-center justify-center rounded-lg border ${
+          className={`mr-2 px-4 h-8 items-center justify-center rounded-full border ${
             isAllSelected
-              ? "bg-red-50 border-red-200"
-              : "bg-white border-gray-200"
+              ? "bg-[#FFF0F1] border-[#E23744]"
+              : "bg-white border-[#E9E9EB]"
           }`}
         >
           <Text
             className={`text-[13px] font-semibold ${
-              isAllSelected ? "text-red-600" : "text-gray-600"
+              isAllSelected ? "text-[#E23744]" : "text-[#686B78]"
             }`}
           >
             All
@@ -63,14 +63,22 @@ const ProductFilter = () => {
             <TouchableOpacity
               key={foodType.id}
               onPress={() => handleFoodTypePress(foodType.id)}
-              className={`mr-2 px-3 h-8 flex-row items-center justify-center rounded-lg border ${
-                isSelected ? "bg-emerald-50 border-emerald-200" : "bg-white border-gray-200"
+              className={`mr-2 px-3 h-8 flex-row items-center justify-center rounded-full border ${
+                isSelected 
+                  ? foodType.id === productFoodTypeOptions.VEG 
+                    ? "bg-[#F0FFF4] border-[#60B246]" 
+                    : "bg-[#FFF0F1] border-[#E23744]"
+                  : "bg-white border-[#E9E9EB]"
               }`}
             >
-              <Icon size={14} color={isSelected ? foodType.color : "#6b7280"} />
+              <Icon size={14} color={isSelected ? foodType.color : "#93959F"} />
               <Text
                 className={`text-[13px] font-semibold ml-1.5 ${
-                  isSelected ? "text-emerald-700" : "text-gray-600"
+                  isSelected 
+                    ? foodType.id === productFoodTypeOptions.VEG 
+                      ? "text-[#60B246]"
+                      : "text-[#E23744]"
+                    : "text-[#686B78]"
                 }`}
               >
                 {foodType.label}
@@ -83,17 +91,17 @@ const ProductFilter = () => {
           <TouchableOpacity
             key={category.category_id}
             onPress={() => handleCategoryPress(category.category_id)}
-            className={`mr-2 px-4 h-8 items-center justify-center rounded-lg border ${
+            className={`mr-2 px-4 h-8 items-center justify-center rounded-full border ${
               selectedCategory === category.category_id
-                ? "bg-red-50 border-red-200"
-                : "bg-white border-gray-200"
+                ? "bg-[#FFF0F1] border-[#E23744]"
+                : "bg-white border-[#E9E9EB]"
             }`}
           >
             <Text
               className={`text-[13px] font-semibold ${
                 selectedCategory === category.category_id
-                  ? "text-red-600"
-                  : "text-gray-600"
+                  ? "text-[#E23744]"
+                  : "text-[#686B78]"
               }`}
             >
               {category.name}

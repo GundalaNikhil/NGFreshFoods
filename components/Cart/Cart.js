@@ -265,7 +265,7 @@ const Cart = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Dynamic Address Header */}
-      <View className="px-5 py-2 border-b border-gray-50 bg-white">
+      <View className="px-5 py-2 border-b border-[#E9E9EB] bg-white">
         <AddressHeader 
           onAddressPress={() => setShowAddressSheet(true)} 
         />
@@ -274,7 +274,7 @@ const Cart = () => {
       {cart.length > 0 || checkoutState === "SUCCESS" || isCheckoutInProgress || isPaymentCancelled ? (
         <>
           <ScrollView
-            className="flex-1 bg-gray-50"
+            className="flex-1 bg-[#F5F5F5]"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 120 }}
           >
@@ -310,17 +310,17 @@ const Cart = () => {
               />
               
               {/* High-Fidelity Delivery Speed Highlight */}
-              <View className="px-5 py-8 items-center flex-row justify-between border-t border-gray-50">
+              <View className="px-5 py-8 items-center flex-row justify-between border-t border-[#F5F5F5]">
                 <View className="flex-1 pr-4">
-                  <View className="bg-green-50 self-start px-2 py-0.5 rounded-full mb-2">
-                    <Text className="text-[10px] text-green-700 font-black uppercase tracking-widest">
-                      Super Fast
+                  <View className="bg-[#FFF0F1] self-start px-2 py-0.5 rounded-full mb-2">
+                    <Text className="text-[10px] text-[#E23744] font-black uppercase tracking-widest">
+                      ⚡ Super Fast
                     </Text>
                   </View>
-                  <Text className="text-[20px] font-black text-gray-900 mb-1">
+                  <Text className="text-[20px] font-black text-[#1C1C1C] mb-1">
                     Delivery in 30 mins
                   </Text>
-                  <Text className="text-[13px] text-gray-500 font-medium leading-relaxed">
+                  <Text className="text-[13px] text-[#686B78] font-medium leading-relaxed">
                     Quick as a flash! Our delivery partner is ready to bring your fresh farm foods.
                   </Text>
                 </View>
@@ -334,11 +334,11 @@ const Cart = () => {
             
             {/* Cancellation Policy */}
             <View className="px-4 pb-8">
-              <View className="bg-white p-4 rounded-xl border border-gray-100">
-                <Text className="text-[14px] font-bold text-gray-800 mb-1">
+              <View className="bg-white p-4 rounded-xl border border-[#E9E9EB]">
+                <Text className="text-[14px] font-bold text-[#1C1C1C] mb-1">
                   Cancellation Policy
                 </Text>
-                <Text className="text-[12px] text-gray-500 leading-relaxed">
+                <Text className="text-[12px] text-[#686B78] leading-relaxed">
                   Help us reduce food waste. Avoid cancellations after placing your order. A 100% cancellation fee may apply.
                 </Text>
               </View>
@@ -401,11 +401,11 @@ const Cart = () => {
             style={{ width: 180, height: 180, marginBottom: 24 }}
             resizeMode="contain"
           />
-          <Text className="text-xl font-bold text-gray-900">Your cart is lonely</Text>
-          <Text className="text-gray-500 text-center mt-2 leading-relaxed">
+          <Text className="text-xl font-bold text-[#1C1C1C]">Your cart is lonely</Text>
+          <Text className="text-[#686B78] text-center mt-2 leading-relaxed">
             Your kitchen is waiting for some fresh farm foods. Let's add some delicious meat, chicken or eggs to your cart!
           </Text>
-          <TouchableOpacity className="mt-8 bg-green-600 px-10 py-4 rounded-2xl shadow-sm">
+          <TouchableOpacity className="mt-8 bg-[#E23744] px-10 py-4 rounded-2xl" style={{ shadowColor: '#E23744', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}>
             <Text className="text-white font-bold text-base">Browse Categories</Text>
           </TouchableOpacity>
         </View>

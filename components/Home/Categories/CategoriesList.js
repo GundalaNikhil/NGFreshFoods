@@ -33,15 +33,13 @@ const CategoriesList = () => {
   return (
     <View className="items-center">
       <View className="items-center px-1 mb-3">
-        <Text className="text-[23px] font-extrabold text-[#1f2937] text-center">
-          Shop By Category
+        <Text className="text-[23px] font-extrabold text-[#1C1C1C] text-center">
+          What's on your mind?
         </Text>
-        <Text className="mt-1 text-[11px] font-semibold text-[#3f6212] text-center">
-          Curated fresh picks
-        </Text>
+        <View className="mt-2 w-8 h-[3px] rounded-full bg-[#E23744]" />
       </View>
-      <Text className="text-xs text-[#64748b] px-4 mb-4 text-center">
-        Farm-sourced essentials delivered with trusted cold-chain handling.
+      <Text className="text-xs text-[#93959F] px-4 mb-4 text-center">
+        Farm-fresh meat, chicken & eggs delivered to your door.
       </Text>
       <ScrollView
         horizontal

@@ -109,33 +109,34 @@ const CartPromoCode = ({
     <View className="px-4 py-2 mt-2">
       <TouchableOpacity
         onPress={handleShowOffers}
-        className="flex-row items-center justify-between bg-white border border-gray-100 p-4 rounded-xl shadow-sm"
+        className="flex-row items-center justify-between bg-white border border-[#E9E9EB] p-4 rounded-xl"
+        style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
       >
         <View className="flex-row items-center">
-          <Tag size={20} color="#16A34A" />
-          <Text className="font-bold text-[15px] ml-3 text-gray-800">
+          <Tag size={20} color="#E23744" />
+          <Text className="font-bold text-[15px] ml-3 text-[#1C1C1C]">
             Use coupons to save more
           </Text>
         </View>
-        <ChevronRight size={20} color="#16A34A" />
+        <ChevronRight size={20} color="#E23744" />
       </TouchableOpacity>
 
       {selectedOffer && (
-        <View className="bg-green-50 p-4 rounded-xl mt-3 border border-green-100">
+        <View className="bg-[#F0FFF4] p-4 rounded-xl mt-3 border border-[#BBF7D0]">
           <View className="flex-row items-center justify-between mb-1">
             <View className="flex-row items-center flex-1">
-              <Gift size={18} color="#16A34A" />
-              <Text className="text-green-700 font-bold ml-2 text-sm">
+              <Gift size={18} color="#60B246" />
+              <Text className="text-[#15803D] font-bold ml-2 text-sm">
                 '{selectedOffer.code || selectedOffer.promoCode}' applied!
               </Text>
             </View>
             <TouchableOpacity onPress={handleRemovePromo}>
-              <Text className="text-green-600 font-bold text-xs uppercase">
+              <Text className="text-[#E23744] font-bold text-xs uppercase">
                 Remove
               </Text>
             </TouchableOpacity>
           </View>
-          <Text className="text-gray-600 text-[11px] ml-7">
+          <Text className="text-[#686B78] text-[11px] ml-7">
             You are saving ₹{Number(discountAmount || 0).toFixed(2)} on this
             order
           </Text>
@@ -150,7 +151,7 @@ const CartPromoCode = ({
               onChangeText={setPromoCode}
               onFocus={handleInputFocus}
               placeholder="Type coupon code here..."
-              className="flex-1 border border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-[14px] font-medium"
+              className="flex-1 border border-[#E9E9EB] rounded-lg px-4 py-3 bg-[#F5F5F5] text-[14px] font-medium"
               autoCapitalize="characters"
             />
             <TouchableOpacity
@@ -160,11 +161,11 @@ const CartPromoCode = ({
               className="ml-3"
             >
               {loading || isApplying ? (
-                <ActivityIndicator size="small" color="#16A34A" />
+                <ActivityIndicator size="small" color="#E23744" />
               ) : (
                 <Text
                   className={`font-bold text-[14px] ${
-                    promoCode.trim() ? "text-green-600" : "text-gray-300"
+                    promoCode.trim() ? "text-[#E23744]" : "text-[#D5D5D8]"
                   }`}
                 >
                   APPLY
@@ -174,19 +175,19 @@ const CartPromoCode = ({
           </View>
 
           {showSuggestions && eligibleCoupons.length > 0 && (
-            <View className="mt-3 bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+            <View className="mt-3 bg-white border border-[#E9E9EB] rounded-xl overflow-hidden" style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 }}>
               <ScrollView style={{ maxHeight: 160 }}>
                 {eligibleCoupons.map((coupon) => (
                   <TouchableOpacity
                     key={coupon.code}
                     onPress={() => handleSuggestionSelect(coupon)}
-                    className="px-4 py-3 border-b border-gray-50"
+                    className="px-4 py-3 border-b border-[#F5F5F5]"
                   >
-                    <Text className="text-[13px] font-bold text-gray-800">
+                    <Text className="text-[13px] font-bold text-[#1C1C1C]">
                       {coupon.code}
                     </Text>
                     {coupon.title || coupon.description ? (
-                      <Text className="text-[11px] text-gray-500">
+                      <Text className="text-[11px] text-[#93959F]">
                         {coupon.title || coupon.description}
                       </Text>
                     ) : null}
@@ -198,15 +199,15 @@ const CartPromoCode = ({
 
           {couponsLoading ? (
             <View className="items-center justify-center py-6">
-              <ActivityIndicator size="large" color="#16A34A" />
-              <Text className="text-[12px] text-gray-400 mt-2 font-medium">
+              <ActivityIndicator size="large" color="#E23744" />
+              <Text className="text-[12px] text-[#93959F] mt-2 font-medium">
                 Loading coupons...
               </Text>
             </View>
           ) : null}
           {couponsError ? (
             <TouchableOpacity onPress={onReloadCoupons} className="mt-3">
-              <Text className="text-[11px] text-red-600">
+              <Text className="text-[11px] text-[#E23744]">
                 {couponsError} Tap to retry.
               </Text>
             </TouchableOpacity>
@@ -215,9 +216,9 @@ const CartPromoCode = ({
       )}
 
       {error ? (
-        <Text className="text-red-500 text-xs mt-2 px-1">{error}</Text>
+        <Text className="text-[#E23744] text-xs mt-2 px-1">{error}</Text>
       ) : success ? (
-        <Text className="text-green-600 text-xs mt-2 px-1">{success}</Text>
+        <Text className="text-[#60B246] text-xs mt-2 px-1">{success}</Text>
       ) : null}
     </View>
   );

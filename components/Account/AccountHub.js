@@ -55,13 +55,13 @@ const SectionButton = ({ title, subtitle, icon: IconCmp, onPress }) => (
     activeOpacity={0.85}
   >
     <View className="flex-row items-center">
-      <View className="w-10 h-10 rounded-full items-center justify-center bg-emerald-50">
-        <IconCmp size={20} color="#107A4A" />
+      <View className="w-10 h-10 rounded-full items-center justify-center bg-[#FFF0F1]">
+        <IconCmp size={20} color="#E23744" />
       </View>
       <View className="ml-3">
-        <Text className="text-[15px] font-semibold text-gray-900">{title}</Text>
+        <Text className="text-[15px] font-semibold text-[#1C1C1C]">{title}</Text>
         {subtitle ? (
-          <Text className="text-[12px] text-gray-500 mt-0.5">{subtitle}</Text>
+          <Text className="text-[12px] text-[#686B78] mt-0.5">{subtitle}</Text>
         ) : null}
       </View>
     </View>
@@ -74,7 +74,7 @@ const SectionHeader = ({ title, onBack }) => (
     <TouchableOpacity onPress={onBack} className="mr-3 p-2 rounded-full bg-white">
       <ChevronLeft size={18} color="#1F2937" />
     </TouchableOpacity>
-    <Text className="text-lg font-bold text-gray-900">{title}</Text>
+    <Text className="text-lg font-bold text-[#1C1C1C]">{title}</Text>
   </View>
 );
 
@@ -87,14 +87,14 @@ const EmptyState = ({ title, subtitle, actionLabel, onAction, image }) => (
         resizeMode="contain"
       />
     ) : null}
-    <Text className="text-base font-semibold text-gray-900 mb-1">{title}</Text>
+    <Text className="text-base font-semibold text-[#1C1C1C] mb-1">{title}</Text>
     {subtitle ? (
-      <Text className="text-[12px] text-gray-500 text-center">{subtitle}</Text>
+      <Text className="text-[12px] text-[#686B78] text-center">{subtitle}</Text>
     ) : null}
     {actionLabel ? (
       <TouchableOpacity
         onPress={onAction}
-        className="mt-4 px-4 py-2 rounded-full bg-emerald-600"
+        className="mt-4 px-4 py-2 rounded-full bg-[#E23744]"
         activeOpacity={0.85}
       >
         <Text className="text-white text-[12px] font-semibold">{actionLabel}</Text>
@@ -143,7 +143,7 @@ const OrderCard = ({ order, onPress }) => {
       onPress={() => onPress && onPress(order)}
     >
       <View className="flex-row items-center justify-between">
-        <Text className="text-sm font-semibold text-gray-900">
+        <Text className="text-sm font-semibold text-[#1C1C1C]">
           {orderIdShort}
         </Text>
         <View className={`px-3 py-1 rounded-full ${statusConfig.bg}`}>
@@ -160,7 +160,7 @@ const OrderCard = ({ order, onPress }) => {
         </Text>
       ) : null}
 
-      <Text className="text-[12px] text-gray-400 mt-1">
+      <Text className="text-[12px] text-[#93959F] mt-1">
         {createdAt ? createdAt.toDateString() : "Order date unavailable"}
       </Text>
 
@@ -169,17 +169,17 @@ const OrderCard = ({ order, onPress }) => {
           {paymentMethod ? (
             <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-full mr-2">
               <CreditCard size={12} color="#6B7280" strokeWidth={2} />
-              <Text className="text-[10px] text-gray-500 font-semibold ml-1">
+              <Text className="text-[10px] text-[#686B78] font-semibold ml-1">
                 {paymentMethod}
               </Text>
             </View>
           ) : null}
-          <Text className="text-[12px] text-gray-500">
+          <Text className="text-[12px] text-[#686B78]">
             {order?.orderItems?.length || 0} items
           </Text>
         </View>
         <View className="flex-row items-center">
-          <Text className="text-[14px] font-bold text-gray-900 mr-1">
+          <Text className="text-[14px] font-bold text-[#1C1C1C] mr-1">
             ₹{Number(order?.totalAmount || 0).toFixed(2)}
           </Text>
           <ChevronRight size={14} color="#9CA3AF" strokeWidth={2} />
@@ -197,16 +197,16 @@ const NotificationCard = ({ item, onPress }) => (
   >
     <View className="flex-row items-start justify-between">
       <View className="flex-1 pr-3">
-        <Text className="text-[14px] font-semibold text-gray-900">{item.title}</Text>
+        <Text className="text-[14px] font-semibold text-[#1C1C1C]">{item.title}</Text>
         <Text className="text-[12px] text-gray-600 mt-1 leading-5">{item.body}</Text>
       </View>
-      <View className="px-2 py-1 rounded-full bg-emerald-50">
-        <Text className="text-[10px] font-semibold text-emerald-700">
+      <View className="px-2 py-1 rounded-full bg-[#FFF0F1]">
+        <Text className="text-[10px] font-semibold text-[#E23744]">
           {(item.eventType || "UPDATE").replace(/_/g, " ")}
         </Text>
       </View>
     </View>
-    <Text className="text-[11px] text-gray-400 mt-3">
+    <Text className="text-[11px] text-[#93959F] mt-3">
       {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Just now"}
     </Text>
   </TouchableOpacity>
@@ -563,8 +563,8 @@ const AccountHub = () => {
         <SectionHeader title="Your Orders" onBack={() => setSection("home")} />
         {loadingOrders ? (
           <View className="flex-1 items-center justify-center p-20">
-            <ActivityIndicator size="large" color="#107A4A" />
-            <Text className="text-gray-400 mt-4 font-medium">Fetching orders...</Text>
+            <ActivityIndicator size="large" color="#E23744" />
+            <Text className="text-[#93959F] mt-4 font-medium">Fetching orders...</Text>
           </View>
         ) : ordersError ? (
           <EmptyState
@@ -610,7 +610,7 @@ const AccountHub = () => {
 
   if (section === "profile") {
     return (
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 80 }}>
         <SectionHeader title="Profile" onBack={() => setSection("home")} />
         <ProfileEditor
           profile={profile}
@@ -663,15 +663,15 @@ const AccountHub = () => {
                   >
                     <View className="flex-row items-center justify-between">
                       <View className="flex-row items-center">
-                        <View className="w-8 h-8 rounded-full bg-emerald-50 items-center justify-center mr-3">
-                          <MapPin size={16} color="#107A4A" />
+                        <View className="w-8 h-8 rounded-full bg-[#FFF0F1] items-center justify-center mr-3">
+                          <MapPin size={16} color="#E23744" />
                         </View>
-                        <Text className="text-[14px] font-bold text-gray-900">
+                        <Text className="text-[14px] font-bold text-[#1C1C1C]">
                           {address.label || "Address"}
                         </Text>
                       </View>
                       {address.isDefault ? (
-                        <View className="px-2 py-0.5 rounded-full bg-emerald-600">
+                        <View className="px-2 py-0.5 rounded-full bg-[#E23744]">
                           <Text className="text-[9px] text-white font-black uppercase">
                             Default
                           </Text>
@@ -682,7 +682,7 @@ const AccountHub = () => {
                       <Text className="text-[13px] text-gray-600 leading-relaxed">
                         {address.addressLine1}
                       </Text>
-                      <Text className="text-[11px] text-gray-400 mt-1">
+                      <Text className="text-[11px] text-[#93959F] mt-1">
                         {address.city}, {address.state} {address.postalCode}
                       </Text>
                     </View>
@@ -716,11 +716,11 @@ const AccountHub = () => {
                 {/* Add New Address — only when addresses already exist */}
                 <TouchableOpacity
                   onPress={() => setIsAddAddressVisible(true)}
-                  className="flex-row items-center justify-center py-4 mt-2 rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/50"
+                  className="flex-row items-center justify-center py-4 mt-2 rounded-2xl border-2 border-dashed border-[#E23744]/30 bg-[#FFF0F1]/50"
                   activeOpacity={0.8}
                 >
-                  <MapPin size={16} color="#107A4A" strokeWidth={2.5} />
-                  <Text className="ml-2 text-[13px] font-bold text-emerald-700">
+                  <MapPin size={16} color="#E23744" strokeWidth={2.5} />
+                  <Text className="ml-2 text-[13px] font-bold text-[#E23744]">
                     Add New Address
                   </Text>
                 </TouchableOpacity>
@@ -747,14 +747,14 @@ const AccountHub = () => {
     };
 
     return (
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 80 }}>
         <SectionHeader title="Notifications" onBack={() => setSection("home")} />
 
         <View className="bg-white rounded-2xl p-5 shadow-sm mb-4">
-          <Text className="text-[15px] font-semibold text-gray-900 mb-1">
+          <Text className="text-[15px] font-semibold text-[#1C1C1C] mb-1">
             Push preferences
           </Text>
-          <Text className="text-[12px] text-gray-500 mb-4">
+          <Text className="text-[12px] text-[#686B78] mb-4">
             Order updates stay fast. Offers and reminders can be tuned anytime.
           </Text>
 
@@ -769,8 +769,8 @@ const AccountHub = () => {
               className="flex-row items-center justify-between py-3 border-t border-gray-100"
             >
               <View className="pr-3 flex-1">
-                <Text className="text-[14px] font-medium text-gray-900">{label}</Text>
-                <Text className="text-[11px] text-gray-500 mt-0.5">
+                <Text className="text-[14px] font-medium text-[#1C1C1C]">{label}</Text>
+                <Text className="text-[11px] text-[#686B78] mt-0.5">
                   {key === "offersAndPromos"
                     ? "Campaigns, launches, and seasonal deals."
                     : key === "orderUpdates"
@@ -783,18 +783,18 @@ const AccountHub = () => {
               <Switch
                 value={Boolean(preferences[key])}
                 onValueChange={(value) => handlePreferenceToggle(key, value)}
-                trackColor={{ false: "#D1D5DB", true: "#A7F3D0" }}
-                thumbColor={preferences[key] ? "#107A4A" : "#F9FAFB"}
+                trackColor={{ false: "#D1D5DB", true: "#FCD5D8" }}
+                thumbColor={preferences[key] ? "#E23744" : "#F9FAFB"}
               />
             </View>
           ))}
 
-          <Text className="text-[11px] text-gray-400 mt-4">
+          <Text className="text-[11px] text-[#93959F] mt-4">
             Permission: {notificationState.permissionStatus || "UNDETERMINED"}
           </Text>
         </View>
 
-        <Text className="text-sm font-semibold text-gray-700 mb-3">
+        <Text className="text-sm font-semibold text-[#93959F] mb-3">
           Recent updates
         </Text>
 
@@ -804,8 +804,8 @@ const AccountHub = () => {
 
         {loadingNotifications ? (
           <View className="flex-1 items-center justify-center p-10">
-            <ActivityIndicator size="large" color="#107A4A" />
-            <Text className="text-gray-400 mt-4 font-medium">
+            <ActivityIndicator size="large" color="#E23744" />
+            <Text className="text-[#93959F] mt-4 font-medium">
               Loading notifications...
             </Text>
           </View>
@@ -830,7 +830,7 @@ const AccountHub = () => {
 
   if (section !== "home") {
     return (
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 80 }}>
         <SectionHeader title="Coming Soon" onBack={() => setSection("home")} />
         <EmptyState
           title="We are polishing this space"
@@ -842,11 +842,11 @@ const AccountHub = () => {
   }
 
   return (
-    <ScrollView className="flex-1">
+    <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 80 }}>
       <View className="bg-white rounded-3xl p-5 mb-5 shadow-sm">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <View className="w-16 h-16 rounded-2xl bg-emerald-50 items-center justify-center mr-4 border border-emerald-100 overflow-hidden">
+            <View className="w-16 h-16 rounded-2xl bg-[#FFF0F1] items-center justify-center mr-4 border border-emerald-100 overflow-hidden">
               <Image 
                 source={require("../../assets/images/characters/profile/user.png")}
                 style={{ width: "100%", height: "100%" }}
@@ -854,11 +854,11 @@ const AccountHub = () => {
               />
             </View>
             <View>
-              <Text className="text-lg font-bold text-gray-900">{displayName}</Text>
-              <Text className="text-[12px] text-gray-500 mt-1">
+              <Text className="text-lg font-bold text-[#1C1C1C]">{displayName}</Text>
+              <Text className="text-[12px] text-[#686B78] mt-1">
                 {profile.email || "Email not available"}
               </Text>
-              <Text className="text-[12px] text-gray-500 mt-1">
+              <Text className="text-[12px] text-[#686B78] mt-1">
                 {profile.phoneNumber || "Phone not available"}
               </Text>
             </View>
@@ -885,13 +885,13 @@ const AccountHub = () => {
         ) : null}
         {loadingProfile ? (
           <View className="mt-3 flex-row items-center">
-            <ActivityIndicator size="small" color="#107A4A" />
-            <Text className="text-[11px] text-gray-400 ml-2">Refreshing profile...</Text>
+            <ActivityIndicator size="small" color="#E23744" />
+            <Text className="text-[11px] text-[#93959F] ml-2">Refreshing profile...</Text>
           </View>
         ) : null}
       </View>
 
-      <Text className="text-sm font-semibold text-gray-700 mb-3">
+      <Text className="text-sm font-semibold text-[#93959F] mb-3">
         Account essentials
       </Text>
       {quickCommerceItems.map((item) => (
@@ -914,21 +914,21 @@ const ProfileEditor = ({ profile, loading, error, onSave, onReload }) => {
 
   return (
     <View className="bg-white rounded-2xl p-5 shadow-sm">
-      <Text className="text-[13px] text-gray-500 mb-2">First name</Text>
+      <Text className="text-[13px] text-[#686B78] mb-2">First name</Text>
       <TextInput
         value={firstName}
         onChangeText={setFirstName}
         placeholder="Enter first name"
         className="border border-gray-200 rounded-xl px-3 py-3 mb-4 text-gray-800"
       />
-      <Text className="text-[13px] text-gray-500 mb-2">Last name</Text>
+      <Text className="text-[13px] text-[#686B78] mb-2">Last name</Text>
       <TextInput
         value={lastName}
         onChangeText={setLastName}
         placeholder="Enter last name"
         className="border border-gray-200 rounded-xl px-3 py-3 mb-4 text-gray-800"
       />
-      <Text className="text-[13px] text-gray-500 mb-2">Phone number</Text>
+      <Text className="text-[13px] text-[#686B78] mb-2">Phone number</Text>
       <TextInput
         value={phoneNumber}
         onChangeText={setPhoneNumber}
@@ -941,7 +941,7 @@ const ProfileEditor = ({ profile, loading, error, onSave, onReload }) => {
 
       <TouchableOpacity
         onPress={() => onSave({ firstName, lastName, phoneNumber })}
-        className="bg-emerald-600 rounded-xl py-3 items-center flex-row justify-center"
+        className="bg-[#E23744] rounded-xl py-3 items-center flex-row justify-center"
         disabled={loading}
         activeOpacity={0.85}
       >
@@ -956,7 +956,7 @@ const ProfileEditor = ({ profile, loading, error, onSave, onReload }) => {
         className="mt-3 items-center"
         disabled={loading}
       >
-        <Text className="text-[12px] text-gray-500">Reload from server</Text>
+        <Text className="text-[12px] text-[#686B78]">Reload from server</Text>
       </TouchableOpacity>
     </View>
   );

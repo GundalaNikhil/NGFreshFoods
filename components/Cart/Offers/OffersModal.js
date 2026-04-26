@@ -50,7 +50,7 @@ const OffersModal = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 bg-white">
-        <View className="bg-emerald-600 px-6 pt-10 pb-8 rounded-b-[40px] shadow-lg">
+        <View className="bg-[#E23744] px-6 pt-10 pb-8 rounded-b-[40px] shadow-lg">
           <View className="flex-row items-center justify-between mb-4">
             <View className="bg-white/20 p-2 rounded-xl">
               <Ticket size={24} color="white" />
@@ -68,7 +68,7 @@ const OffersModal = ({
               <Text className="text-white text-2xl font-black tracking-tight mb-1">
                 Save & Feast!
               </Text>
-              <Text className="text-emerald-50 text-sm font-medium leading-tight">
+              <Text className="text-white/80 text-sm font-medium leading-tight">
                 Get the best deals on your fresh farm favorites.
               </Text>
               
@@ -89,8 +89,8 @@ const OffersModal = ({
         >
           {loading ? (
             <View className="flex-1 items-center justify-center p-20">
-              <ActivityIndicator size="large" color="#107A4A" />
-              <Text className="text-gray-400 mt-4 font-medium text-center">
+              <ActivityIndicator size="large" color="#E23744" />
+              <Text className="text-[#93959F] mt-4 font-medium text-center">
                 Fetching the best deals for you...
               </Text>
             </View>
@@ -102,7 +102,7 @@ const OffersModal = ({
             <>
               {eligibleOffers.length > 0 && (
                 <View className="mb-4">
-                  <Text className="text-lg font-bold text-gray-800 mb-2">
+                  <Text className="text-lg font-bold text-[#1C1C1C] mb-2">
                     Available Now ({eligibleOffers.length})
                   </Text>
                   {eligibleOffers.map((offer) => (
@@ -128,7 +128,7 @@ const OffersModal = ({
 
               {ineligibleOffers.length > 0 && (
                 <View className="mb-4">
-                  <Text className="text-lg font-bold text-gray-500 mb-2">
+                  <Text className="text-lg font-bold text-[#686B78] mb-2">
                     Unlock More ({ineligibleOffers.length})
                   </Text>
                   {ineligibleOffers.map((offer) => (
@@ -170,10 +170,10 @@ const OffersModal = ({
           <View 
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.7)', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
           >
-            <View className="bg-white p-6 rounded-3xl shadow-2xl border border-emerald-100 items-center w-[220px]">
-              <ActivityIndicator size="large" color="#107A4A" />
-              <Text className="text-emerald-900 font-black mt-4 text-base tracking-tight">Applying Coupon...</Text>
-              <Text className="text-gray-500 text-[11px] font-bold mt-1 uppercase tracking-wider">Optimizing Savings</Text>
+            <View className="bg-white p-6 rounded-3xl shadow-2xl border border-[#E9E9EB] items-center w-[220px]">
+              <ActivityIndicator size="large" color="#E23744" />
+              <Text className="text-[#1C1C1C] font-black mt-4 text-base tracking-tight">Applying Coupon...</Text>
+              <Text className="text-[#686B78] text-[11px] font-bold mt-1 uppercase tracking-wider">Optimizing Savings</Text>
             </View>
           </View>
         )}

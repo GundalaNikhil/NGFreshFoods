@@ -40,8 +40,11 @@ import {
   Poppins_800ExtraBold,
 } from "@expo-google-fonts/poppins";
 
-// Material icon wrappers for filled, dark style
-const LICIOUS_RED = "#E41D2D";
+// ── Brand Design Tokens ──
+const BRAND_RED = "#E23744";
+const BRAND_ORANGE = "#FC8019";
+const TAB_BAR_BG = "#1E1E2E";
+const TAB_INACTIVE = "#7C7C8A";
 const BASE_FONT = "Poppins_500Medium";
 
 const HomeIcon = ({ size, color }) => <Home size={size} color={color} strokeWidth={2.2} />;
@@ -68,7 +71,7 @@ const TAB_ICONS = {
   Cart: CartIcon,
 };
 
-// ── Premium Custom Tab Bar ──
+// ── Premium Dark Floating Tab Bar ──
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const cart = useRecoilValue(cartState);
   const itemCount = cart?.items?.length || 0;
@@ -80,12 +83,17 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: "#FFFFFF",
-        borderTopWidth: 1,
-        borderColor: "rgba(0,0,0,0.08)",
+        backgroundColor: TAB_BAR_BG,
+        borderTopLeftRadius: 18,
+        borderTopRightRadius: 18,
         paddingTop: 6,
-        paddingBottom: Platform.OS === "ios" ? (isSmallScreen ? 10 : 18) : 6,
-        paddingHorizontal: 8,
+        paddingBottom: Platform.OS === "ios" ? (isSmallScreen ? 10 : 18) : 8,
+        paddingHorizontal: 6,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        elevation: 16,
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -117,15 +125,15 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 };
 
 const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
-  const pillWidth = useSharedValue(focused ? 1 : 0);
+  const dotScale = useSharedValue(focused ? 1 : 0);
 
   useEffect(() => {
-    pillWidth.value = withSpring(focused ? 1 : 0, { damping: 16, stiffness: 140 });
+    dotScale.value = withSpring(focused ? 1 : 0, { damping: 14, stiffness: 160 });
   }, [focused]);
 
-  const pillAnimStyle = useAnimatedStyle(() => ({
-    paddingHorizontal: 10 + pillWidth.value * 6,
-    backgroundColor: `rgba(209, 18, 67, ${pillWidth.value * 0.06})`,
+  const dotStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: dotScale.value }],
+    opacity: dotScale.value,
   }));
 
   return (
@@ -133,39 +141,35 @@ const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
       onPress={onPress}
       style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
     >
-      <Reanimated.View
-        style={[
-          {
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            paddingVertical: 8,
-            borderRadius: 20,
-          },
-          pillAnimStyle,
-        ]}
+      <View
+        style={{
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: 4,
+        }}
       >
         {/* Icon */}
         <View style={{ position: "relative" }}>
           <IconComponent
             size={20}
-            color={focused ? LICIOUS_RED : "#333333"}
+            color={focused ? "#FFFFFF" : TAB_INACTIVE}
           />
           {badge > 0 && (
             <View
               style={{
                 position: "absolute",
-                top: -5,
-                right: -9,
-                backgroundColor: LICIOUS_RED,
-                borderRadius: 7,
-                minWidth: 15,
-                height: 15,
+                top: -6,
+                right: -10,
+                backgroundColor: BRAND_ORANGE,
+                borderRadius: 8,
+                minWidth: 16,
+                height: 16,
                 alignItems: "center",
                 justifyContent: "center",
-                paddingHorizontal: 3,
-                borderWidth: 1.5,
-                borderColor: "white",
+                paddingHorizontal: 4,
+                borderWidth: 2,
+                borderColor: TAB_BAR_BG,
               }}
             >
               <Text style={{ color: "white", fontSize: 8, fontWeight: "900" }}>
@@ -178,16 +182,30 @@ const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
         <Text
           numberOfLines={1}
           style={{
-            marginTop: 4,
-            fontSize: 11,
+            marginTop: 2,
+            fontSize: 9,
             fontWeight: focused ? "800" : "600",
-            color: focused ? LICIOUS_RED : "#333333",
-            letterSpacing: 0.2,
+            color: focused ? "#FFFFFF" : TAB_INACTIVE,
+            letterSpacing: 0.3,
           }}
         >
           {label}
         </Text>
-      </Reanimated.View>
+
+        {/* Active dot indicator */}
+        <Reanimated.View
+          style={[
+            {
+              width: 4,
+              height: 4,
+              borderRadius: 2,
+              backgroundColor: BRAND_ORANGE,
+              marginTop: 2,
+            },
+            dotStyle,
+          ]}
+        />
+      </View>
     </Pressable>
   );
 };
@@ -313,7 +331,7 @@ function RootNavigator() {
   if (initializing || !authState.isHydrated) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-        <ActivityIndicator size="large" color="#1F2B24" />
+        <ActivityIndicator size="large" color={BRAND_RED} />
       </View>
     );
   }
@@ -357,7 +375,7 @@ export default function Index() {
 
     const baseTextStyle = {
       fontFamily: BASE_FONT,
-      color: "#111827",
+      color: "#1C1C1C",
       letterSpacing: 0.1,
     };
 
@@ -371,7 +389,7 @@ export default function Index() {
   if (!fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-        <ActivityIndicator size="large" color="#111827" />
+        <ActivityIndicator size="large" color={BRAND_RED} />
       </View>
     );
   }

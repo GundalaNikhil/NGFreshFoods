@@ -33,20 +33,20 @@ const OfferCard = ({ offer, isSelected, onSelect, cartTotal }) => {
       onPress={eligible ? onSelect : null}
       className={`mb-4 rounded-3xl p-6 border ${
         isSelected
-          ? "border-emerald-500 bg-emerald-50/50"
+          ? "border-[#E23744] bg-[#FFF0F1]"
           : eligible
-          ? "border-gray-200 bg-white"
-          : "border-gray-100 bg-gray-50"
-      } ${eligible ? "shadow-md shadow-emerald-900/5" : ""}`}
+          ? "border-[#E9E9EB] bg-white"
+          : "border-[#F5F5F5] bg-[#F5F5F5]"
+      } ${eligible ? "shadow-md shadow-[#E23744]/5" : ""}`}
       disabled={!eligible}
       activeOpacity={0.85}
     >
       <View className="flex-row items-start">
-        <View className="w-12 h-12 rounded-2xl bg-emerald-100 items-center justify-center mr-4">
+        <View className={`w-12 h-12 rounded-2xl items-center justify-center mr-4 ${eligible ? "bg-[#FFF0F1]" : "bg-[#F5F5F5]"}`}>
            {eligible ? (
-              <Tag size={24} color="#059669" />
+              <Tag size={24} color="#E23744" />
             ) : (
-              <AlertCircle size={24} color="#94A3B8" />
+              <AlertCircle size={24} color="#93959F" />
             )}
         </View>
 
@@ -55,16 +55,16 @@ const OfferCard = ({ offer, isSelected, onSelect, cartTotal }) => {
             <Text
               className={`font-black text-lg tracking-tight ${
                 isSelected
-                  ? "text-emerald-800"
+                  ? "text-[#E23744]"
                   : eligible
-                  ? "text-gray-900"
-                  : "text-gray-400"
+                  ? "text-[#1C1C1C]"
+                  : "text-[#93959F]"
               }`}
             >
               {offer.code || offer.promoCode}
             </Text>
             {isSelected && (
-              <View className="bg-emerald-500 p-1 rounded-full">
+              <View className="bg-[#E23744] p-1 rounded-full">
                 <Check size={12} color="white" strokeWidth={4} />
               </View>
             )}
@@ -72,7 +72,7 @@ const OfferCard = ({ offer, isSelected, onSelect, cartTotal }) => {
           
           <Text
             className={`text-[15px] font-bold mb-1 ${
-              eligible ? "text-gray-800" : "text-gray-400"
+              eligible ? "text-[#1C1C1C]" : "text-[#93959F]"
             }`}
           >
             {offer.title || "Special Discount"}
@@ -80,7 +80,7 @@ const OfferCard = ({ offer, isSelected, onSelect, cartTotal }) => {
 
           <Text
             className={`text-[13px] leading-relaxed mb-4 ${
-              eligible ? "text-gray-500 font-medium" : "text-gray-400"
+              eligible ? "text-[#686B78] font-medium" : "text-[#93959F]"
             }`}
           >
             {offer.description || `Save big on your order today!`}
@@ -88,21 +88,21 @@ const OfferCard = ({ offer, isSelected, onSelect, cartTotal }) => {
 
           <View className="flex-row items-center justify-between">
             {eligible ? (
-               <View className="bg-emerald-600 px-3 py-1 rounded-full">
+               <View className="bg-[#E23744] px-3 py-1 rounded-full">
                 <Text className="text-white font-black text-[11px] uppercase tracking-wider">
                   Save ₹{discount.toFixed(0)}
                 </Text>
               </View>
             ) : (
-              <View className="bg-gray-200 px-3 py-1 rounded-full">
-                 <Text className="text-gray-500 font-bold text-[10px] uppercase">
+              <View className="bg-[#E9E9EB] px-3 py-1 rounded-full">
+                 <Text className="text-[#686B78] font-bold text-[10px] uppercase">
                   Locked
                 </Text>
               </View>
             )}
 
             {!eligible && (
-              <Text className="text-gray-400 font-bold text-[11px]">
+              <Text className="text-[#93959F] font-bold text-[11px]">
                 Add ₹{Number((offer.minOrderAmount || 0) - cartTotal).toFixed(0)} more
               </Text>
             )}

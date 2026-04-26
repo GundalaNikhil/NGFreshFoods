@@ -74,7 +74,7 @@ const ProductList = ({ products, onAddToCart }) => {
       contentContainerStyle={{
         paddingTop: 0,
         paddingHorizontal: 0,
-        paddingBottom: 16,
+        paddingBottom: 80,
         flexGrow: products.length === 0 ? 1 : 0,
       }}
       showsVerticalScrollIndicator={false}

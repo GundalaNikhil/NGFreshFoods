@@ -1,4 +1,4 @@
-import { ChevronDown, MapPin, User, Plus } from "lucide-react-native";
+import { ChevronDown, MapPin, User } from "lucide-react-native";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { useAddress } from "../../hooks/useAddress";
@@ -13,11 +13,11 @@ const AddressHeader = ({ onAddressPress, onProfilePress }) => {
         onPress={onAddressPress}
         activeOpacity={0.7}
       >
-        <View className="w-8 h-8 rounded-full bg-[#107A4A]/10 justify-center items-center">
+        <View className="w-9 h-9 rounded-full bg-[#FFF0F1] justify-center items-center">
           {selectedAddress ? (
-            <MapPin size={16} color="#107A4A" strokeWidth={2.5} />
+            <MapPin size={17} color="#E23744" strokeWidth={2.5} />
           ) : (
-            <MapPin size={16} color="#9CA3AF" strokeWidth={2.5} />
+            <MapPin size={17} color="#93959F" strokeWidth={2.5} />
           )}
         </View>
 
@@ -25,21 +25,21 @@ const AddressHeader = ({ onAddressPress, onProfilePress }) => {
           {selectedAddress ? (
             <>
               <View className="flex-row items-center">
-                <Text className="text-[15px] font-black text-[#111827] mr-1 uppercase tracking-tight">
+                <Text className="text-[15px] font-black text-[#1C1C1C] mr-1 uppercase tracking-tight">
                   {selectedAddress.label}
                 </Text>
-                <ChevronDown size={14} color="#107A4A" strokeWidth={3} />
+                <ChevronDown size={14} color="#E23744" strokeWidth={3} />
               </View>
-              <Text numberOfLines={1} className="text-[#6b7280] text-[12px] font-medium">
+              <Text numberOfLines={1} className="text-[#93959F] text-[12px] font-medium">
                 {selectedAddress.addressLine1}
               </Text>
             </>
           ) : (
             <View className="flex-row items-center">
-              <Text className="text-[14px] font-bold text-gray-500">
+              <Text className="text-[14px] font-bold text-[#93959F]">
                 Select delivery location
               </Text>
-              <ChevronDown size={14} color="#9CA3AF" strokeWidth={3} className="ml-1" />
+              <ChevronDown size={14} color="#93959F" strokeWidth={3} className="ml-1" />
             </View>
           )}
         </View>
@@ -47,9 +47,9 @@ const AddressHeader = ({ onAddressPress, onProfilePress }) => {
 
       <TouchableOpacity 
         onPress={onProfilePress}
-        className="w-9 h-9 rounded-full bg-white justify-center items-center border border-gray-100 shadow-sm"
+        className="w-9 h-9 rounded-full bg-[#F5F5F5] justify-center items-center border border-[#E9E9EB]"
       >
-        <User size={18} color="#334155" />
+        <User size={18} color="#1C1C1C" />
       </TouchableOpacity>
     </View>
   );
