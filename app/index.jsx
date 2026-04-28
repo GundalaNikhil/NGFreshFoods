@@ -1,5 +1,4 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { useNavigation } from "@react-navigation/native";
 
 import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, Pressable, Text, TextInput, View, ActivityIndicator, Platform } from "react-native";
@@ -14,7 +13,6 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
 import { authAtom } from "../recoil/atoms/authAtom";
 import { cartState } from "../recoil/atoms/cartAtom";
-import { notificationAtom } from "../recoil/atoms/notificationAtom";
 import { auth } from "../services/firebaseConfig";
 import { onAuthStateChanged } from "@react-native-firebase/auth";
 import Toast from "react-native-toast-message";
@@ -191,20 +189,20 @@ const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
             <View
               style={{
                 position: "absolute",
-                top: -6,
-                right: -10,
-                backgroundColor: BRAND_ORANGE,
-                borderRadius: 8,
-                minWidth: 16,
-                height: 16,
+                top: -8,
+                right: -12,
+                backgroundColor: "#E23744",
+                borderRadius: 10,
+                minWidth: 20,
+                height: 20,
                 alignItems: "center",
                 justifyContent: "center",
-                paddingHorizontal: 4,
-                borderWidth: 2,
+                paddingHorizontal: 5,
+                borderWidth: 2.5,
                 borderColor: TAB_BAR_BG,
               }}
             >
-              <Text style={{ color: "white", fontSize: 8, fontWeight: "900" }}>
+              <Text style={{ color: "white", fontSize: 10, fontWeight: "900", lineHeight: 12 }}>
                 {badge > 9 ? "9+" : badge}
               </Text>
             </View>
@@ -245,51 +243,9 @@ const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
 // The main App routing logic inside RecoilRoot
 function RootNavigator() {
   const [authState, setAuthState] = useRecoilState(authAtom);
-  const notificationState = useRecoilValue(notificationAtom);
   const [initializing, setInitializing] = useState(true);
 
   const initRef = useRef(true);
-  const navigation = useNavigation();
-
-  useEffect(() => {
-    const intent = notificationState.intent;
-    if (!intent || !navigation) {
-      return;
-    }
-
-    const normalizedTarget = String(
-      intent.targetScreen || intent.deepLink || ""
-    ).toLowerCase();
-
-    if (
-      intent.orderId ||
-      normalizedTarget.includes("orders") ||
-      normalizedTarget.includes("order") ||
-      normalizedTarget.includes("notifications") ||
-      normalizedTarget.includes("notification") ||
-      normalizedTarget.includes("account")
-    ) {
-      navigation.navigate("Account");
-      return;
-    }
-
-    if (normalizedTarget.includes("cart")) {
-      navigation.navigate("Cart");
-      return;
-    }
-
-    if (
-      normalizedTarget.includes("products") ||
-      normalizedTarget.includes("product")
-    ) {
-      navigation.navigate("Products");
-      return;
-    }
-
-    if (normalizedTarget.includes("home")) {
-      navigation.navigate("Home");
-    }
-  }, [notificationState.intentUpdatedAt, navigation]);
 
   useEffect(() => {
     console.log("[Root] State - initializing:", initializing, "isHydrated:", authState?.isHydrated, "isAuthenticated:", authState?.isAuthenticated);

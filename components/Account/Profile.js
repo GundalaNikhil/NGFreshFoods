@@ -28,7 +28,7 @@ const Profile = () => {
   };
 
   return (
-    <View className="w-full bg-white rounded-2xl p-5 shadow-sm">
+    <View className="w-full bg-white rounded-2xl p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}>
       <Text className="text-xl font-bold text-gray-900 mb-1">
         {profile.fullName || "User"}
       </Text>

@@ -58,7 +58,7 @@ const AddAddressModal = ({ visible, onClose, onAdd }) => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
-        <TouchableOpacity activeOpacity={1} onPress={onClose} className="flex-1 bg-black/50" />
+        <TouchableOpacity activeOpacity={1} onPress={onClose} className="flex-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} />
 
         <View className="bg-white rounded-t-[28px]" style={{ maxHeight: SCREEN_H * 0.88 }}>
           {/* Handle */}

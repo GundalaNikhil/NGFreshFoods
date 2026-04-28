@@ -1,3 +1,4 @@
+/* forced bundler cache bypass */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -27,7 +28,6 @@ import {
   LifeBuoy,
 } from "lucide-react-native";
 import authFirebase from "@react-native-firebase/auth";
-import { useNavigation } from "@react-navigation/native";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import { notificationAtom } from "../../recoil/atoms/notificationAtom";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
@@ -48,15 +48,16 @@ import { useAddress } from "../../hooks/useAddress";
 
 const ACCOUNT_CACHE_TTL_MS = 2 * 60 * 1000;
 
-const SectionButton = ({ title, subtitle, icon: IconCmp, onPress }) => (
+const SectionButton = ({ title, subtitle, icon: IconCmp, iconColor = "#E23744", iconBg = "#FFF0F1", onPress }) => (
   <TouchableOpacity
     onPress={onPress}
-    className="flex-row items-center justify-between bg-white rounded-2xl px-4 py-4 mb-3 shadow-sm"
+    className="flex-row items-center justify-between bg-white rounded-2xl px-4 py-4 mb-3"
+    style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
     activeOpacity={0.85}
   >
     <View className="flex-row items-center">
-      <View className="w-10 h-10 rounded-full items-center justify-center bg-[#FFF0F1]">
-        <IconCmp size={20} color="#E23744" />
+      <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: iconBg }}>
+        <IconCmp size={20} color={iconColor} />
       </View>
       <View className="ml-3">
         <Text className="text-[15px] font-semibold text-[#1C1C1C]">{title}</Text>
@@ -79,7 +80,7 @@ const SectionHeader = ({ title, onBack }) => (
 );
 
 const EmptyState = ({ title, subtitle, actionLabel, onAction, image }) => (
-  <View className="bg-white rounded-2xl p-6 items-center shadow-sm">
+  <View className="bg-white rounded-2xl p-6 items-center" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}>
     {image ? (
       <Image 
         source={image} 
@@ -138,7 +139,8 @@ const OrderCard = ({ order, onPress }) => {
 
   return (
     <TouchableOpacity
-      className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+      className="bg-white rounded-2xl p-4 mb-3"
+      style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
       activeOpacity={0.85}
       onPress={() => onPress && onPress(order)}
     >
@@ -191,7 +193,8 @@ const OrderCard = ({ order, onPress }) => {
 
 const NotificationCard = ({ item, onPress }) => (
   <TouchableOpacity
-    className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+    className="bg-white rounded-2xl p-4 mb-3"
+    style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
     activeOpacity={0.85}
     onPress={() => onPress && onPress(item)}
   >
@@ -213,12 +216,11 @@ const NotificationCard = ({ item, onPress }) => (
 );
 
 const AccountHub = () => {
-  const navigation = useNavigation();
   const auth = useRecoilValue(authAtom);
   const setAuth = useSetRecoilState(authAtom);
   const resetProfile = useResetRecoilState(profileAtom);
   const [profile, setProfile] = useRecoilState(profileAtom);
-  const [notificationState, setNotificationState] = useRecoilState(notificationAtom);
+  const notificationState = useRecoilValue(notificationAtom);
 
   const [section, setSection] = useState("home");
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -229,6 +231,8 @@ const AccountHub = () => {
   const [ordersError, setOrdersError] = useState("");
   const [notificationsError, setNotificationsError] = useState("");
   const [orders, setOrders] = useState([]);
+  const [notificationFeed, setNotificationFeed] = useState([]);
+  const [notificationPreferences, setNotificationPreferences] = useState(null);
   const { addresses, refreshAddresses, deleteAddress, addAddress } = useAddress();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isAddAddressVisible, setIsAddAddressVisible] = useState(false);
@@ -286,11 +290,8 @@ const AccountHub = () => {
     const cachedNotifications = await getCachedData(cacheKey, ACCOUNT_CACHE_TTL_MS);
 
     if (cachedNotifications) {
-      setNotificationState((prev) => ({
-        ...prev,
-        preferences: cachedNotifications.preferences || prev.preferences,
-        feed: cachedNotifications.feed || prev.feed,
-      }));
+      setNotificationPreferences(cachedNotifications.preferences || null);
+      setNotificationFeed(cachedNotifications.feed || []);
       setLoadingNotifications(false);
     } else {
       setLoadingNotifications(true);
@@ -313,11 +314,13 @@ const AccountHub = () => {
       );
     }
 
-    setNotificationState((prev) => ({
-      ...prev,
-      preferences: prefsResponse.success ? prefsResponse.data : prev.preferences,
-      feed: feedResponse.success ? feedResponse.data.notifications || [] : prev.feed,
-    }));
+    if (prefsResponse.success) {
+      setNotificationPreferences(prefsResponse.data || null);
+    }
+
+    if (feedResponse.success) {
+      setNotificationFeed(feedResponse.data.notifications || []);
+    }
 
     if (prefsResponse.success && feedResponse.success) {
       setCachedData(cacheKey, {
@@ -331,14 +334,7 @@ const AccountHub = () => {
     auth.token,
     profile.phoneNumber,
     profile.userId,
-    setNotificationState,
   ]);
-
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("tabPress", resetToHome);
-    return unsubscribe;
-  }, [navigation, resetToHome]);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -419,14 +415,11 @@ const AccountHub = () => {
 
   const handlePreferenceToggle = async (key, value) => {
     const nextPreferences = {
-      ...(notificationState.preferences || {}),
+      ...(notificationPreferences || {}),
       [key]: value,
     };
 
-    setNotificationState((prev) => ({
-      ...prev,
-      preferences: nextPreferences,
-    }));
+    setNotificationPreferences(nextPreferences);
 
     const response = await updateNotificationPreferences({
       token: auth.token,
@@ -441,10 +434,7 @@ const AccountHub = () => {
       return;
     }
 
-    setNotificationState((prev) => ({
-      ...prev,
-      preferences: response.data,
-    }));
+    setNotificationPreferences(response.data || nextPreferences);
   };
 
   const openNotificationItem = (item) => {
@@ -456,16 +446,8 @@ const AccountHub = () => {
     }
 
     if (payload.orderId) {
-      setNotificationState((prev) => ({
-        ...prev,
-        intent: {
-          orderId: payload.orderId,
-          targetScreen: payload.targetScreen || "orders",
-          deepLink: payload.deepLink || item.deepLink || null,
-        },
-        intentUpdatedAt: new Date().toISOString(),
-      }));
-      setSection("orders");
+      setSelectedOrder({ orderId: payload.orderId });
+      setSection("orderDetail");
       return;
     }
 
@@ -477,15 +459,6 @@ const AccountHub = () => {
       targetScreen.includes("notifications") ||
       targetScreen.includes("notification")
     ) {
-      setNotificationState((prev) => ({
-        ...prev,
-        intent: {
-          orderId: null,
-          targetScreen: "notifications",
-          deepLink: payload.deepLink || item.deepLink || null,
-        },
-        intentUpdatedAt: new Date().toISOString(),
-      }));
       setSection("notifications");
       return;
     }
@@ -496,53 +469,78 @@ const AccountHub = () => {
   const quickCommerceItems = [
     {
       title: "Your Orders",
-      subtitle: "Track, manage and reorder",
+      subtitle: "Track & reorder",
       icon: Receipt,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
       onPress: () => setSection("orders"),
     },
     {
       title: "Profile",
-      subtitle: "Update your personal details",
+      subtitle: "Name, phone, email",
       icon: User,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
       onPress: () => setSection("profile"),
     },
     {
-      title: "Saved Addresses",
-      subtitle: "Add or edit delivery spots",
+      title: "Addresses",
+      subtitle: "Add or edit spots",
       icon: MapPin,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
       onPress: () => setSection("addresses"),
     },
     {
       title: "Payments",
-      subtitle: "Saved cards and UPI",
+      subtitle: "Cards & UPI",
       icon: CreditCard,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
       onPress: () => setSection("payments"),
     },
     {
       title: "Notifications",
-      subtitle: "Order updates and offers",
+      subtitle: "Updates & offers",
       icon: Bell,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
       onPress: () => setSection("notifications"),
     },
     {
-      title: "Help & Support",
-      subtitle: "Chat with us anytime",
+      title: "Help",
+      subtitle: "Chat with us",
       icon: LifeBuoy,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
       onPress: () => setSection("support"),
     },
     {
       title: "Refer & Earn",
-      subtitle: "Invite friends for rewards",
+      subtitle: "Invite for rewards",
       icon: Gift,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
       onPress: () => setSection("refer"),
     },
     {
       title: "Preferences",
-      subtitle: "Taste, delivery, and more",
+      subtitle: "Taste & delivery",
       icon: Settings,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
       onPress: () => setSection("preferences"),
     },
   ];
+
+  // --- Helper: check if email looks real ---
+  const isValidEmail = (email) => {
+    if (!email || typeof email !== "string") return false;
+    // Filter out phone-number-based fake emails and empty values  
+    if (/^\d{5,}/.test(email)) return false;
+    if (!email.includes("@") || !email.includes(".")) return false;
+    return true;
+  };
 
   if (section === "orderDetail" && selectedOrder) {
     return (
@@ -659,7 +657,8 @@ const AccountHub = () => {
                 {addresses.map((address) => (
                   <View
                     key={address.addressId}
-                    className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-gray-50"
+                    className="bg-white rounded-2xl p-4 mb-3 border border-gray-50"
+                    style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
                   >
                     <View className="flex-row items-center justify-between">
                       <View className="flex-row items-center">
@@ -716,7 +715,8 @@ const AccountHub = () => {
                 {/* Add New Address — only when addresses already exist */}
                 <TouchableOpacity
                   onPress={() => setIsAddAddressVisible(true)}
-                  className="flex-row items-center justify-center py-4 mt-2 rounded-2xl border-2 border-dashed border-[#E23744]/30 bg-[#FFF0F1]/50"
+                  className="flex-row items-center justify-center py-4 mt-2 rounded-2xl border-2 border-dashed"
+                  style={{ borderColor: 'rgba(226,55,68,0.3)', backgroundColor: 'rgba(255,240,241,0.5)' }}
                   activeOpacity={0.8}
                 >
                   <MapPin size={16} color="#E23744" strokeWidth={2.5} />
@@ -739,7 +739,7 @@ const AccountHub = () => {
   }
 
   if (section === "notifications") {
-    const preferences = notificationState.preferences || {
+    const preferences = notificationPreferences || {
       orderUpdates: true,
       offersAndPromos: true,
       reminders: true,
@@ -750,7 +750,7 @@ const AccountHub = () => {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 80 }}>
         <SectionHeader title="Notifications" onBack={() => setSection("home")} />
 
-        <View className="bg-white rounded-2xl p-5 shadow-sm mb-4">
+        <View className="bg-white rounded-2xl p-5 mb-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}>
           <Text className="text-[15px] font-semibold text-[#1C1C1C] mb-1">
             Push preferences
           </Text>
@@ -809,14 +809,14 @@ const AccountHub = () => {
               Loading notifications...
             </Text>
           </View>
-        ) : notificationState.feed.length === 0 ? (
+        ) : notificationFeed.length === 0 ? (
           <EmptyState
             title="No notifications yet"
             subtitle="Order progress, reminders, and campaigns will land here."
             image={require("../../assets/images/characters/orders/empty.png")}
           />
         ) : (
-          notificationState.feed.map((item) => (
+          notificationFeed.map((item) => (
             <NotificationCard
               key={item.notificationEventId}
               item={item}
@@ -843,60 +843,97 @@ const AccountHub = () => {
 
   return (
     <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 80 }}>
-      <View className="bg-white rounded-3xl p-5 mb-5 shadow-sm">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <View className="w-16 h-16 rounded-2xl bg-[#FFF0F1] items-center justify-center mr-4 border border-emerald-100 overflow-hidden">
-              <Image 
-                source={require("../../assets/images/characters/profile/user.png")}
-                style={{ width: "100%", height: "100%" }}
-                resizeMode="cover"
-              />
-            </View>
-            <View>
-              <Text className="text-lg font-bold text-[#1C1C1C]">{displayName}</Text>
-              <Text className="text-[12px] text-[#686B78] mt-1">
-                {profile.email || "Email not available"}
-              </Text>
-              <Text className="text-[12px] text-[#686B78] mt-1">
-                {profile.phoneNumber || "Phone not available"}
-              </Text>
+      {/* ── Greeting Banner ── */}
+      <View className="bg-[#1E1E2E] rounded-2xl p-5 mb-4">
+        <View className="flex-row items-center">
+          <View className="w-14 h-14 rounded-full items-center justify-center mr-4 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)' }}>
+            <Image
+              source={require("../../assets/images/characters/profile/user.png")}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="cover"
+            />
+          </View>
+          <View className="flex-1">
+            <Text className="text-white text-[18px] font-bold">
+              {displayName}
+            </Text>
+            <View className="flex-row items-center mt-1.5 flex-wrap">
+              {profile.phoneNumber ? (
+                <View className="flex-row items-center rounded-full px-2.5 py-0.5 mr-2 mb-1" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                  <Text className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>{profile.phoneNumber}</Text>
+                </View>
+              ) : null}
+              {isValidEmail(profile.email) ? (
+                <View className="flex-row items-center rounded-full px-2.5 py-0.5 mb-1" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                  <Text className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>{profile.email}</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setSection("profile")}
+                  className="flex-row items-center rounded-full px-2.5 py-0.5 mb-1"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                >
+                  <Text className="text-[#FC8019] text-[11px] font-bold">+ Add email ›</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
-          <TouchableOpacity
-            onPress={handleLogout}
-            disabled={isLoggingOut}
-            className="px-3 py-2 rounded-full bg-red-50 flex-row items-center"
-          >
-            {isLoggingOut ? (
-              <ActivityIndicator size="small" color="#DC2626" />
-            ) : (
-              <>
-                <LogOut size={16} color="#DC2626" />
-                <Text className="ml-2 text-[11px] font-semibold text-red-600">
-                  Logout
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
         </View>
         {profileError ? (
-          <Text className="text-[11px] text-red-600 mt-3">{profileError}</Text>
+          <Text className="text-[11px] text-red-400 mt-2">{profileError}</Text>
         ) : null}
         {loadingProfile ? (
-          <View className="mt-3 flex-row items-center">
-            <ActivityIndicator size="small" color="#E23744" />
-            <Text className="text-[11px] text-[#93959F] ml-2">Refreshing profile...</Text>
+          <View className="mt-2 flex-row items-center">
+            <ActivityIndicator size="small" color="#fff" />
+            <Text className="text-[11px] ml-2" style={{ color: 'rgba(255,255,255,0.5)' }}>Syncing...</Text>
           </View>
         ) : null}
       </View>
 
-      <Text className="text-sm font-semibold text-[#93959F] mb-3">
-        Account essentials
-      </Text>
-      {quickCommerceItems.map((item) => (
-        <SectionButton key={item.title} {...item} />
-      ))}
+      {/* ── Amazon-Style 2x Grid ── */}
+      <View className="flex-row flex-wrap justify-between">
+        {quickCommerceItems.map((item) => {
+          const IconCmp = item.icon;
+          return (
+            <TouchableOpacity
+              key={item.title}
+              onPress={item.onPress}
+              className="bg-white rounded-2xl p-4 mb-3"
+              style={{ width: "48.5%", shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
+              activeOpacity={0.85}
+            >
+              <View
+                className="w-10 h-10 rounded-xl items-center justify-center mb-3"
+                style={{ backgroundColor: item.iconBg }}
+              >
+                <IconCmp size={20} color={item.iconColor} />
+              </View>
+              <Text className="text-[14px] font-bold text-[#1C1C1C]">{item.title}</Text>
+              <Text className="text-[11px] text-[#93959F] mt-0.5">{item.subtitle}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* ── Logout ── */}
+      <TouchableOpacity
+        onPress={handleLogout}
+        disabled={isLoggingOut}
+        className="flex-row items-center justify-center py-4 mt-2 rounded-2xl bg-white"
+        style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
+        activeOpacity={0.85}
+      >
+        {isLoggingOut ? (
+          <ActivityIndicator size="small" color="#DC2626" />
+        ) : (
+          <>
+            <LogOut size={16} color="#DC2626" />
+            <Text className="ml-2 text-[13px] font-semibold text-red-600">
+              Log out
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -913,7 +950,7 @@ const ProfileEditor = ({ profile, loading, error, onSave, onReload }) => {
   }, [profile.firstName, profile.lastName, profile.phoneNumber]);
 
   return (
-    <View className="bg-white rounded-2xl p-5 shadow-sm">
+    <View className="bg-white rounded-2xl p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}>
       <Text className="text-[13px] text-[#686B78] mb-2">First name</Text>
       <TextInput
         value={firstName}
