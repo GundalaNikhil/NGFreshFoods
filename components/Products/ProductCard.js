@@ -12,6 +12,11 @@ const ProductCard = ({ product, cartItem, addToCart, updateQuantity, onAddToCart
   const [isAdding, setIsAdding] = useState(false);
 
   const isVeg = isVegProduct(product);
+
+  // Stock awareness
+  const stockQty = product.stockQuantity ?? product.stock_quantity ?? 999;
+  const isOutOfStock = stockQty <= 0;
+  const isLowStock = stockQty > 0 && stockQty <= 5;
   
   const hasCustomizations =
     (product.variants && product.variants.length > 0) ||
@@ -44,7 +49,7 @@ const ProductCard = ({ product, cartItem, addToCart, updateQuantity, onAddToCart
   };
 
   return (
-    <View className="bg-white border-b border-gray-100 p-4">
+    <View className="bg-white border-b border-gray-100 p-4" style={{ opacity: isOutOfStock ? 0.55 : 1 }}>
       <View className="flex-row">
         {/* Left Info Section */}
         <View className="flex-1 pr-4">
@@ -75,6 +80,18 @@ const ProductCard = ({ product, cartItem, addToCart, updateQuantity, onAddToCart
           <Text className="text-[13px] text-gray-500 mt-2 leading-relaxed" numberOfLines={2}>
             {product.description}
           </Text>
+
+          {/* Out of Stock / Low Stock Badge */}
+          {isOutOfStock && (
+            <View className="bg-red-50 rounded-md px-2 py-1 mt-2 self-start">
+              <Text className="text-[11px] font-bold text-red-600">Out of stock</Text>
+            </View>
+          )}
+          {isLowStock && (
+            <View className="rounded-md px-2 py-1 mt-2 self-start" style={{ backgroundColor: "#FFF7ED" }}>
+              <Text className="text-[11px] font-bold" style={{ color: "#C2410C" }}>Only {stockQty} left!</Text>
+            </View>
+          )}
         </View>
 
         {/* Right Image Section */}
@@ -123,10 +140,10 @@ const ProductCard = ({ product, cartItem, addToCart, updateQuantity, onAddToCart
                 </View>
               ) : (
                 <TouchableOpacity
-                  onPress={handleAddToCartClick}
+                  onPress={isOutOfStock ? null : handleAddToCartClick}
                   className="w-full h-full items-center justify-center px-6"
                   activeOpacity={0.8}
-                  disabled={isAdding}
+                  disabled={isAdding || isOutOfStock}
                 >
                   {isAdding ? (
                     <ActivityIndicator size="small" color="#E23744" />

@@ -56,6 +56,7 @@ const toUserProfile = (payload) => {
   const firstName = payload?.firstName || "";
   const lastName = payload?.lastName || "";
   const fullName = `${firstName} ${lastName}`.trim();
+  console.log("[BFF] toUserProfile parsed payload role as:", payload?.role);
 
   return {
     userId: payload?.userId || "",
@@ -64,6 +65,8 @@ const toUserProfile = (payload) => {
     lastName,
     fullName,
     phoneNumber: payload?.phoneNumber || "",
+    role: payload?.role || "CUSTOMER",
+    isNewUser: payload?.newUser || false,
     addresses: payload?.userAddresses || [],
     addressId: payload?.userAddresses?.[0]?.addressId || null,
   };

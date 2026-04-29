@@ -49,4 +49,31 @@ export const API_ENDPOINTS = {
   // Products
   PRODUCTS: `${API_BASE_URL}/api/${API_VERSION}/products`,
   CATEGORIES: `${API_BASE_URL}/api/${API_VERSION}/categories`,
+
+  // Shop (public)
+  SHOP_STATUS: `${API_BASE_URL}/api/${API_VERSION}/shop/status`,
+
+  // Admin
+  ADMIN_DASHBOARD: `${API_BASE_URL}/api/${API_VERSION}/admin/dashboard`,
+  ADMIN_ORDERS: `${API_BASE_URL}/api/${API_VERSION}/admin/orders`,
+  ADMIN_ORDER_STATUS: (orderId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/admin/orders/${orderId}/status`,
+  ADMIN_PRODUCTS: `${API_BASE_URL}/api/${API_VERSION}/admin/products`,
+  ADMIN_PRODUCT_UPDATE: (productId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/admin/products/${productId}`,
+  ADMIN_PRODUCT_DELETE: (productId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/admin/products/${productId}`,
+  ADMIN_PRODUCT_STOCK: (productId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/admin/products/${productId}/stock`,
+  ADMIN_USERS: `${API_BASE_URL}/api/${API_VERSION}/admin/users`,
+  ADMIN_BROADCAST: `${API_BASE_URL}/api/${API_VERSION}/admin/notifications/broadcast`,
+  ADMIN_SHOP_SETTINGS: `${API_BASE_URL}/api/${API_VERSION}/admin/shop/settings`,
+  ADMIN_AUDIT_LOG: `${API_BASE_URL}/api/${API_VERSION}/admin/audit-log`,
+
+  // Admin Coupons
+  ADMIN_COUPONS: `${API_BASE_URL}/api/${API_VERSION}/admin/coupons`,
+  ADMIN_COUPON_UPDATE: (couponId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/admin/coupons/${couponId}`,
+  ADMIN_COUPON_DELETE: (couponId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/admin/coupons/${couponId}`,
 };

@@ -215,7 +215,7 @@ const NotificationCard = ({ item, onPress }) => (
   </TouchableOpacity>
 );
 
-const AccountHub = () => {
+const AccountHub = ({ onBack }) => {
   const auth = useRecoilValue(authAtom);
   const setAuth = useSetRecoilState(authAtom);
   const resetProfile = useResetRecoilState(profileAtom);
@@ -555,6 +555,8 @@ const AccountHub = () => {
     );
   }
 
+
+
   if (section === "orders") {
     return (
       <View className="flex-1">
@@ -843,6 +845,15 @@ const AccountHub = () => {
 
   return (
     <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 80 }}>
+      {/* ── Back header (when opened from AdminPanel) ── */}
+      {onBack && (
+        <View className="flex-row items-center mb-3">
+          <TouchableOpacity onPress={onBack} className="mr-3 p-2 rounded-full bg-white">
+            <ChevronLeft size={18} color="#1F2937" />
+          </TouchableOpacity>
+          <Text className="text-lg font-bold text-[#1C1C1C]">Account Settings</Text>
+        </View>
+      )}
       {/* ── Greeting Banner ── */}
       <View className="bg-[#1E1E2E] rounded-2xl p-5 mb-4">
         <View className="flex-row items-center">
@@ -914,6 +925,8 @@ const AccountHub = () => {
           );
         })}
       </View>
+
+
 
       {/* ── Logout ── */}
       <TouchableOpacity

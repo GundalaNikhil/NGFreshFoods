@@ -1,6 +1,16 @@
 import Constants from "expo-constants";
 import { PermissionsAndroid, Platform } from "react-native";
-import messaging, { AuthorizationStatus } from "@react-native-firebase/messaging";
+import { 
+  getMessaging, 
+  getToken, 
+  requestPermission, 
+  registerDeviceForRemoteMessages,
+  onMessage,
+  onTokenRefresh,
+  onNotificationOpenedApp,
+  getInitialNotification as getInitialNotificationFirebase,
+  AuthorizationStatus 
+} from "@react-native-firebase/messaging";
 
 const normalizePermissionStatus = (status) => {
   switch (status) {
@@ -25,12 +35,12 @@ export const requestPushPermission = async () => {
     return "GRANTED";
   }
 
-  const status = await messaging().requestPermission();
+  const status = await requestPermission(getMessaging());
   return normalizePermissionStatus(status);
 };
 
 export const getPushRegistration = async () => {
-  await messaging().registerDeviceForRemoteMessages();
+  await registerDeviceForRemoteMessages(getMessaging());
   const permissionStatus = await requestPushPermission();
   if (permissionStatus !== "GRANTED") {
     return {
@@ -39,7 +49,7 @@ export const getPushRegistration = async () => {
     };
   }
 
-  const fcmToken = await messaging().getToken();
+  const fcmToken = await getToken(getMessaging());
   return {
     permissionStatus,
     fcmToken,
@@ -55,13 +65,14 @@ export const getPushRegistration = async () => {
 };
 
 export const subscribeToForegroundMessages = (handler) =>
-  messaging().onMessage(handler);
+  onMessage(getMessaging(), handler);
 
 export const subscribeToTokenRefresh = (handler) =>
-  messaging().onTokenRefresh(handler);
+  onTokenRefresh(getMessaging(), handler);
 
 export const subscribeToOpenedNotifications = (handler) =>
-  messaging().onNotificationOpenedApp(handler);
+  onNotificationOpenedApp(getMessaging(), handler);
 
 export const getInitialNotification = () =>
-  messaging().getInitialNotification();
+  getInitialNotificationFirebase(getMessaging());
+

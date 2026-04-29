@@ -10,6 +10,7 @@ export const profileAtom = atom({
     lastName: "",
     fullName: "",
     phoneNumber: "",
+    role: "",
     addresses: [],
     addressId: null,
   },

@@ -1,4 +1,5 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, Pressable, Text, TextInput, View, ActivityIndicator, Platform } from "react-native";
@@ -12,6 +13,7 @@ import { Linking } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { RecoilRoot, useRecoilState, useRecoilValue } from "recoil";
 import { authAtom } from "../recoil/atoms/authAtom";
+import { profileAtom } from "../recoil/atoms/profileAtom";
 import { cartState } from "../recoil/atoms/cartAtom";
 import { auth } from "../services/firebaseConfig";
 import { onAuthStateChanged } from "@react-native-firebase/auth";
@@ -41,6 +43,11 @@ import {
 } from "@expo-google-fonts/poppins";
 import { Icon } from "@rneui/themed";
 
+// Admin screen imports
+import AdminDashboardScreen from "../components/bottomNavScreens/AdminDashboardScreen";
+import AdminOrdersScreen from "../components/bottomNavScreens/AdminOrdersScreen";
+import AdminProductsScreen from "../components/bottomNavScreens/AdminProductsScreen";
+import AdminMoreScreenWrapper from "../components/bottomNavScreens/AdminMoreScreenWrapper";
 
 // ── Brand Design Tokens ──
 const BRAND_RED = "#E23744";
@@ -65,6 +72,20 @@ const WhatsAppIcon = ({ size, color }) => (
   <FontAwesome5 name="whatsapp" size={size + 2} color={color === TAB_INACTIVE ? "#25D366" : color} />
 );
 
+// ── Admin Tab Icons ──
+const AdminDashboardIcon = ({ size, color }) => (
+  <FontAwesome5 name="chart-line" size={size} color={color} />
+);
+const AdminOrdersIcon = ({ size, color }) => (
+  <FontAwesome5 name="clipboard-list" size={size} color={color} />
+);
+const AdminProductsIcon = ({ size, color }) => (
+  <FontAwesome5 name="box-open" size={size} color={color} />
+);
+const AdminMoreIcon = ({ size, color }) => (
+  <FontAwesome5 name="ellipsis-h" size={size} color={color} />
+);
+
 // Screen dimensions for responsive design
 const { height } = Dimensions.get("window");
 const isSmallScreen = height < 700;
@@ -78,7 +99,14 @@ const TAB_ICONS = {
   Cart: CartIcon,
 };
 
-// ── Premium Dark Floating Tab Bar ──
+const ADMIN_TAB_ICONS = {
+  Dashboard: AdminDashboardIcon,
+  Orders: AdminOrdersIcon,
+  Products: AdminProductsIcon,
+  More: AdminMoreIcon,
+};
+
+// ── Premium Dark Floating Tab Bar (Customer) ──
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const cart = useRecoilValue(cartState);
   const itemCount = cart?.items?.length || 0;
@@ -107,6 +135,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const IconComponent = TAB_ICONS[route.name];
+          const label = route.name;
 
           const onPress = () => {
             const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
@@ -119,7 +148,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             <TabItem
               key={route.name}
               focused={focused}
-              label={route.name}
+              label={label}
               IconComponent={IconComponent}
               onPress={onPress}
               badge={route.name === "Cart" && itemCount > 0 ? itemCount : 0}
@@ -153,6 +182,54 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
     </View>
   );
 };
+
+// ── Admin Tab Bar ──
+const AdminTabBar = ({ state, descriptors, navigation }) => (
+  <View
+    style={{
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: TAB_BAR_BG,
+      borderTopLeftRadius: 18,
+      borderTopRightRadius: 18,
+      paddingTop: 6,
+      paddingBottom: Platform.OS === "ios" ? (isSmallScreen ? 10 : 18) : 8,
+      paddingHorizontal: 6,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: -3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      elevation: 16,
+    }}
+  >
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      {state.routes.map((route, index) => {
+        const focused = state.index === index;
+        const IconComponent = ADMIN_TAB_ICONS[route.name];
+
+        const onPress = () => {
+          const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+          if (!focused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        return (
+          <TabItem
+            key={route.name}
+            focused={focused}
+            label={route.name}
+            IconComponent={IconComponent}
+            onPress={onPress}
+            badge={0}
+          />
+        );
+      })}
+    </View>
+  </View>
+);
 
 const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
   const dotScale = useSharedValue(focused ? 1 : 0);
@@ -243,7 +320,9 @@ const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
 // The main App routing logic inside RecoilRoot
 function RootNavigator() {
   const [authState, setAuthState] = useRecoilState(authAtom);
+  const profile = useRecoilValue(profileAtom);
   const [initializing, setInitializing] = useState(true);
+  const isAdmin = profile.role === "ADMIN";
 
   const initRef = useRef(true);
 
@@ -329,7 +408,28 @@ function RootNavigator() {
     return <AuthScreen />;
   }
 
-  // Main Authenticated App Flow
+  // ── Admin Tab Navigator ──
+  if (isAdmin) {
+    return (
+      <>
+        <CartSyncManager />
+        <PushNotificationsManager />
+        <Tab.Navigator
+          tabBar={(props) => <AdminTabBar {...props} />}
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Tab.Screen name="Dashboard" component={AdminDashboardScreen} />
+          <Tab.Screen name="Orders" component={AdminOrdersScreen} />
+          <Tab.Screen name="Products" component={AdminProductsScreen} />
+          <Tab.Screen name="More" component={AdminMoreScreenWrapper} />
+        </Tab.Navigator>
+      </>
+    );
+  }
+
+  // ── Customer Tab Navigator ──
   return (
     <>
     <CartSyncManager />
@@ -348,6 +448,15 @@ function RootNavigator() {
     </>
   );
 }
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      retry: 1,
+    },
+  },
+});
 
 export default function Index() {
   const [fontsLoaded] = useFonts({
@@ -383,11 +492,11 @@ export default function Index() {
   }
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <RecoilRoot>
         <RootNavigator />
       </RecoilRoot>
       <Toast />
-    </>
+    </QueryClientProvider>
   );
 }

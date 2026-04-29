@@ -1,7 +1,8 @@
 import { ActivityIndicator, FlatList, SafeAreaView, ScrollView, Text, View, InteractionManager } from "react-native";
 import React, { useState, useEffect, useCallback, memo } from "react";
-import { SearchX } from "lucide-react-native";
+import { SearchX, Store } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
+import { fetchShopStatus } from "../../services/bff/shopBff";
 import { useProducts } from "../../hooks/useProducts";
 import { useAddress } from "../../hooks/useAddress";
 import AddressHeader from "./AddressHeader";
@@ -59,12 +60,17 @@ const HomePage = () => {
   const { refreshAddresses, addAddress } = useAddress();
   const [showAddressSheet, setShowAddressSheet] = useState(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+  const [shopStatus, setShopStatus] = useState({ isOpen: true, message: "" });
 
   const isSearching = searchQuery.trim().length > 0;
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
       refreshAddresses();
+      // Check shop status
+      fetchShopStatus().then((result) => {
+        if (result?.data) setShopStatus(result.data);
+      });
     });
 
     return () => {
@@ -90,6 +96,26 @@ const HomePage = () => {
       <View className="px-4 mt-3">
         <SearchBar />
       </View>
+
+      {/* Shop Closed Banner */}
+      {!shopStatus.isOpen && (
+        <View className="mx-4 mt-3 rounded-2xl px-4 py-4" style={{ backgroundColor: "#1E1E2E" }}>
+          <View className="flex-row items-center mb-2">
+            <View className="w-8 h-8 rounded-full items-center justify-center mr-2" style={{ backgroundColor: "rgba(239,68,68,0.15)" }}>
+              <Store size={16} color="#F87171" strokeWidth={2.5} />
+            </View>
+            <Text className="text-[15px] font-bold text-white">Shop is currently closed</Text>
+          </View>
+          <Text className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+            {shopStatus.message || "We'll be back soon!"}
+          </Text>
+          {shopStatus.reopenAt ? (
+            <Text className="text-[12px] font-semibold mt-1" style={{ color: "#A5B4FC" }}>
+              Reopen at: {shopStatus.reopenAt}
+            </Text>
+          ) : null}
+        </View>
+      )}
 
       {isRefreshing ? (
         <View className="px-4 mt-2 flex-row items-center">
