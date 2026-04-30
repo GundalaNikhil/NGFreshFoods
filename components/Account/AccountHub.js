@@ -36,11 +36,11 @@ import {
   fetchNotificationPreferences,
   fetchMyOrders,
   fetchMyProfile,
+  logoutSession,
   unregisterCurrentDevice,
   updateNotificationPreferences,
   updateMyProfile,
 } from "../../services/bff/accountBff";
-import { setAuthTokens } from "../../services/http/apiClient";
 import { clearCachedData, getCachedData, setCachedData } from "../../utils/localCache";
 import OrderDetailScreen from "../Cart/OrderDetailScreen";
 import AddAddressModal from "../Home/AddAddressModal";
@@ -109,9 +109,18 @@ const OrderCard = ({ order, onPress }) => {
   const orderLabel = order?.orderNumber || order?.orderId || "Order";
   const orderIdShort =
     orderLabel && orderLabel.length > 10 ? orderLabel.slice(0, 10) : orderLabel;
+  const paymentStatus = String(order?.payment?.paymentStatus || "").toUpperCase();
+  const isOnlinePaymentPending =
+    order?.orderStatus === "PENDING" &&
+    paymentStatus &&
+    paymentStatus !== "SUCCESS" &&
+    paymentStatus !== "REFUNDED";
 
   // Status color coding
   const statusConfig = (() => {
+    if (isOnlinePaymentPending) {
+      return { bg: "bg-amber-50", text: "text-amber-700", label: "Payment Pending" };
+    }
     switch (order?.orderStatus) {
       case "CONFIRMED":
       case "PREPARING":
@@ -122,7 +131,7 @@ const OrderCard = ({ order, onPress }) => {
       case "CANCELLED":
         return { bg: "bg-red-50", text: "text-red-600", label: "Cancelled" };
       default: // PENDING
-        return { bg: "bg-amber-50", text: "text-amber-700", label: "Processing" };
+        return { bg: "bg-amber-50", text: "text-amber-700", label: "Awaiting Confirmation" };
     }
   })();
 
@@ -216,7 +225,6 @@ const NotificationCard = ({ item, onPress }) => (
 );
 
 const AccountHub = ({ onBack }) => {
-  const auth = useRecoilValue(authAtom);
   const setAuth = useSetRecoilState(authAtom);
   const resetProfile = useResetRecoilState(profileAtom);
   const [profile, setProfile] = useRecoilState(profileAtom);
@@ -252,14 +260,14 @@ const AccountHub = ({ onBack }) => {
   const loadProfile = useCallback(async () => {
     setLoadingProfile(true);
     setProfileError("");
-    const response = await fetchMyProfile({ token: auth.token });
+    const response = await fetchMyProfile();
     if (response.success) {
       setProfile(response.data.profile);
     } else {
       setProfileError(response.error.message || "Failed to load profile.");
     }
     setLoadingProfile(false);
-  }, [auth.token, setProfile]);
+  }, [setProfile]);
 
   const loadOrders = useCallback(async () => {
     setOrdersError("");
@@ -273,7 +281,7 @@ const AccountHub = ({ onBack }) => {
       setLoadingOrders(true);
     }
 
-    const response = await fetchMyOrders({ token: auth.token });
+    const response = await fetchMyOrders();
     if (response.success) {
       const nextOrders = response.data.orders || [];
       setOrders(nextOrders);
@@ -282,7 +290,7 @@ const AccountHub = ({ onBack }) => {
       setOrdersError(response.error.message || "Failed to load orders.");
     }
     setLoadingOrders(false);
-  }, [auth.token, profile.phoneNumber, profile.userId]);
+  }, [profile.phoneNumber, profile.userId]);
 
   const loadNotifications = useCallback(async () => {
     setNotificationsError("");
@@ -298,8 +306,8 @@ const AccountHub = ({ onBack }) => {
     }
 
     const [prefsResponse, feedResponse] = await Promise.all([
-      fetchNotificationPreferences({ token: auth.token }),
-      fetchNotificationFeed({ token: auth.token }),
+      fetchNotificationPreferences(),
+      fetchNotificationFeed(),
     ]);
 
     if (!prefsResponse.success) {
@@ -331,7 +339,6 @@ const AccountHub = ({ onBack }) => {
 
     setLoadingNotifications(false);
   }, [
-    auth.token,
     profile.phoneNumber,
     profile.userId,
   ]);
@@ -389,9 +396,15 @@ const AccountHub = ({ onBack }) => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
-      await unregisterCurrentDevice({ token: auth.token });
+      await unregisterCurrentDevice();
     } catch (_error) {
       // Device cleanup is best effort.
+    }
+
+    try {
+      await logoutSession();
+    } catch (_error) {
+      // Session cleanup is best effort; local logout must still complete.
     }
 
     try {
@@ -403,11 +416,8 @@ const AccountHub = ({ onBack }) => {
     setAuth((prev) => ({
       ...prev,
       isAuthenticated: false,
-      token: null,
-      refreshToken: null,
     }));
     resetProfile();
-    setAuthTokens({});
     clearCachedData(`orders:${profile.userId || profile.phoneNumber || "current"}`);
     clearCachedData(`notifications:${profile.userId || profile.phoneNumber || "current"}`);
     setIsLoggingOut(false);
@@ -422,7 +432,6 @@ const AccountHub = ({ onBack }) => {
     setNotificationPreferences(nextPreferences);
 
     const response = await updateNotificationPreferences({
-      token: auth.token,
       payload: nextPreferences,
     });
 
@@ -621,7 +630,6 @@ const AccountHub = ({ onBack }) => {
             setLoadingProfile(true);
             setProfileError("");
             const response = await updateMyProfile({
-              token: auth.token,
               ...payload,
             });
             if (response.success) {

@@ -20,8 +20,7 @@ import { cartState } from "../../recoil/atoms/cartAtom";
 import { notificationAtom } from "../../recoil/atoms/notificationAtom";
 import authFirebase from "@react-native-firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { unregisterCurrentDevice } from "../../services/bff/accountBff";
-import { setAuthTokens } from "../../services/http/apiClient";
+import { logoutSession, unregisterCurrentDevice } from "../../services/bff/accountBff";
 import AdminDashboard from "./AdminDashboard";
 import AdminOrders from "./AdminOrders";
 import AdminProducts from "./AdminProducts";
@@ -69,10 +68,10 @@ const AdminPanel = ({ onBack }) => {
           setIsLoggingOut(true);
           try {
             await unregisterCurrentDevice();
+            await logoutSession();
             await authFirebase().signOut();
-          } catch (e) { /* ignore */ }
-          setAuthTokens({});
-          setAuthState({ isAuthenticated: false, token: null, refreshToken: null, isHydrated: true });
+          } catch (_e) { /* ignore */ }
+          setAuthState({ isAuthenticated: false, isHydrated: true });
           resetCart();
           resetNotifications();
           await AsyncStorage.multiRemove(["auth", "profile", "cart"]);

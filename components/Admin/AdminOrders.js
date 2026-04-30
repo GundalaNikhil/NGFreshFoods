@@ -40,7 +40,7 @@ import {
   ShoppingBag,
   ArrowUpDown,
 } from "lucide-react-native";
-import { fetchAllOrders, updateOrderStatus } from "../../services/bff/adminBff";
+import { fetchAllOrders, updateOrderStatus, initiateRefund } from "../../services/bff/adminBff";
 import { ListSkeleton } from "./shared/SkeletonLoader";
 import EmptyState from "./shared/EmptyState";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -69,6 +69,27 @@ const STATUS_COLORS = {
   DELIVERED: { bg: "#E8F5E9", text: "#2E7D32", icon: CheckCircle },
   CANCELLED: { bg: "#FFEBEE", text: "#C62828", icon: XCircle },
 };
+
+const PAYMENT_STATUS_COLORS = {
+  PENDING: { bg: "#FEF3C7", text: "#92400E" },
+  AUTHORIZED: { bg: "#DBEAFE", text: "#1E40AF" },
+  SUCCESS: { bg: "#D1FAE5", text: "#065F46" },
+  FAILED: { bg: "#FEE2E2", text: "#991B1B" },
+  REFUND_INITIATED: { bg: "#EDE9FE", text: "#5B21B6" },
+  REFUNDED: { bg: "#E0E7FF", text: "#3730A3" },
+};
+
+const isPaymentPending = (order) =>
+  order?.orderStatus === "PENDING" &&
+  order?.paymentProvider !== "COD" &&
+  order?.paymentStatus &&
+  order.paymentStatus !== "SUCCESS" &&
+  order.paymentStatus !== "REFUNDED";
+
+const canRefund = (order) =>
+  order?.orderStatus === "CANCELLED" &&
+  order?.paymentProvider !== "COD" &&
+  order?.paymentStatus === "SUCCESS";
 
 const STATUS_FLOW = ["PENDING", "CONFIRMED", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"];
 const FILTERS = ["ALL", ...STATUS_FLOW, "CANCELLED"];
@@ -160,29 +181,54 @@ const OrderDetailSheet = ({ order, visible, onClose, onStatusChange }) => {
             </View>
 
             {/* Status Badge */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: statusStyle.bg,
-                borderRadius: 10,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                marginTop: 16,
-                alignSelf: "flex-start",
-              }}
-            >
-              <StatusIcon size={16} color={statusStyle.text} strokeWidth={2} />
-              <Text
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+              <View
                 style={{
-                  fontSize: 13,
-                  fontWeight: "700",
-                  color: statusStyle.text,
-                  marginLeft: 6,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: statusStyle.bg,
+                  borderRadius: 10,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  alignSelf: "flex-start",
                 }}
               >
-                {order.orderStatus?.replace(/_/g, " ")}
-              </Text>
+                <StatusIcon size={16} color={statusStyle.text} strokeWidth={2} />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "700",
+                    color: statusStyle.text,
+                    marginLeft: 6,
+                  }}
+                >
+                  {order.orderStatus?.replace(/_/g, " ")}
+                </Text>
+              </View>
+              {/* Payment Status Chip */}
+              {order.paymentStatus && (() => {
+                const pStyle = PAYMENT_STATUS_COLORS[order.paymentStatus] || { bg: "#F2F2F7", text: "#3C3C43" };
+                const label = isPaymentPending(order)
+                  ? "⏳ Payment Pending"
+                  : order.paymentProvider === "COD" ? "💵 COD" : `💳 ${order.paymentStatus?.replace(/_/g, " ")}`;
+                return (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: pStyle.bg,
+                      borderRadius: 10,
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      alignSelf: "flex-start",
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: pStyle.text }}>
+                      {label}
+                    </Text>
+                  </View>
+                );
+              })()}
             </View>
 
             {/* Order Items */}
@@ -323,48 +369,121 @@ const OrderDetailSheet = ({ order, visible, onClose, onStatusChange }) => {
                 >
                   ACTIONS
                 </Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                  {STATUS_FLOW.slice(currentIdx + 1).map((status) => (
+                {isPaymentPending(order) && (
+                  <View style={{ backgroundColor: "#FEF3C7", borderRadius: 12, padding: 12, marginBottom: 10 }}>
+                    <Text style={{ fontSize: 12, color: "#92400E", fontWeight: "600" }}>
+                      ⏳ Waiting for payment confirmation. Status actions will be available once payment is confirmed.
+                    </Text>
+                  </View>
+                )}
+                {!isPaymentPending(order) && (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    {STATUS_FLOW.slice(currentIdx + 1).map((status) => (
+                      <TouchableOpacity
+                        key={status}
+                        onPress={() => handleStatusChange(status)}
+                        disabled={updating}
+                        style={{
+                          backgroundColor: status === nextStatus ? "#2C2C2E" : "#F2F2F7",
+                          borderRadius: 12,
+                          paddingHorizontal: 16,
+                          paddingVertical: 10,
+                          opacity: updating ? 0.6 : 1,
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={{ color: status === nextStatus ? "#FFFFFF" : "#1C1C1E", fontSize: 13, fontWeight: "700" }}>
+                          {status === nextStatus ? "→ " : ""}{status.replace(/_/g, " ")}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                     <TouchableOpacity
-                      key={status}
-                      onPress={() => handleStatusChange(status)}
-                      disabled={updating}
+                      onPress={() => {
+                        Alert.alert("Cancel Order", "Are you sure you want to cancel this order?", [
+                          { text: "No" },
+                          {
+                            text: "Yes, Cancel",
+                            onPress: () => handleStatusChange("CANCELLED"),
+                            style: "destructive",
+                          },
+                        ]);
+                      }}
                       style={{
-                        backgroundColor: status === nextStatus ? "#2C2C2E" : "#F2F2F7",
+                        backgroundColor: "#FFEBEE",
                         borderRadius: 12,
                         paddingHorizontal: 16,
                         paddingVertical: 10,
-                        opacity: updating ? 0.6 : 1,
                       }}
                       activeOpacity={0.8}
                     >
-                      <Text style={{ color: status === nextStatus ? "#FFFFFF" : "#1C1C1E", fontSize: 13, fontWeight: "700" }}>
-                        {status === nextStatus ? "→ " : ""}{status.replace(/_/g, " ")}
-                      </Text>
+                      <Text style={{ color: "#C62828", fontSize: 13, fontWeight: "700" }}>Cancel</Text>
                     </TouchableOpacity>
-                  ))}
-                  <TouchableOpacity
-                    onPress={() => {
-                      Alert.alert("Cancel Order", "Are you sure you want to cancel this order?", [
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Refund Action for Cancelled + Paid Orders */}
+            {canRefund(order) && (
+              <View style={{ marginTop: 20 }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      "Initiate Refund",
+                      `Are you sure you want to refund ₹${order.totalAmount?.toLocaleString("en-IN")} for order #${order.orderNumber}?`,
+                      [
                         { text: "No" },
                         {
-                          text: "Yes, Cancel",
-                          onPress: () => handleStatusChange("CANCELLED"),
+                          text: "Yes, Refund",
                           style: "destructive",
+                          onPress: () => {
+                            Alert.alert(
+                              "Final Confirmation",
+                              "This action cannot be undone. The refund will be processed to the customer's original payment method.",
+                              [
+                                { text: "Cancel" },
+                                {
+                                  text: "Confirm Refund",
+                                  style: "destructive",
+                                  onPress: async () => {
+                                    try {
+                                      setUpdating(true);
+                                      const result = await initiateRefund(order.orderId);
+                                      Alert.alert(
+                                        result.success ? "Refund Initiated" : "Refund Failed",
+                                        result.message || "Unknown result"
+                                      );
+                                      onClose();
+                                    } catch (e) {
+                                      Alert.alert("Error", e?.message || "Failed to initiate refund");
+                                    } finally {
+                                      setUpdating(false);
+                                    }
+                                  },
+                                },
+                              ]
+                            );
+                          },
                         },
-                      ]);
-                    }}
-                    style={{
-                      backgroundColor: "#FFEBEE",
-                      borderRadius: 12,
-                      paddingHorizontal: 16,
-                      paddingVertical: 10,
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={{ color: "#C62828", fontSize: 13, fontWeight: "700" }}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
+                      ]
+                    );
+                  }}
+                  disabled={updating}
+                  style={{
+                    backgroundColor: "#EDE9FE",
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: updating ? 0.6 : 1,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <CreditCard size={16} color="#5B21B6" strokeWidth={2} />
+                  <Text style={{ color: "#5B21B6", fontSize: 14, fontWeight: "700", marginLeft: 8 }}>Refund ₹{order.totalAmount?.toLocaleString("en-IN")}</Text>
+                </TouchableOpacity>
               </View>
             )}
           </ScrollView>
@@ -469,14 +588,14 @@ const OrderCard = ({ order, onStatusChange, onPress }) => {
                   letterSpacing: 0.3,
                 }}
               >
-                {order.orderStatus?.replace(/_/g, " ")}
+                {isPaymentPending(order) ? "⏳ Pay Pending" : order.orderStatus?.replace(/_/g, " ")}
               </Text>
             </View>
           </View>
         </View>
 
         {/* Quick Status Action */}
-        {currentIdx >= 0 && currentIdx < STATUS_FLOW.length - 1 && (
+        {currentIdx >= 0 && currentIdx < STATUS_FLOW.length - 1 && !isPaymentPending(order) && (
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
             {STATUS_FLOW.slice(currentIdx + 1).map((status) => (
               <TouchableOpacity
@@ -509,6 +628,11 @@ const OrderCard = ({ order, onStatusChange, onPress }) => {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+        )}
+        {isPaymentPending(order) && (
+          <View style={{ marginTop: 10, backgroundColor: "#FEF3C7", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+            <Text style={{ fontSize: 10, fontWeight: "600", color: "#92400E" }}>⏳ Awaiting payment</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -552,16 +676,23 @@ const AdminOrders = () => {
   const [sortOrder, setSortOrder] = useState("date_desc");
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [manualRefreshing, setManualRefreshing] = useState(false);
 
   const {
     data: ordersData,
     isLoading: loading,
     refetch,
-    isRefetching: refreshing,
   } = useQuery({
     queryKey: ["adminOrders", "ALL"],
     queryFn: () => fetchAllOrders(null),
+    refetchInterval: 30000, // Silent background refresh every 30s
   });
+
+  const handleManualRefresh = useCallback(async () => {
+    setManualRefreshing(true);
+    await refetch();
+    setManualRefreshing(false);
+  }, [refetch]);
 
   const orders = Array.isArray(ordersData) ? ordersData : [];
 
@@ -727,8 +858,8 @@ const AdminOrders = () => {
           contentContainerStyle={{ paddingTop: 4, paddingBottom: 100 }}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
-              onRefresh={refetch}
+              refreshing={manualRefreshing}
+              onRefresh={handleManualRefresh}
               tintColor="#3C3C43"
             />
           }

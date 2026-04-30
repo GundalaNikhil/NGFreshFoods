@@ -38,18 +38,12 @@ const normalizeError = (error) => {
   };
 };
 
-const requireToken = (token) => {
-  if (!token) {
-    return {
-      success: false,
-      error: {
-        type: "auth_error",
-        message: "You need to be logged in to continue.",
-        details: null,
-      },
-    };
-  }
-  return null;
+const toAddressList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.addresses)) return payload.addresses;
+  if (Array.isArray(payload?.userAddresses)) return payload.userAddresses;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
 };
 
 const toUserProfile = (payload) => {
@@ -57,6 +51,7 @@ const toUserProfile = (payload) => {
   const lastName = payload?.lastName || "";
   const fullName = `${firstName} ${lastName}`.trim();
   console.log("[BFF] toUserProfile parsed payload role as:", payload?.role);
+  const addresses = toAddressList(payload);
 
   return {
     userId: payload?.userId || "",
@@ -67,15 +62,12 @@ const toUserProfile = (payload) => {
     phoneNumber: payload?.phoneNumber || "",
     role: payload?.role || "CUSTOMER",
     isNewUser: payload?.newUser || false,
-    addresses: payload?.userAddresses || [],
-    addressId: payload?.userAddresses?.[0]?.addressId || null,
+    addresses,
+    addressId: addresses[0]?.addressId || null,
   };
 };
 
-export const fetchMyProfile = async ({ token }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const fetchMyProfile = async () => {
   try {
     const response = await apiClient.get(API_ENDPOINTS.PROFILE_ME);
 
@@ -90,10 +82,7 @@ export const fetchMyProfile = async ({ token }) => {
   }
 };
 
-export const updateMyProfile = async ({ token, firstName, lastName, phoneNumber }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const updateMyProfile = async ({ firstName, lastName, phoneNumber }) => {
   try {
     const response = await apiClient.put(
       API_ENDPOINTS.PROFILE_UPDATE,
@@ -115,17 +104,15 @@ export const updateMyProfile = async ({ token, firstName, lastName, phoneNumber 
   }
 };
 
-export const fetchMyAddresses = async ({ token }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const fetchMyAddresses = async () => {
   try {
     const response = await apiClient.get(API_ENDPOINTS.ADDRESSES_ME);
+    const addresses = toAddressList(response?.data);
 
     return {
       success: true,
       data: {
-        addresses: response?.data || [],
+        addresses,
       },
     };
   } catch (error) {
@@ -133,10 +120,7 @@ export const fetchMyAddresses = async ({ token }) => {
   }
 };
 
-export const createAddress = async ({ token, payload }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const createAddress = async ({ payload }) => {
   try {
     const response = await apiClient.post(API_ENDPOINTS.ADDRESSES_ME, payload);
 
@@ -149,10 +133,7 @@ export const createAddress = async ({ token, payload }) => {
   }
 };
 
-export const updateAddress = async ({ token, addressId, payload }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const updateAddress = async ({ addressId, payload }) => {
   try {
     const response = await apiClient.put(
       API_ENDPOINTS.ADDRESS_UPDATE(addressId),
@@ -168,10 +149,7 @@ export const updateAddress = async ({ token, addressId, payload }) => {
   }
 };
 
-export const deleteAddress = async ({ token, addressId }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const deleteAddress = async ({ addressId }) => {
   try {
     await apiClient.delete(API_ENDPOINTS.ADDRESS_DELETE(addressId));
     return { success: true };
@@ -180,10 +158,7 @@ export const deleteAddress = async ({ token, addressId }) => {
   }
 };
 
-export const fetchMyOrders = async ({ token }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const fetchMyOrders = async () => {
   try {
     const response = await apiClient.get(API_ENDPOINTS.ORDERS_ME);
 
@@ -211,10 +186,7 @@ export const fetchOrderById = async (orderId) => {
   }
 };
 
-export const registerDevicePushToken = async ({ token, payload }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const registerDevicePushToken = async ({ payload }) => {
   try {
     const response = await apiClient.post(
       API_ENDPOINTS.NOTIFICATION_REGISTER_DEVICE,
@@ -229,10 +201,7 @@ export const registerDevicePushToken = async ({ token, payload }) => {
   }
 };
 
-export const unregisterCurrentDevice = async ({ token }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const unregisterCurrentDevice = async () => {
   try {
     await apiClient.delete(API_ENDPOINTS.NOTIFICATION_UNREGISTER_DEVICE);
     return { success: true };
@@ -241,10 +210,16 @@ export const unregisterCurrentDevice = async ({ token }) => {
   }
 };
 
-export const fetchNotificationPreferences = async ({ token }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
+export const logoutSession = async () => {
+  try {
+    await apiClient.post(API_ENDPOINTS.LOGOUT, {});
+    return { success: true };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
 
+export const fetchNotificationPreferences = async () => {
   try {
     const response = await apiClient.get(API_ENDPOINTS.NOTIFICATION_PREFERENCES);
     return {
@@ -256,10 +231,7 @@ export const fetchNotificationPreferences = async ({ token }) => {
   }
 };
 
-export const updateNotificationPreferences = async ({ token, payload }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const updateNotificationPreferences = async ({ payload }) => {
   try {
     const response = await apiClient.put(
       API_ENDPOINTS.NOTIFICATION_PREFERENCES,
@@ -274,16 +246,29 @@ export const updateNotificationPreferences = async ({ token, payload }) => {
   }
 };
 
-export const fetchNotificationFeed = async ({ token }) => {
-  const missing = requireToken(token);
-  if (missing) return missing;
-
+export const fetchNotificationFeed = async () => {
   try {
     const response = await apiClient.get(API_ENDPOINTS.NOTIFICATION_FEED);
     return {
       success: true,
       data: {
         notifications: response?.data || [],
+      },
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
+
+export const fetchAuthStatus = async () => {
+  try {
+    const response = await apiClient.get(API_ENDPOINTS.AUTH_STATUS, {
+      skipAuthRefresh: true,
+    });
+    return {
+      success: true,
+      data: {
+        profile: toUserProfile(response?.data || {}),
       },
     };
   } catch (error) {

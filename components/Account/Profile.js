@@ -21,8 +21,6 @@ const Profile = () => {
     setAuth((prev) => ({
       ...prev,
       isAuthenticated: false,
-      token: null,
-      refreshToken: null,
     }));
     resetProfile();
   };

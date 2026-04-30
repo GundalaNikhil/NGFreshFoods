@@ -48,6 +48,13 @@ export const deleteProduct = async (productId) => {
   return response?.data || {};
 };
 
+// ── Refunds ──
+
+export const initiateRefund = async (orderId) => {
+  const response = await apiClient.post(API_ENDPOINTS.ADMIN_ORDER_REFUND(orderId));
+  return response?.data || {};
+};
+
 // ── Users ──
 
 export const fetchAllUsers = async () => {

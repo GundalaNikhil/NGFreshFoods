@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
 } from "react-native";
-import { X, MapPin, Plus, Trash2, Home, Briefcase, Heart } from "lucide-react-native";
+import { X, Plus, Trash2, Home, Briefcase, Heart } from "lucide-react-native";
 import { useAddress } from "../../hooks/useAddress";
 
 const AddressSelectionSheet = ({ visible, onClose, onAddPress }) => {

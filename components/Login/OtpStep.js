@@ -4,7 +4,6 @@ import { useSetRecoilState } from 'recoil';
 import { authAtom } from '../../recoil/atoms/authAtom';
 import { profileAtom } from '../../recoil/atoms/profileAtom';
 import { loginWithFirebaseOtpBff } from '../../services/bff/authBff';
-import { setAuthTokens } from '../../services/http/apiClient';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { handleGlobalError } from '../../utils/errorHandler';
 import authFirebase from '@react-native-firebase/auth';
@@ -48,13 +47,7 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
       setAuth((prev) => ({
         ...prev,
         isAuthenticated: true,
-        token: backendResponse.data.token,
-        refreshToken: backendResponse.data.refreshToken,
       }));
-      setAuthTokens({
-        token: backendResponse.data.token,
-        refreshToken: backendResponse.data.refreshToken,
-      });
       setProfile(backendResponse.data.profile);
     } else {
       throw new Error(backendResponse.error.message || "Failed to authenticate with backend");

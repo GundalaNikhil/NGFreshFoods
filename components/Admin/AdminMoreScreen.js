@@ -28,8 +28,7 @@ import { cartState } from "../../recoil/atoms/cartAtom";
 import { notificationAtom } from "../../recoil/atoms/notificationAtom";
 import authFirebase from "@react-native-firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { unregisterCurrentDevice } from "../../services/bff/accountBff";
-import { setAuthTokens } from "../../services/http/apiClient";
+import { logoutSession, unregisterCurrentDevice } from "../../services/bff/accountBff";
 import { useIsFocused } from "@react-navigation/native";
 
 import AdminUsers from "./AdminUsers";
@@ -98,15 +97,13 @@ const AdminMoreScreen = () => {
           setIsLoggingOut(true);
           try {
             await unregisterCurrentDevice();
+            await logoutSession();
             await authFirebase().signOut();
-          } catch (e) {
+          } catch (_e) {
             /* ignore */
           }
-          setAuthTokens({});
           setAuthState({
             isAuthenticated: false,
-            token: null,
-            refreshToken: null,
             isHydrated: true,
           });
           resetCart();

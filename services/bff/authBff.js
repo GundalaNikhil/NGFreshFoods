@@ -71,8 +71,6 @@ export const loginWithFirebaseOtpBff = async ({ idToken }) => {
     return {
       success: true,
       data: {
-        token: response?.data?.jwtToken || null,
-        refreshToken: response?.data?.refreshToken || null,
         profile: toUserProfile(response?.data || {}),
       },
     };
@@ -102,8 +100,6 @@ export const signupWithFirebaseOtpBff = async ({
     return {
       success: true,
       data: {
-        token: response?.data?.jwtToken || null,
-        refreshToken: response?.data?.refreshToken || null,
         profile: toUserProfile(response?.data || {}),
       },
     };

@@ -36,6 +36,12 @@ const TIMELINE_STEPS = [
   { key: "DELIVERED", label: "Delivered", subtitle: "Enjoy your meal!" },
 ];
 
+const PAYMENT_PENDING_STEP = {
+  key: "PAYMENT_PENDING",
+  label: "Payment Pending",
+  subtitle: "We are waiting for the final payment update",
+};
+
 const STATUS_INDEX = {
   PENDING: 0,
   CONFIRMED: 1,
@@ -58,6 +64,16 @@ const getStatusColor = (status) => {
     default:
       return { bg: "#FEF3C7", text: "#D97706", dot: "#D97706" };
   }
+};
+
+const isPaymentPendingOrder = (order) => {
+  const paymentStatus = String(order?.payment?.paymentStatus || "").toUpperCase();
+  return (
+    order?.orderStatus === "PENDING" &&
+    paymentStatus &&
+    paymentStatus !== "SUCCESS" &&
+    paymentStatus !== "REFUNDED"
+  );
 };
 
 /**
@@ -190,11 +206,15 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
   }
 
   const orderNumber = order.orderNumber || order.orderId?.slice(0, 10) || "—";
-  const activeIdx = STATUS_INDEX[order.orderStatus] ?? 0;
+  const paymentPending = isPaymentPendingOrder(order);
+  const activeIdx = paymentPending ? 0 : STATUS_INDEX[order.orderStatus] ?? 0;
   const isCancelled = order.orderStatus === "CANCELLED";
   const statusColor = getStatusColor(order.orderStatus);
   const createdAt = order.createdAt ? new Date(order.createdAt) : null;
-  const activeStepKey = TIMELINE_STEPS[Math.min(activeIdx, TIMELINE_STEPS.length - 1)]?.key || "PENDING";
+  const activeStep = paymentPending
+    ? PAYMENT_PENDING_STEP
+    : TIMELINE_STEPS[Math.min(activeIdx, TIMELINE_STEPS.length - 1)] || TIMELINE_STEPS[0];
+  const activeStepKey = paymentPending ? "PENDING" : activeStep.key;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#FAFFFE" }}>
@@ -272,11 +292,11 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
           />
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: "900", color: statusColor.text }}>
-              {isCancelled ? "Order Cancelled" : TIMELINE_STEPS[Math.min(activeIdx, TIMELINE_STEPS.length - 1)]?.label}
+              {isCancelled ? "Order Cancelled" : activeStep.label}
             </Text>
             {!isCancelled && (
               <Text style={{ fontSize: 12, color: statusColor.text, fontWeight: "500", marginTop: 2, opacity: 0.8 }}>
-                {TIMELINE_STEPS[Math.min(activeIdx, TIMELINE_STEPS.length - 1)]?.subtitle}
+                {activeStep.subtitle}
               </Text>
             )}
           </View>
@@ -290,7 +310,28 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
           )}
         </View>
 
-        {/* ── Pixar Timeline ── */}
+        {paymentPending && (
+          <View
+            style={{
+              marginHorizontal: 16,
+              marginTop: 14,
+              backgroundColor: "#FFFBEB",
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: "#FDE68A",
+            }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: "900", color: "#92400E", marginBottom: 6 }}>
+              Do not pay again yet
+            </Text>
+            <Text style={{ fontSize: 12, color: "#92400E", lineHeight: 18 }}>
+              Your payment has not been confirmed yet. If money was debited, this order should update automatically once the payment is verified. Pull down to refresh.
+            </Text>
+          </View>
+        )}
+
+        {/* ── Payment / Order Timeline ── */}
         {!isCancelled && (
           <View style={{ marginHorizontal: 16, marginTop: 28, marginBottom: 8 }}>
             <Text
@@ -302,13 +343,13 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
                 marginBottom: 20,
               }}
             >
-              ORDER TIMELINE
+              {paymentPending ? "PAYMENT STATUS" : "ORDER TIMELINE"}
             </Text>
 
-            {TIMELINE_STEPS.map((step, idx) => {
-              const isCompleted = idx <= activeIdx;
-              const isActive = idx === activeIdx;
-              const isLast = idx === TIMELINE_STEPS.length - 1;
+            {(paymentPending ? [PAYMENT_PENDING_STEP] : TIMELINE_STEPS).map((step, idx, steps) => {
+              const isCompleted = paymentPending || idx <= activeIdx;
+              const isActive = paymentPending || idx === activeIdx;
+              const isLast = idx === steps.length - 1;
               const anim = stepAnims[idx];
 
               return (
@@ -335,7 +376,7 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
                       }}
                     >
                       <Image
-                        source={TIMELINE_IMAGES[step.key]}
+                        source={TIMELINE_IMAGES[step.key] || TIMELINE_IMAGES.PENDING}
                         style={{
                           width: isActive ? 50 : 38,
                           height: isActive ? 50 : 38,
@@ -454,7 +495,7 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
                     {item.orderName || "Item"}
                   </Text>
                   <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 3 }}>
-                    {item.quantity} × ₹{Number(item.unitPrice || 0).toFixed(2)}
+                    {item.quantity} x ₹{Number(item.unitPrice || 0).toFixed(2)}
                   </Text>
                 </View>
                 <Text style={{ fontSize: 14, fontWeight: "800", color: "#111827" }}>
@@ -505,7 +546,9 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
             />
             <View style={{ height: 1, backgroundColor: "#F3F4F6", marginVertical: 14 }} />
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ fontSize: 16, fontWeight: "900", color: "#111827" }}>Total Paid</Text>
+              <Text style={{ fontSize: 16, fontWeight: "900", color: "#111827" }}>
+                {paymentPending ? "Amount Due" : "Total Paid"}
+              </Text>
               <Text style={{ fontSize: 16, fontWeight: "900", color: "#111827" }}>
                 ₹{Number(order.totalAmount || 0).toFixed(2)}
               </Text>

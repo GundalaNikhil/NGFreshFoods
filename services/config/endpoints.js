@@ -1,10 +1,23 @@
 import { Platform } from "react-native";
 
-const defaultApiBaseUrl =
+const devApiBaseUrl =
   Platform.OS === "android" ? "http://10.0.2.2:8080" : "http://localhost:8080";
 
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || defaultApiBaseUrl;
+const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = configuredApiBaseUrl || (__DEV__ ? devApiBaseUrl : null);
+
+if (!API_BASE_URL) {
+  throw new Error(
+    "EXPO_PUBLIC_API_BASE_URL must be set for non-development builds."
+  );
+}
+
+if (!__DEV__ && !API_BASE_URL.startsWith("https://")) {
+  throw new Error(
+    "Production API base URL must use HTTPS."
+  );
+}
+
 const API_VERSION = process.env.EXPO_PUBLIC_API_VERSION || "v1";
 
 export const API_ENDPOINTS = {
@@ -12,6 +25,8 @@ export const API_ENDPOINTS = {
   FIREBASE_SIGNUP_OTP: `${API_BASE_URL}/api/${API_VERSION}/onboarding/firebase/register-otp`,
   FIREBASE_LOGIN_OTP: `${API_BASE_URL}/api/${API_VERSION}/onboarding/firebase/login-otp`,
   REFRESH_TOKEN: `${API_BASE_URL}/api/${API_VERSION}/onboarding/refresh-token`,
+  LOGOUT: `${API_BASE_URL}/api/${API_VERSION}/onboarding/logout`,
+  AUTH_STATUS: `${API_BASE_URL}/api/${API_VERSION}/onboarding/auth-status`,
 
   // Cart
   CART: `${API_BASE_URL}/api/${API_VERSION}/cart`,
@@ -58,6 +73,8 @@ export const API_ENDPOINTS = {
   ADMIN_ORDERS: `${API_BASE_URL}/api/${API_VERSION}/admin/orders`,
   ADMIN_ORDER_STATUS: (orderId) =>
     `${API_BASE_URL}/api/${API_VERSION}/admin/orders/${orderId}/status`,
+  ADMIN_ORDER_REFUND: (orderId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/admin/orders/${orderId}/refund`,
   ADMIN_PRODUCTS: `${API_BASE_URL}/api/${API_VERSION}/admin/products`,
   ADMIN_PRODUCT_UPDATE: (productId) =>
     `${API_BASE_URL}/api/${API_VERSION}/admin/products/${productId}`,

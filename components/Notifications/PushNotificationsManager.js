@@ -30,7 +30,7 @@ const PushNotificationsManager = () => {
   const lastSyncedTokenRef = useRef(null);
 
   useEffect(() => {
-    if (!auth?.isAuthenticated || !auth?.token) {
+    if (!auth?.isAuthenticated) {
       return undefined;
     }
 
@@ -61,7 +61,6 @@ const PushNotificationsManager = () => {
       }
 
       const response = await registerDevicePushToken({
-        token: auth.token,
         payload: registration,
       });
 
@@ -122,7 +121,7 @@ const PushNotificationsManager = () => {
       unsubscribeOpened();
       unsubscribeRefresh();
     };
-  }, [auth?.isAuthenticated, auth?.token, notificationState.permissionStatus, setNotificationState]);
+  }, [auth?.isAuthenticated, notificationState.permissionStatus, setNotificationState]);
 
   return null;
 };

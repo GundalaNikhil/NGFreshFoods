@@ -28,9 +28,10 @@ import AuthScreen from "../components/Login/AuthScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   setAuthFailureHandler,
-  setAuthTokens,
   setAuthUpdateHandler,
 } from "../services/http/apiClient";
+import { fetchAuthStatus } from "../services/bff/accountBff";
+import { loginWithFirebaseOtpBff } from "../services/bff/authBff";
 import CartSyncManager from "../providers/CartSyncManager";
 
 import {
@@ -320,80 +321,125 @@ const TabItem = ({ focused, label, IconComponent, onPress, badge = 0 }) => {
 // The main App routing logic inside RecoilRoot
 function RootNavigator() {
   const [authState, setAuthState] = useRecoilState(authAtom);
-  const profile = useRecoilValue(profileAtom);
+  const [profile, setProfile] = useRecoilState(profileAtom);
   const [initializing, setInitializing] = useState(true);
   const isAdmin = profile.role === "ADMIN";
 
   const initRef = useRef(true);
+  const sessionRestoreRef = useRef(null);
 
   useEffect(() => {
     console.log("[Root] State - initializing:", initializing, "isHydrated:", authState?.isHydrated, "isAuthenticated:", authState?.isAuthenticated);
   }, [initializing, authState?.isHydrated, authState?.isAuthenticated]);
 
+  const clearLocalAuth = React.useCallback(() => {
+    setAuthState({ isAuthenticated: false, isHydrated: true });
+    AsyncStorage.removeItem("auth");
+  }, [setAuthState]);
+
+  const restoreBackendSessionFromFirebase = React.useCallback(async (firebaseUser, options = {}) => {
+    if (!firebaseUser) {
+      clearLocalAuth();
+      return false;
+    }
+
+    if (sessionRestoreRef.current) {
+      return sessionRestoreRef.current;
+    }
+
+    sessionRestoreRef.current = (async () => {
+      const keepExistingSession = options.keepExistingSession !== false;
+
+      try {
+        const statusResponse = await fetchAuthStatus();
+        if (statusResponse.success) {
+          setProfile(statusResponse.data.profile);
+          setAuthState({ isAuthenticated: true, isHydrated: true });
+          return true;
+        }
+      } catch (_error) {
+        // Fall through to Firebase-backed session restore.
+      }
+
+      try {
+        const idToken = await firebaseUser.getIdToken(true);
+        const loginResponse = await loginWithFirebaseOtpBff({ idToken });
+        if (loginResponse.success) {
+          setProfile(loginResponse.data.profile);
+          setAuthState({ isAuthenticated: true, isHydrated: true });
+          return true;
+        }
+
+        const status = loginResponse.error?.details?.status || loginResponse.error?.details?.statusCode;
+        if (status === 401 || status === 403) {
+          clearLocalAuth();
+          return false;
+        }
+      } catch (_error) {
+        // Network/backend failures should not sign out a valid Firebase user.
+      }
+
+      if (keepExistingSession) {
+        setAuthState({ isAuthenticated: true, isHydrated: true });
+        return true;
+      }
+
+      clearLocalAuth();
+      return false;
+    })();
+
+    try {
+      return await sessionRestoreRef.current;
+    } finally {
+      sessionRestoreRef.current = null;
+    }
+  }, [clearLocalAuth, setAuthState, setProfile]);
+
   // Listen for Firebase Auth state changes — subscribe ONCE
   useEffect(() => {
-    const subscriber = onAuthStateChanged(auth(), (user) => {
+    const subscriber = onAuthStateChanged(auth(), async (user) => {
       console.log("[Root] Firebase onAuthStateChanged - User:", user ? user.email || user.phoneNumber : "null");
-      if (!user) {
-        // User is signed out in Firebase
-        setAuthState((prev) => {
-          if (prev.isAuthenticated) {
-            return { ...prev, isAuthenticated: false, token: null, refreshToken: null };
-          }
-          return prev;
-        });
+      if (user) {
+        await restoreBackendSessionFromFirebase(user, { keepExistingSession: true });
+      } else {
+        clearLocalAuth();
       }
       if (initRef.current) {
         initRef.current = false;
-        setInitializing(false);
       }
+      setInitializing(false);
     });
     return subscriber; // unsubscribe on unmount
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearLocalAuth, restoreBackendSessionFromFirebase]);
 
   useEffect(() => {
-    if (authState?.isAuthenticated) {
-      if (!authState.refreshToken) {
-        Toast.show({
-          type: "error",
-          text1: "Session updated",
-          text2: "Please log in again to continue.",
-        });
-        setAuthState({ isAuthenticated: false, token: null, refreshToken: null, isHydrated: true });
-        AsyncStorage.removeItem("auth");
-        return;
+    setAuthFailureHandler(async () => {
+      const firebaseUser = auth().currentUser;
+      if (firebaseUser) {
+        const restored = await restoreBackendSessionFromFirebase(firebaseUser, { keepExistingSession: true });
+        if (!restored) {
+          Toast.show({
+            type: "error",
+            text1: "Session expired",
+            text2: "Please log in again.",
+          });
+        }
+        return restored;
       }
-      setAuthTokens({
-        token: authState.token,
-        refreshToken: authState.refreshToken,
-      });
-    } else {
-      setAuthTokens({});
-    }
-  }, [authState?.isAuthenticated, authState?.token, authState?.refreshToken]);
 
-
-
-  useEffect(() => {
-    setAuthFailureHandler(() => {
       Toast.show({
         type: "error",
         text1: "Session expired",
         text2: "Please log in again.",
       });
-      setAuthState({ isAuthenticated: false, token: null, refreshToken: null, isHydrated: true });
-      AsyncStorage.removeItem("auth");
+      clearLocalAuth();
+      return false;
     });
-    setAuthUpdateHandler(({ token, refreshToken }) => {
-      setAuthState((prev) => ({
-        ...prev,
-        isAuthenticated: true,
-        token,
-        refreshToken,
-      }));
+    setAuthUpdateHandler(() => {
+      setAuthState((prev) => ({ ...prev, isAuthenticated: true, isHydrated: true }));
     });
-  }, [setAuthState]);
+  }, [clearLocalAuth, restoreBackendSessionFromFirebase, setAuthState]);
 
   if (initializing || !authState.isHydrated) {
     return (

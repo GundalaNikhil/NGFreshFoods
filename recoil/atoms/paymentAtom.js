@@ -7,7 +7,7 @@ import { atom } from "recoil";
 export const paymentAtom = atom({
   key: "paymentAtom",
   default: {
-    /** IDLE | CREATING_ORDER | AWAITING_PAYMENT | VERIFYING | SUCCESS | FAILED | CANCELLED */
+    /** IDLE | CREATING_ORDER | AWAITING_PAYMENT | VERIFYING | CHECKING_PAYMENT | PENDING_CONFIRMATION | SUCCESS | FAILED | CANCELLED */
     checkoutState: "IDLE",
     /** The order response from the backend */
     currentOrder: null,
@@ -15,6 +15,8 @@ export const paymentAtom = atom({
     razorpayConfig: null,
     /** Error message if checkout failed */
     error: null,
+    /** Error kind: NONE | CANCELLED | TIMEOUT | FAILED | UNCERTAIN | METHOD_UNAVAILABLE | SHOP_CLOSED */
+    errorKind: "NONE",
     /** Selected payment method: ONLINE | COD */
     paymentMethod: "ONLINE",
   },

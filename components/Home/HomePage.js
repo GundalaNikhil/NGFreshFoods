@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, SafeAreaView, ScrollView, Text, View, InteractionManager } from "react-native";
+import { ActivityIndicator, FlatList, RefreshControl, SafeAreaView, ScrollView, Text, View, InteractionManager } from "react-native";
 import React, { useState, useEffect, useCallback, memo } from "react";
 import { SearchX, Store } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -61,22 +61,42 @@ const HomePage = () => {
   const [showAddressSheet, setShowAddressSheet] = useState(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
   const [shopStatus, setShopStatus] = useState({ isOpen: true, message: "" });
+  const [pullRefreshing, setPullRefreshing] = useState(false);
 
   const isSearching = searchQuery.trim().length > 0;
+
+  // Silent shop status poll (no loading indicator)
+  const refreshShopStatusSilent = useCallback(() => {
+    fetchShopStatus().then((result) => {
+      if (result?.data) setShopStatus(result.data);
+    });
+  }, []);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
       refreshAddresses();
-      // Check shop status
-      fetchShopStatus().then((result) => {
-        if (result?.data) setShopStatus(result.data);
-      });
+      refreshShopStatusSilent();
     });
+
+    // Poll shop status every 60 seconds (silent background refresh)
+    const pollInterval = setInterval(refreshShopStatusSilent, 60000);
 
     return () => {
       task?.cancel?.();
+      clearInterval(pollInterval);
     };
-  }, [refreshAddresses]);
+  }, [refreshAddresses, refreshShopStatusSilent]);
+
+  // Pull-to-refresh handler (like Zepto)
+  const handlePullRefresh = useCallback(async () => {
+    setPullRefreshing(true);
+    await Promise.all([
+      refreshAddresses(),
+      refreshShopStatusSilent(),
+    ]);
+    // Small delay for smooth UX
+    setTimeout(() => setPullRefreshing(false), 600);
+  }, [refreshAddresses, refreshShopStatusSilent]);
 
   const renderSearchResult = useCallback(
     ({ item }) => <ProductCard product={item} onAddToCart={() => {}} />,
@@ -117,12 +137,11 @@ const HomePage = () => {
         </View>
       )}
 
-      {isRefreshing ? (
+      {/* Background refresh indicator — only show on error reconnect, never during normal polling */}
+      {isRefreshing && error ? (
         <View className="px-4 mt-2 flex-row items-center">
           <ActivityIndicator size="small" color="#E23744" />
-          <Text className="ml-2 text-xs text-[#93959F]">
-            {error ? "Reconnecting catalog..." : "Refreshing today's stock..."}
-          </Text>
+          <Text className="ml-2 text-xs text-[#93959F]">Reconnecting catalog...</Text>
         </View>
       ) : null}
 
@@ -154,6 +173,14 @@ const HomePage = () => {
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 90 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={pullRefreshing}
+              onRefresh={handlePullRefresh}
+              tintColor="#E23744"
+              colors={["#E23744"]}
+            />
+          }
         >
           <View className="mt-4">
             <Slideshow />

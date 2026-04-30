@@ -1,9 +1,11 @@
+/* global setTimeout, clearTimeout */
 import React, { useEffect, useRef, useState } from "react";
-import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, Text, TouchableOpacity, View, Alert } from "react-native";
 import { Image } from "expo-image";
 import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
 import { fetchActiveCoupons, validateCoupon } from "../../services/bff/couponsBff";
+import { fetchShopStatus } from "../../services/bff/shopBff";
 import CartFooter from "./CartFooter";
 import CartItems from "./CartItems";
 import CartPromoCode from "./CartPromoCode";
@@ -23,6 +25,7 @@ const Cart = () => {
     checkoutState,
     paymentMethod,
     error: paymentError,
+    errorKind: paymentErrorKind,
     currentOrder,
     startCheckout,
     retryCheckout,
@@ -51,6 +54,21 @@ const Cart = () => {
   const [activeScreen, setActiveScreen] = useState("cart");
   const [viewingOrder, setViewingOrder] = useState(null);
   const [isCheckoutInProgress, setIsCheckoutInProgress] = useState(false);
+  const [shopStatus, setShopStatus] = useState({ isOpen: true, message: "" });
+
+  // Silent shop status poll every 60s (no loading indicator)
+  useEffect(() => {
+    // Fetch immediately on mount
+    fetchShopStatus().then((result) => {
+      if (result?.data) setShopStatus(result.data);
+    });
+    const pollInterval = setInterval(() => {
+      fetchShopStatus().then((result) => {
+        if (result?.data) setShopStatus(result.data);
+      });
+    }, 60000);
+    return () => clearInterval(pollInterval);
+  }, []);
 
   // Get current promo/offer state from cart
   const selectedOffer = cartData?.offer || null;
@@ -174,15 +192,39 @@ const Cart = () => {
 
   // ── Checkout handlers ──
 
-  const handlePlaceOrder = () => {
+  const refreshShopStatus = async () => {
+    const result = await fetchShopStatus();
+    const nextStatus = result?.data || { isOpen: true, message: "" };
+    setShopStatus(nextStatus);
+    return nextStatus;
+  };
+
+  const handlePlaceOrder = async () => {
+    const status = await refreshShopStatus();
+    if (status && !status.isOpen) {
+      Alert.alert(
+        "Shop Closed",
+        status.message || "Ordering and payments are paused right now. Please try again during business hours.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
     setIsCheckoutVisible(true);
   };
 
   const handlePayOnline = async () => {
     if (isCheckoutInProgress) return;
+    const latestShopStatus = await refreshShopStatus();
+    if (latestShopStatus?.isOpen === false) {
+      setIsCheckoutInProgress(false);
+      return;
+    }
     setIsCheckoutInProgress(true);
     try {
-      await startCheckout();
+      await startCheckout({
+        paymentMethod,
+        addressId: selectedAddress?.addressId || null,
+      });
     } finally {
       // Keep isCheckoutInProgress true until we navigate away or reset
     }
@@ -199,7 +241,11 @@ const Cart = () => {
   };
 
   const handleCheckoutClose = () => {
-    if (checkoutState !== "CREATING_ORDER" && checkoutState !== "VERIFYING") {
+    if (
+      checkoutState !== "CREATING_ORDER" &&
+      checkoutState !== "VERIFYING" &&
+      checkoutState !== "CHECKING_PAYMENT"
+    ) {
       setIsCheckoutVisible(false);
       setIsCheckoutInProgress(false);
       resetProcessingFlag();
@@ -219,6 +265,14 @@ const Cart = () => {
       clearCartAfterSuccess();
       loadCoupons(true); // Immediate refresh to hide first-order-only coupons like WELCOME50
     }, 300);
+  };
+
+  const handleTrackPendingOrder = (order) => {
+    setIsCheckoutVisible(false);
+    setViewingOrder(order);
+    setActiveScreen("detail");
+    setIsCheckoutInProgress(false);
+    resetProcessingFlag();
   };
 
   // ── Auto-trigger navigation on payment success ──
@@ -360,13 +414,16 @@ const Cart = () => {
             itemCount={itemCount}
             checkoutState={checkoutState}
             error={paymentError}
+            errorKind={paymentErrorKind}
             paymentMethod={paymentMethod}
             onSelectMethod={setPaymentMethod}
             onReset={resetPayment}
             onViewOrder={handleViewOrder}
+            onViewPendingOrder={handleTrackPendingOrder}
             currentOrder={currentOrder}
             selectedAddress={selectedAddress}
             onSelectAddress={() => setShowAddressSheet(true)}
+            shopStatus={shopStatus}
           />
 
           <AddressSelectionSheet

@@ -1,6 +1,11 @@
+/* global setTimeout */
 import { useCallback, useRef } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { Alert } from "react-native";
+import { paymentAtom } from "../recoil/atoms/paymentAtom";
+import { profileAtom } from "../recoil/atoms/profileAtom";
+import { useCart } from "./useCart";
+import { createOrder, verifyPayment, getPaymentStatus } from "../services/bff/paymentBff";
 
 const getRazorpayModule = () => {
   try {
@@ -11,11 +16,6 @@ const getRazorpayModule = () => {
     return null;
   }
 };
-import { paymentAtom } from "../recoil/atoms/paymentAtom";
-import { authAtom } from "../recoil/atoms/authAtom";
-import { profileAtom } from "../recoil/atoms/profileAtom";
-import { useCart } from "./useCart";
-import { createOrder, verifyPayment, getPaymentStatus } from "../services/bff/paymentBff";
 
 // ── Timeout wrapper ──
 const withTimeout = (promise, ms, label = "Request") => {
@@ -28,6 +28,165 @@ const withTimeout = (promise, ms, label = "Request") => {
       )
     ),
   ]);
+};
+
+const PAYMENT_ERROR_KIND = {
+  NONE: "NONE",
+  CANCELLED: "CANCELLED",
+  TIMEOUT: "TIMEOUT",
+  FAILED: "FAILED",
+  UNCERTAIN: "UNCERTAIN",
+  METHOD_UNAVAILABLE: "METHOD_UNAVAILABLE",
+  SHOP_CLOSED: "SHOP_CLOSED",
+};
+
+const tryParseJson = (value) => {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+    return null;
+  }
+  try {
+    return JSON.parse(trimmed);
+  } catch (_error) {
+    return null;
+  }
+};
+
+const extractGatewayError = (error) => {
+  const parsedMessage = tryParseJson(error?.message);
+  const parsedDescription = tryParseJson(error?.description);
+  const nested = parsedMessage?.error || parsedDescription?.error || error?.error || null;
+
+  return {
+    code: nested?.code || error?.code || null,
+    description:
+      (typeof nested?.description === "string" && nested.description !== "undefined"
+        ? nested.description
+        : null) ||
+      (typeof error?.description === "string" && error.description !== "undefined"
+        ? error.description
+        : null),
+    reason: nested?.reason || null,
+    step: nested?.step || null,
+    source: nested?.source || null,
+    rawMessage: typeof error?.message === "string" ? error.message : "",
+  };
+};
+
+const classifyPaymentError = (error) => {
+  const gateway = extractGatewayError(error);
+  const haystack = [
+    gateway.code,
+    gateway.description,
+    gateway.reason,
+    gateway.step,
+    gateway.source,
+    gateway.rawMessage,
+    error?.message,
+    error?.description,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    haystack.includes("shop is currently closed") ||
+    haystack.includes("shop is closed") ||
+    haystack.includes("currently closed") ||
+    haystack.includes("business hours")
+  ) {
+    return {
+      kind: PAYMENT_ERROR_KIND.SHOP_CLOSED,
+      message: gateway.description || error?.message || "The shop is currently closed. Please try again during business hours.",
+      shouldCheckStatus: false,
+      shouldAlert: false,
+    };
+  }
+
+  if (
+    error?.code === "PAYMENT_CANCELLED" ||
+    error?.code === 2 ||
+    haystack.includes("cancelled") ||
+    haystack.includes("canceled") ||
+    haystack.includes("dismissed") ||
+    haystack.includes("user closed")
+  ) {
+    return {
+      kind: PAYMENT_ERROR_KIND.CANCELLED,
+      message: "You closed the payment window. Your cart and order are still safe.",
+      shouldCheckStatus: false,
+      shouldAlert: false,
+    };
+  }
+
+  if (
+    haystack.includes("timed out") ||
+    haystack.includes("timeout") ||
+    haystack.includes("network") ||
+    haystack.includes("unable to connect") ||
+    haystack.includes("socket")
+  ) {
+    return {
+      kind: PAYMENT_ERROR_KIND.TIMEOUT,
+      message: "The payment is taking longer than expected. We are checking its status now.",
+      shouldCheckStatus: true,
+      shouldAlert: false,
+    };
+  }
+
+  if (
+    haystack.includes("no app found") ||
+    haystack.includes("app not installed") ||
+    haystack.includes("no upi app") ||
+    haystack.includes("activity not found")
+  ) {
+    return {
+      kind: PAYMENT_ERROR_KIND.METHOD_UNAVAILABLE,
+      message: "No supported payment app was available on this device. Try another payment method or use a phone with a UPI app installed.",
+      shouldCheckStatus: false,
+      shouldAlert: false,
+    };
+  }
+
+  if (
+    gateway.step === "payment_authentication" ||
+    gateway.reason === "payment_error" ||
+    haystack.includes("payment_authentication") ||
+    haystack.includes("bad_request_error")
+  ) {
+    return {
+      kind: PAYMENT_ERROR_KIND.UNCERTAIN,
+      message: "We could not confirm whether the payment app completed the charge. We are checking your order status now.",
+      shouldCheckStatus: true,
+      shouldAlert: false,
+    };
+  }
+
+  return {
+    kind: PAYMENT_ERROR_KIND.FAILED,
+    message:
+      gateway.description ||
+      "Payment could not be completed. You can try again or choose another payment method.",
+    shouldCheckStatus: false,
+    shouldAlert: true,
+  };
+};
+
+const resolveStatusOutcome = (statusResult) => {
+  const status = String(statusResult?.data?.paymentStatus || "").toUpperCase();
+  if (status === "COMPLETED" || status === "CAPTURED" || status === "SUCCESS") {
+    return "SUCCESS";
+  }
+  if (status === "FAILED" || status === "REFUNDED") {
+    return "FAILED";
+  }
+  if (status === "AUTHORIZED" || status === "PENDING") {
+    return "PENDING";
+  }
+  return "UNKNOWN";
 };
 
 /**
@@ -47,7 +206,6 @@ const withTimeout = (promise, ms, label = "Request") => {
  */
 export const usePayment = () => {
   const [payment, setPayment] = useRecoilState(paymentAtom);
-  const authState = useRecoilValue(authAtom);
   const profile = useRecoilValue(profileAtom);
   const { cart, cartData, cartTotal, cartDiscount, clearCart } = useCart();
   const isProcessing = useRef(false);
@@ -59,6 +217,7 @@ export const usePayment = () => {
       currentOrder: null,
       razorpayConfig: null,
       error: null,
+      errorKind: PAYMENT_ERROR_KIND.NONE,
       paymentMethod: "ONLINE",
     });
     lastCreatedOrder.current = null;
@@ -74,7 +233,7 @@ export const usePayment = () => {
   /**
    * Build the order payload from current cart state.
    */
-  const buildOrderPayload = useCallback(() => {
+  const buildOrderPayload = useCallback((checkoutOptions = {}) => {
     const items = cart.map((item) => ({
       productId: item.productId || null,
       variantId: item.variantId || null,
@@ -96,29 +255,13 @@ export const usePayment = () => {
       totalAmount: cartTotal,
       discountAmount: discountAmount,
       discountCode: promoCode,
-      shippingAddress: { addressId: profile?.addressId || null },
+      paymentMethod: checkoutOptions.paymentMethod || payment.paymentMethod || "ONLINE",
+      shippingAddress: { addressId: checkoutOptions.addressId || profile?.addressId || null },
     };
-  }, [cart, cartData, cartTotal, authState, profile]);
+  }, [cart, cartData, cartTotal, profile, payment.paymentMethod]);
 
   /**
    * Detect if a Razorpay error is a user-initiated cancellation.
-   */
-  const isUserCancellation = (error) => {
-    const code = error?.code;
-    const desc = (error?.description || error?.message || "").toLowerCase();
-    return (
-      code === "PAYMENT_CANCELLED" ||
-      code === 2 || // Razorpay Android cancel code
-      desc.includes("cancelled") ||
-      desc.includes("canceled") ||
-      desc.includes("user closed") ||
-      desc.includes("dismissed")
-    );
-  };
-
-  /**
-   * Fallback verification: poll backend for payment status
-   * when verify endpoint fails but payment may have succeeded.
    */
   const fallbackVerify = useCallback(
     async (orderId, maxAttempts = 3) => {
@@ -134,27 +277,62 @@ export const usePayment = () => {
           if (statusResult.success) {
             const status = statusResult.data?.paymentStatus;
             console.log(`[usePayment] Fallback attempt ${attempt}: status=${status}`);
-            if (status === "COMPLETED" || status === "CAPTURED" || status === "SUCCESS") {
-              return { success: true, data: statusResult.data };
+            const outcome = resolveStatusOutcome(statusResult);
+            if (outcome === "SUCCESS") {
+              return { outcome, data: statusResult.data };
             }
-            if (status === "FAILED" || status === "REFUNDED") {
-              return { success: false, data: statusResult.data };
+            if (outcome === "FAILED") {
+              return { outcome, data: statusResult.data };
             }
-            // PENDING — keep polling
+            if (outcome === "PENDING") {
+              continue;
+            }
           }
         } catch (e) {
           console.warn(`[usePayment] Fallback attempt ${attempt} failed:`, e.message);
         }
       }
-      return { success: false, data: null };
+      return { outcome: "UNKNOWN", data: null };
     },
     []
   );
 
+  const applyFailureState = useCallback((kind, message) => {
+    setPayment((prev) => ({
+      ...prev,
+      checkoutState: kind === PAYMENT_ERROR_KIND.CANCELLED ? "CANCELLED" : "FAILED",
+      error: message,
+      errorKind: kind,
+    }));
+  }, [setPayment]);
+
+  const applyPendingConfirmationState = useCallback((message) => {
+    setPayment((prev) => ({
+      ...prev,
+      checkoutState: "PENDING_CONFIRMATION",
+      error:
+        message ||
+        "We are still checking your payment with the bank. Please do not pay again for this order yet.",
+      errorKind: PAYMENT_ERROR_KIND.UNCERTAIN,
+    }));
+  }, [setPayment]);
+
+  const finalizeSuccessfulPayment = useCallback((order, paymentData = null) => {
+    console.log("[usePayment] ✓ Payment successful!");
+    setPayment((prev) => ({
+      ...prev,
+      checkoutState: "SUCCESS",
+      currentOrder: { ...order, payment: paymentData || order.payment || null },
+      error: null,
+      errorKind: PAYMENT_ERROR_KIND.NONE,
+    }));
+    lastCreatedOrder.current = null;
+  }, [setPayment]);
+
   /**
    * Main checkout function – call this from the Place Order button.
    */
-  const startCheckout = useCallback(async () => {
+  const startCheckout = useCallback(async (checkoutOptions = {}) => {
     if (isProcessing.current) {
       console.log("[usePayment] Checkout already in progress, skipping");
       return { success: false, error: "Checkout already in progress" };
@@ -164,11 +342,11 @@ export const usePayment = () => {
 
     try {
       // ── Pre-validation ──
-      if (!authState?.isAuthenticated || !authState?.token) {
+      if (!profile?.userId) {
         throw new Error("Please log in to place an order");
       }
 
-      const orderPayload = buildOrderPayload();
+      const orderPayload = buildOrderPayload(checkoutOptions);
 
       if (!orderPayload.user?.userId) {
         throw new Error("Please complete your profile to place an order");
@@ -177,12 +355,16 @@ export const usePayment = () => {
       if (!orderPayload.orderItems?.length) {
         throw new Error("Your cart is empty");
       }
+      if (!orderPayload.shippingAddress?.addressId) {
+        throw new Error("Please select a delivery address");
+      }
 
       // ── Step 1: Create order on backend ──
       setPayment((prev) => ({
         ...prev,
         checkoutState: "CREATING_ORDER",
         error: null,
+        errorKind: PAYMENT_ERROR_KIND.NONE,
       }));
 
       console.log("[usePayment] → Creating order on backend...");
@@ -199,7 +381,7 @@ export const usePayment = () => {
           throw new Error("Session expired. Please log in again.");
         }
         if (orderResult.error?.status === 409) {
-          throw new Error("A conflicting order already exists. Please try again in a moment.");
+          throw new Error(errMsg);
         }
         if (orderResult.error?.status >= 500) {
           throw new Error("Our servers are busy. Please try again in a moment.");
@@ -208,6 +390,20 @@ export const usePayment = () => {
       }
 
       const order = orderResult.data;
+      if (orderPayload.paymentMethod === "COD") {
+        setPayment((prev) => ({
+          ...prev,
+          checkoutState: "SUCCESS",
+          currentOrder: order,
+          razorpayConfig: null,
+          error: null,
+          errorKind: PAYMENT_ERROR_KIND.NONE,
+        }));
+        lastCreatedOrder.current = null;
+        checkoutSucceeded = true;
+        return { success: true, order };
+      }
+
       const razorpayOrderId = order.razorPayOrderId;
       const razorpayKeyId = order.razorpayKeyId || order.payment?.razorpayKeyId;
       const amount = order.totalAmount;
@@ -284,72 +480,99 @@ export const usePayment = () => {
           error: null, // Don't show error yet, we're still trying
         }));
         const fallbackResult = await fallbackVerify(order.orderId);
-        if (fallbackResult.success) {
+        if (fallbackResult.outcome === "SUCCESS") {
           verifyResult = fallbackResult;
+        } else if (fallbackResult.outcome === "FAILED") {
+          const failureReason =
+            fallbackResult.data?.failureReason ||
+            "The bank declined or failed the payment. No charge was confirmed.";
+          throw Object.assign(new Error(failureReason), {
+            paymentKind: PAYMENT_ERROR_KIND.FAILED,
+          });
         } else {
-          throw new Error(
-            "Payment may have been charged but verification failed. " +
-            "Please check your order history or contact support. " +
-            "Do NOT retry payment."
+          throw Object.assign(
+            new Error(
+              "We could not confirm the payment yet. If money was debited, it should either appear in your orders shortly or be auto-reversed by your bank."
+            ),
+            { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
           );
         }
       }
 
-      if (!verifyResult.success) {
-        throw new Error(
-          verifyResult.error?.message || "Payment verification failed. Please check your bank statement."
+      if (verifyResult?.success === false) {
+        throw Object.assign(
+          new Error(
+            verifyResult.error?.message || "Payment verification failed. Please check your bank statement."
+          ),
+          { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
         );
       }
 
       // ── Step 4: Success! ──
-      console.log("[usePayment] ✓ Payment successful!");
-      setPayment((prev) => ({
-        ...prev,
-        checkoutState: "SUCCESS",
-        currentOrder: { ...order, payment: verifyResult.data },
-      }));
-
-      lastCreatedOrder.current = null; // Clear on success
+      finalizeSuccessfulPayment(order, verifyResult.data);
       checkoutSucceeded = true;
       return { success: true, order: { ...order, payment: verifyResult.data } };
     } catch (error) {
-      const errorMessage =
-        error?.description || error?.message || "Payment failed";
+      const classified = error?.paymentKind
+        ? {
+            kind: error.paymentKind,
+            message: error?.message || "Payment failed",
+            shouldCheckStatus: error.paymentKind === PAYMENT_ERROR_KIND.UNCERTAIN,
+            shouldAlert: false,
+          }
+        : classifyPaymentError(error);
 
-      console.error("[usePayment] ✗ Checkout failed:", {
-        message: errorMessage,
+      const logPayload = {
+        message: classified.message,
         code: error?.code,
-      });
+        kind: classified.kind,
+      };
+      if (classified.shouldCheckStatus) {
+        console.warn("[usePayment] Checkout needs payment follow-up:", logPayload);
+      } else {
+        console.log("[usePayment] ✗ Checkout failed:", logPayload);
+      }
 
-      // ── Distinguish user cancellation from real failures ──
-      if (isUserCancellation(error)) {
-        console.log("[usePayment] User cancelled payment");
+      if (classified.shouldCheckStatus && lastCreatedOrder.current?.orderId) {
         setPayment((prev) => ({
           ...prev,
-          checkoutState: "CANCELLED",
-          error: null, // No error message for intentional cancellation
+          checkoutState: "CHECKING_PAYMENT",
+          currentOrder: lastCreatedOrder.current,
+          error: null,
+          errorKind: classified.kind,
         }));
+        const fallbackResult = await fallbackVerify(lastCreatedOrder.current.orderId, 4);
+        if (fallbackResult.outcome === "SUCCESS") {
+          finalizeSuccessfulPayment(lastCreatedOrder.current, fallbackResult.data);
+          checkoutSucceeded = true;
+          return {
+            success: true,
+            order: { ...lastCreatedOrder.current, payment: fallbackResult.data },
+          };
+        }
+        if (fallbackResult.outcome === "FAILED") {
+          const failureReason =
+            fallbackResult.data?.failureReason ||
+            "The payment was not completed. No successful charge was confirmed.";
+          applyFailureState(PAYMENT_ERROR_KIND.FAILED, failureReason);
+          return { success: false, error: failureReason };
+        }
+        applyPendingConfirmationState(classified.message);
+        return {
+          success: false,
+          pending: true,
+          order: lastCreatedOrder.current,
+          error: classified.message,
+        };
+      }
+
+      applyFailureState(classified.kind, classified.message);
+
+      if (classified.kind === PAYMENT_ERROR_KIND.CANCELLED) {
         return { success: false, cancelled: true };
       }
 
-      // ── Real failure ──
-      setPayment((prev) => ({
-        ...prev,
-        checkoutState: "FAILED",
-        error: errorMessage,
-      }));
-
-      // Only show alert for non-network-timeout errors
-      // (timeout errors are already user-friendly in the message)
-      if (!errorMessage.includes("timed out")) {
-        Alert.alert(
-          "Payment Failed",
-          errorMessage,
-          [{ text: "OK" }]
-        );
-      }
-
-      return { success: false, error: errorMessage };
+      return { success: false, error: classified.message };
     } finally {
       // Only release the processing lock on failure/cancel.
       // On success, the lock stays until Cart.js calls resetProcessingFlag().
@@ -357,7 +580,7 @@ export const usePayment = () => {
         isProcessing.current = false;
       }
     }
-  }, [buildOrderPayload, setPayment, clearCart, authState, profile, fallbackVerify]);
+  }, [buildOrderPayload, setPayment, clearCart, fallbackVerify, profile, applyFailureState, applyPendingConfirmationState, finalizeSuccessfulPayment]);
 
   /**
    * Retry checkout — reuses the existing order if same items.
@@ -378,6 +601,7 @@ export const usePayment = () => {
           checkoutState: "AWAITING_PAYMENT",
           currentOrder: order,
           error: null,
+          errorKind: PAYMENT_ERROR_KIND.NONE,
         }));
 
         const rzpOptions = {
@@ -418,38 +642,76 @@ export const usePayment = () => {
             20000,
             "Payment verification"
           );
-        } catch (verifyError) {
+        } catch (_verifyError) {
           const fallbackResult = await fallbackVerify(order.orderId);
-          if (fallbackResult.success) {
+          if (fallbackResult.outcome === "SUCCESS") {
             verifyResult = fallbackResult;
+          } else if (fallbackResult.outcome === "FAILED") {
+            const failureReason =
+              fallbackResult.data?.failureReason ||
+              "The bank declined or failed the payment. No charge was confirmed.";
+            throw Object.assign(new Error(failureReason), {
+              paymentKind: PAYMENT_ERROR_KIND.FAILED,
+            });
           } else {
-            throw new Error(
-              "Verification failed. Please check your order history."
+            throw Object.assign(
+              new Error(
+                "We could not confirm the payment yet. Please check your order history before retrying."
+              ),
+              { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
             );
           }
         }
 
-        if (!verifyResult.success) {
-          throw new Error(verifyResult.error?.message || "Verification failed");
+        if (verifyResult?.success === false) {
+          throw Object.assign(
+            new Error(verifyResult.error?.message || "Verification failed"),
+            { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
+          );
         }
 
-        setPayment((prev) => ({
-          ...prev,
-          checkoutState: "SUCCESS",
-          currentOrder: { ...order, payment: verifyResult.data },
-        }));
-
-        lastCreatedOrder.current = null;
+        finalizeSuccessfulPayment(order, verifyResult.data);
         checkoutSucceeded = true;
         return { success: true, order: { ...order, payment: verifyResult.data } };
       } catch (error) {
-        if (isUserCancellation(error)) {
-          setPayment((prev) => ({ ...prev, checkoutState: "CANCELLED", error: null }));
+        const classified = error?.paymentKind
+          ? {
+              kind: error.paymentKind,
+              message: error?.message || "Retry failed",
+              shouldCheckStatus: error.paymentKind === PAYMENT_ERROR_KIND.UNCERTAIN,
+            }
+          : classifyPaymentError(error);
+
+        if (classified.shouldCheckStatus && order?.orderId) {
+          setPayment((prev) => ({
+            ...prev,
+            checkoutState: "CHECKING_PAYMENT",
+            currentOrder: order,
+            error: null,
+            errorKind: classified.kind,
+          }));
+          const fallbackResult = await fallbackVerify(order.orderId, 4);
+          if (fallbackResult.outcome === "SUCCESS") {
+            finalizeSuccessfulPayment(order, fallbackResult.data);
+            checkoutSucceeded = true;
+            return { success: true, order: { ...order, payment: fallbackResult.data } };
+          }
+          if (fallbackResult.outcome === "FAILED") {
+            const failureReason =
+              fallbackResult.data?.failureReason ||
+              "The payment was not completed. No successful charge was confirmed.";
+            applyFailureState(PAYMENT_ERROR_KIND.FAILED, failureReason);
+            return { success: false, error: failureReason };
+          }
+          applyPendingConfirmationState(classified.message);
+          return { success: false, pending: true, order, error: classified.message };
+        }
+
+        applyFailureState(classified.kind, classified.message);
+        if (classified.kind === PAYMENT_ERROR_KIND.CANCELLED) {
           return { success: false, cancelled: true };
         }
-        const msg = error?.description || error?.message || "Retry failed";
-        setPayment((prev) => ({ ...prev, checkoutState: "FAILED", error: msg }));
-        return { success: false, error: msg };
+        return { success: false, error: classified.message };
       } finally {
         if (!checkoutSucceeded) {
           isProcessing.current = false;
@@ -459,7 +721,7 @@ export const usePayment = () => {
 
     // No existing order — full fresh checkout
     return startCheckout();
-  }, [startCheckout, setPayment, profile, fallbackVerify]);
+  }, [startCheckout, setPayment, profile, fallbackVerify, applyFailureState, applyPendingConfirmationState, finalizeSuccessfulPayment]);
 
   /**
    * Force-reset the processing flag.
@@ -475,10 +737,13 @@ export const usePayment = () => {
     currentOrder: payment.currentOrder,
     paymentMethod: payment.paymentMethod,
     error: payment.error,
+    errorKind: payment.errorKind,
     isLoading:
       payment.checkoutState === "CREATING_ORDER" ||
-      payment.checkoutState === "VERIFYING",
+      payment.checkoutState === "VERIFYING" ||
+      payment.checkoutState === "CHECKING_PAYMENT",
     isAwaitingPayment: payment.checkoutState === "AWAITING_PAYMENT",
+    isPendingConfirmation: payment.checkoutState === "PENDING_CONFIRMATION",
     isSuccess: payment.checkoutState === "SUCCESS",
     isFailed: payment.checkoutState === "FAILED",
     isCancelled: payment.checkoutState === "CANCELLED",
