@@ -52,6 +52,7 @@ const EMPTY_FORM = {
   unit: "500g",
   categoryId: "",
   isActive: true,
+  isHidden: false,
 };
 
 const PRESET_UNITS = ["250g", "500g", "1kg", "1pc", "6pcs", "12pcs", "1L", "500ml"];
@@ -113,6 +114,8 @@ const ProductCard = ({ product, onEdit, onStockUpdate, onToggleActive, onDelete,
           shadowRadius: 8,
           elevation: 2,
           opacity: product.isActive ? 1 : 0.55,
+          borderWidth: product.isHidden ? 1 : 0,
+          borderColor: product.isHidden ? "#FFCDD2" : "transparent",
         }}
       >
         {/* Main Row */}
@@ -167,6 +170,22 @@ const ProductCard = ({ product, onEdit, onStockUpdate, onToggleActive, onDelete,
               >
                 <Text style={{ fontSize: 10, fontWeight: "700", color: "#C62828" }}>
                   OUT OF STOCK
+                </Text>
+              </View>
+            )}
+            {product.isHidden && (
+              <View
+                style={{
+                  backgroundColor: "#FCE4EC",
+                  borderRadius: 6,
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  marginTop: 6,
+                  alignSelf: "flex-start",
+                }}
+              >
+                <Text style={{ fontSize: 10, fontWeight: "700", color: "#C2185B" }}>
+                  HIDDEN
                 </Text>
               </View>
             )}
@@ -391,6 +410,7 @@ const AdminProducts = () => {
       unit: product.unit || "500g",
       categoryId: product.categoryId || "",
       isActive: product.isActive !== false,
+      isHidden: product.isHidden || false,
     });
     setModalVisible(true);
   };
@@ -425,6 +445,7 @@ const AdminProducts = () => {
         unit: form.unit,
         categoryId: form.categoryId || null,
         isActive: form.isActive,
+        isHidden: form.isHidden,
       };
 
       if (editingProduct) {
@@ -759,23 +780,45 @@ const AdminProducts = () => {
           />
         </FormField>
 
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            backgroundColor: "#F8F8FC",
-            borderRadius: 12,
-            padding: 14,
-          }}
-        >
-          <Text style={{ fontSize: 14, fontWeight: "600", color: "#1C1C1E" }}>Active</Text>
-          <Switch
-            value={form.isActive}
-            onValueChange={(v) => updateFormField("isActive", v)}
-            trackColor={{ false: "#E5E7EB", true: "#C8E6C9" }}
-            thumbColor={form.isActive ? "#2E7D32" : "#9CA3AF"}
-          />
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              backgroundColor: "#F8F8FC",
+              borderRadius: 12,
+              padding: 14,
+            }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#1C1C1E" }}>Active</Text>
+            <Switch
+              value={form.isActive}
+              onValueChange={(v) => updateFormField("isActive", v)}
+              trackColor={{ false: "#E5E7EB", true: "#C8E6C9" }}
+              thumbColor={form.isActive ? "#2E7D32" : "#9CA3AF"}
+            />
+          </View>
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              backgroundColor: "#F8F8FC",
+              borderRadius: 12,
+              padding: 14,
+            }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#1C1C1E" }}>Hidden</Text>
+            <Switch
+              value={form.isHidden}
+              onValueChange={(v) => updateFormField("isHidden", v)}
+              trackColor={{ false: "#E5E7EB", true: "#FFCDD2" }}
+              thumbColor={form.isHidden ? "#C62828" : "#9CA3AF"}
+            />
+          </View>
         </View>
       </FormModal>
     </View>

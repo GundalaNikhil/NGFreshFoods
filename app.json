@@ -46,6 +46,13 @@
       "backgroundColor": "#d9dcb9"
     },
     "plugins": [
+      [
+        "@sentry/react-native",
+        {
+          "organization": "freshfarmworks",
+          "project": "freshfarmfoods"
+        }
+      ],
       "expo-router",
       "@react-native-firebase/app",
       [

@@ -50,6 +50,13 @@ import AdminOrdersScreen from "../components/bottomNavScreens/AdminOrdersScreen"
 import AdminProductsScreen from "../components/bottomNavScreens/AdminProductsScreen";
 import AdminMoreScreenWrapper from "../components/bottomNavScreens/AdminMoreScreenWrapper";
 
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  debug: false,
+});
+
 // ── Brand Design Tokens ──
 const BRAND_RED = "#E23744";
 const BRAND_ORANGE = "#FC8019";
@@ -504,7 +511,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function Index() {
+function Index() {
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -546,3 +553,5 @@ export default function Index() {
     </QueryClientProvider>
   );
 }
+
+export default Sentry.wrap(Index);
