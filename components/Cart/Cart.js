@@ -1,6 +1,7 @@
 /* global setTimeout, clearTimeout */
 import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView, ScrollView, Text, TouchableOpacity, View, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { useCart } from "../../hooks/useCart";
 import { usePayment } from "../../hooks/usePayment";
@@ -20,6 +21,7 @@ import AddAddressModal from "../Home/AddAddressModal";
 import { useAddress } from "../../hooks/useAddress";
 
 const Cart = () => {
+  const navigation = useNavigation();
   const { cart, cartData, cartTotal, cartDiscount, applyCoupon, removeCoupon } = useCart();
   const {
     checkoutState,
@@ -462,7 +464,11 @@ const Cart = () => {
           <Text className="text-[#686B78] text-center mt-2 leading-relaxed">
             Your kitchen is waiting for some fresh farm foods. Let's add some delicious meat, chicken or eggs to your cart!
           </Text>
-          <TouchableOpacity className="mt-8 bg-[#E23744] px-10 py-4 rounded-2xl" style={{ shadowColor: '#E23744', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}>
+          <TouchableOpacity 
+            className="mt-8 bg-[#E23744] px-10 py-4 rounded-2xl" 
+            style={{ shadowColor: '#E23744', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}
+            onPress={() => navigation.navigate("Products")}
+          >
             <Text className="text-white font-bold text-base">Browse Categories</Text>
           </TouchableOpacity>
         </View>

@@ -24,6 +24,11 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) =>
       return;
     }
 
+    if (!lastName.trim()) {
+      setError('Last name is required');
+      return;
+    }
+
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError('Please enter a valid email address');
       return;
@@ -159,9 +164,9 @@ const CompleteProfileStep = ({ phoneNumber, firebaseIdToken, onAuthSuccess }) =>
 
       {/* Sticky Bottom Action Button */}
       <TouchableOpacity 
-        style={[styles.mainButton, loading || !firstName.trim() ? styles.buttonDisabled : null]}
+        style={[styles.mainButton, loading || !firstName.trim() || !lastName.trim() ? styles.buttonDisabled : null]}
         onPress={handleCompleteProfile}
-        disabled={loading || !firstName.trim()}
+        disabled={loading || !firstName.trim() || !lastName.trim()}
         activeOpacity={0.8}
       >
         {loading ? (

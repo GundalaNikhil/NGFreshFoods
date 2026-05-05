@@ -190,9 +190,30 @@ const HomePage = () => {
             <CategoriesList />
           </View>
 
-          <View className="px-4 mt-6">
+          <View className="px-4 mt-6 mb-2">
             <HomePageBanner />
           </View>
+          
+          {/* Personalized Section: Top Picks */}
+          {products && products.length > 0 && (
+            <View className="mt-6 mb-4 bg-[#F8F9FA] pt-6 pb-2">
+              <View className="px-4 mb-4 flex-row justify-between items-center">
+                <View>
+                  <Text className="text-[22px] font-extrabold text-[#1C1C1C]">Top Picks For You</Text>
+                  <Text className="text-xs text-[#93959F] mt-1">Curated based on your preferences</Text>
+                </View>
+              </View>
+              <View className="bg-white">
+                {products.slice(0, 3).map((item) => (
+                  <ProductCard 
+                    key={item.product_id?.toString()} 
+                    product={item} 
+                    onAddToCart={() => {}} 
+                  />
+                ))}
+              </View>
+            </View>
+          )}
         </ScrollView>
       )}
 

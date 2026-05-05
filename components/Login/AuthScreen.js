@@ -197,7 +197,7 @@ const AuthScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF5ED', // Premium warm cream tone
+    backgroundColor: '#FFFFFF', // Clean white background
   },
   innerContainer: {
     flex: 1,
@@ -206,36 +206,39 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     position: 'relative',
-    backgroundColor: '#EBE2D5',
+    backgroundColor: '#F9FAFB', // Very subtle gray to contrast with white card
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   characterImage: {
-    width: '100%',
-    height: '110%',
+    width: '90%',
+    height: '90%',
     position: 'absolute',
-    top: -20, // Slightly shift up to focus on the character
+    bottom: 20,
   },
   gradientOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 120,
-    // A linear gradient effect recreated using overlapping shadows or just letting the card handle the edge 
+    height: 80,
     backgroundColor: 'transparent', 
   },
   bottomCard: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 36,
-    borderTopRightRadius: 36,
-    paddingHorizontal: 28,
-    paddingTop: 36,
-    paddingBottom: Platform.OS === 'ios' ? 44 : 32,
-    minHeight: height * 0.52, // Takes up just over half the screen
-    shadowColor: '#1A0E04',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 20, // Android shadow
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingHorizontal: 32,
+    paddingTop: 40,
+    paddingBottom: Platform.OS === 'ios' ? 50 : 36,
+    minHeight: height * 0.55, 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 15, 
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
   }
 });
 

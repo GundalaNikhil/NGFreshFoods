@@ -84,6 +84,21 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
   const [loading, setLoading] = useState(!initialOrder);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Refresh cooldown for payment pending state
+  const [refreshCooldown, setRefreshCooldown] = useState(60);
+
+  useEffect(() => {
+    let timer = null;
+    if (refreshCooldown > 0) {
+      timer = setTimeout(() => {
+        setRefreshCooldown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [refreshCooldown]);
 
   // Animations for timeline steps
   const stepAnims = useRef(
@@ -165,6 +180,7 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
 
   const onRefresh = () => {
     setRefreshing(true);
+    setRefreshCooldown(60);
     loadOrder(true);
   };
 
@@ -325,9 +341,35 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
             <Text style={{ fontSize: 14, fontWeight: "900", color: "#92400E", marginBottom: 6 }}>
               Do not pay again yet
             </Text>
-            <Text style={{ fontSize: 12, color: "#92400E", lineHeight: 18 }}>
-              Your payment has not been confirmed yet. If money was debited, this order should update automatically once the payment is verified. Pull down to refresh.
+            <Text style={{ fontSize: 12, color: "#92400E", lineHeight: 18, marginBottom: 12 }}>
+              Your payment has not been confirmed yet. If money was debited, this order should update automatically once the payment is verified.
             </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: refreshCooldown > 0 || refreshing ? "#FDE68A" : "#D97706",
+                borderRadius: 10,
+                paddingVertical: 10,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row"
+              }}
+              disabled={refreshCooldown > 0 || refreshing}
+              onPress={onRefresh}
+            >
+              {refreshing ? (
+                <ActivityIndicator size="small" color="#92400E" />
+              ) : (
+                <Text style={{ 
+                  color: refreshCooldown > 0 ? "#B45309" : "#FFFFFF", 
+                  fontWeight: "700", 
+                  fontSize: 13 
+                }}>
+                  {refreshCooldown > 0 
+                    ? `Refresh Status (${refreshCooldown}s)` 
+                    : "Refresh Status"}
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
         )}
 

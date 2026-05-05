@@ -9,18 +9,18 @@ const CategoryItem = ({ title, image, itemSize, isLast, onPress }) => {
       onPress={onPress}
       style={{ 
         width: itemSize, 
-        marginRight: isLast ? 0 : 12,
+        marginBottom: 16,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 4,
       }}
-      className="bg-white rounded-2xl p-2.5"
+      className="bg-white rounded-[24px] p-3 border border-gray-100"
     >
       <View
-        className="rounded-xl overflow-hidden bg-[#F5F5F5]"
-        style={{ height: itemSize - 12 }}
+        className="rounded-2xl overflow-hidden bg-[#F8F9FA]"
+        style={{ height: itemSize * 0.8 }}
       >
         <CachedImage
           source={image}
@@ -30,18 +30,18 @@ const CategoryItem = ({ title, image, itemSize, isLast, onPress }) => {
             width: "100%",
             height: "100%",
           }}
-          className="rounded-xl"
+          className="rounded-2xl"
         />
       </View>
       <Text
-        className="mt-2.5 text-center font-bold text-[#1C1C1C] text-xs"
+        className="mt-3 text-center font-extrabold text-[#1C1C1C] text-[13px]"
         numberOfLines={1}
       >
         {title}
       </Text>
       <View className="mt-1 items-center">
-        <Text className="text-[10px] text-[#E23744] font-semibold">
-          View all →
+        <Text className="text-[10px] text-[#E23744] font-bold tracking-wide uppercase">
+          Explore
         </Text>
       </View>
     </TouchableOpacity>

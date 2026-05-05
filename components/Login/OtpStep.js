@@ -124,10 +124,10 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
     }
   };
 
-  const handleVerifyOtp = async () => {
+  const handleVerifyOtp = async (overrideCode) => {
     if (isProcessingRef.current) return; // Already auto-verifying
     
-    const code = otp.join('');
+    const code = typeof overrideCode === 'string' ? overrideCode : otp.join('');
     if (code.length < 6) {
       setError('Please enter the full 6-digit OTP');
       return;

@@ -372,6 +372,10 @@ function RootNavigator() {
         const idToken = await firebaseUser.getIdToken(true);
         const loginResponse = await loginWithFirebaseOtpBff({ idToken });
         if (loginResponse.success) {
+          if (loginResponse.data.profile.isNewUser) {
+            // New user needs to complete profile, don't set as authenticated yet
+            return false;
+          }
           setProfile(loginResponse.data.profile);
           setAuthState({ isAuthenticated: true, isHydrated: true });
           return true;

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import { Dimensions, ScrollView, Text, View } from "react-native";
+import { Dimensions, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useProducts } from "../../../hooks/useProducts";
 import { getEntityImageUrl } from "../../../utils/imageUrl";
@@ -22,7 +22,8 @@ const CategoriesList = () => {
   const navigation = useNavigation();
   const { categories, setSelectedCategory, setSelectedFoodType } = useProducts();
   const screenWidth = Dimensions.get("window").width;
-  const itemSize = useMemo(() => Math.min(108, (screenWidth - 56) / 3), [screenWidth]);
+  // Calculate item size for a clean 3-column grid
+  const itemSize = useMemo(() => (screenWidth - 48) / 3, [screenWidth]);
 
   const handleCategoryPress = useCallback((categoryId) => {
     setSelectedFoodType(productFoodTypeOptions.ALL);
@@ -31,24 +32,26 @@ const CategoriesList = () => {
   }, [navigation, setSelectedCategory, setSelectedFoodType]);
 
   return (
-    <View className="items-center">
-      <View className="items-center px-1 mb-3">
-        <Text className="text-[23px] font-extrabold text-[#1C1C1C] text-center">
-          What's on your mind?
-        </Text>
-        <View className="mt-2 w-8 h-[3px] rounded-full bg-[#E23744]" />
+    <View className="items-center w-full">
+      <View className="w-full flex-row justify-between items-end mb-4 px-1">
+        <View>
+          <Text className="text-[22px] font-extrabold text-[#1C1C1C]">
+            Shop by Category
+          </Text>
+          <Text className="text-xs text-[#93959F] mt-1">
+            Freshest meat tailored for you
+          </Text>
+        </View>
+        <View className="w-8 h-[3px] rounded-full bg-[#E23744] mb-2" />
       </View>
-      <Text className="text-xs text-[#93959F] px-4 mb-4 text-center">
-        Farm-fresh meat, chicken & eggs delivered to your door.
-      </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ width: "100%" }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          paddingHorizontal: 16,
+      
+      <View 
+        style={{ 
+          flexDirection: 'row', 
+          flexWrap: 'wrap', 
+          justifyContent: categories.length > 3 ? 'space-between' : 'flex-start',
+          gap: categories.length > 3 ? 0 : 8,
+          width: '100%',
         }}
       >
         {categories.map((category, index) => (
@@ -65,7 +68,7 @@ const CategoriesList = () => {
             onPress={() => handleCategoryPress(category.category_id)}
           />
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 };
