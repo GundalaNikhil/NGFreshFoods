@@ -75,6 +75,8 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/${API_VERSION}/admin/orders/${orderId}/status`,
   ADMIN_ORDER_REFUND: (orderId) =>
     `${API_BASE_URL}/api/${API_VERSION}/admin/orders/${orderId}/refund`,
+  ADMIN_ORDER_COD_RECEIVED: (orderId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/admin/orders/${orderId}/cod-received`,
   ADMIN_PRODUCTS: `${API_BASE_URL}/api/${API_VERSION}/admin/products`,
   ADMIN_PRODUCT_UPDATE: (productId) =>
     `${API_BASE_URL}/api/${API_VERSION}/admin/products/${productId}`,

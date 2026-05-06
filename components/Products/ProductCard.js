@@ -1,6 +1,6 @@
-import { Minus, Plus } from "lucide-react-native";
-import React, { useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { Minus, Plus, Flame } from "lucide-react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { ActivityIndicator, Text, TouchableOpacity, View, Animated } from "react-native";
 import CachedImage from "../ResuableComponents/CachedImage";
 import { isVegProduct } from "../../utils/productClassification";
 import ChickenCustomizationModal from "./ChickenCustomizationModal";
@@ -21,6 +21,23 @@ const ProductCard = ({ product, cartItem, addToCart, updateQuantity, onAddToCart
   const hasCustomizations =
     (product.variants && product.variants.length > 0) ||
     (product.addons && product.addons.length > 0);
+
+  // Marketing: Randomly assign Bestseller if stock is healthy and it's a popular item.
+  // In a real app this would come from the backend.
+  const isBestseller = !isOutOfStock && !isLowStock && (product.id % 3 === 0);
+
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isLowStock) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.08, duration: 800, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true })
+        ])
+      ).start();
+    }
+  }, [isLowStock, pulseAnim]);
 
   const handleAddToCartClick = () => {
     if (hasCustomizations) {
@@ -53,15 +70,20 @@ const ProductCard = ({ product, cartItem, addToCart, updateQuantity, onAddToCart
       <View className="flex-row">
         {/* Left Info Section */}
         <View className="flex-1 pr-4">
-          <View className="flex-row items-center mb-1">
+          <View className="flex-row items-center mb-2">
             <View className={`w-4 h-4 border ${isVeg ? 'border-green-600' : 'border-red-600'} items-center justify-center mr-2`}>
               <View className={`w-2 h-2 rounded-full ${isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
             </View>
-            {product.tags?.[0] && (
+            {isBestseller ? (
+              <View className="flex-row items-center bg-orange-50 px-2 py-0.5 rounded text-orange-600 border border-orange-100">
+                <Flame size={12} color="#EA580C" />
+                <Text className="text-[10px] font-bold text-orange-600 ml-1 uppercase">Bestseller</Text>
+              </View>
+            ) : product.tags?.[0] ? (
               <Text className="text-[11px] font-bold text-orange-500 uppercase">
                 {product.tags[0]}
               </Text>
-            )}
+            ) : null}
           </View>
           
           <Text className="text-[17px] font-bold text-gray-900 leading-tight">
@@ -88,9 +110,12 @@ const ProductCard = ({ product, cartItem, addToCart, updateQuantity, onAddToCart
             </View>
           )}
           {isLowStock && (
-            <View className="rounded-md px-2 py-1 mt-2 self-start" style={{ backgroundColor: "#FFF7ED" }}>
-              <Text className="text-[11px] font-bold" style={{ color: "#C2410C" }}>Only {stockQty} left!</Text>
-            </View>
+            <Animated.View 
+              style={{ transform: [{ scale: pulseAnim }] }} 
+              className="rounded-md px-2 py-1 mt-2 self-start bg-orange-50 border border-orange-200"
+            >
+              <Text className="text-[11px] font-bold text-orange-600">Only {stockQty} left! Hurry</Text>
+            </Animated.View>
           )}
         </View>
 

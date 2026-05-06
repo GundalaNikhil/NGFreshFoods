@@ -1,55 +1,65 @@
-import { ChevronDown, MapPin, User } from "lucide-react-native";
+import { ChevronDown, MapPin, ShoppingCart } from "lucide-react-native";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { useAddress } from "../../hooks/useAddress";
+import { useRecoilValue } from "recoil";
+import { profileAtom } from "../../recoil/atoms/profileAtom";
+import { useNavigation } from "@react-navigation/native";
+import { useCart } from "../../hooks/useCart";
 
 const AddressHeader = ({ onAddressPress, onProfilePress }) => {
   const { selectedAddress } = useAddress();
+  const profile = useRecoilValue(profileAtom);
+  const navigation = useNavigation();
+  const { cart } = useCart();
+  
+  const cartItemCount = cart?.length || 0;
+  
+  // Extract the first initial of the user's name
+  const userInitial = profile?.firstName?.charAt(0)?.toUpperCase() || "U";
+
+  const locationName = selectedAddress?.label === "HOME" || selectedAddress?.label === "WORK" || selectedAddress?.label === "OTHER"
+    ? selectedAddress.label.charAt(0).toUpperCase() + selectedAddress.label.slice(1).toLowerCase()
+    : selectedAddress?.label || "New York";
 
   return (
-    <View className="flex-row items-center justify-between py-1">
+    <View className="flex-row items-center justify-between py-2 mb-2">
+      {/* LEFT: Profile */}
       <TouchableOpacity 
-        className="flex-row items-center flex-1 pr-3" 
-        onPress={onAddressPress}
-        activeOpacity={0.7}
+        onPress={onProfilePress}
+        activeOpacity={0.8}
       >
-        <View className="w-9 h-9 rounded-full bg-[#FFF0F1] justify-center items-center">
-          {selectedAddress ? (
-            <MapPin size={17} color="#E23744" strokeWidth={2.5} />
-          ) : (
-            <MapPin size={17} color="#93959F" strokeWidth={2.5} />
-          )}
-        </View>
-
-        <View className="ml-3 flex-1">
-          {selectedAddress ? (
-            <>
-              <View className="flex-row items-center">
-                <Text className="text-[15px] font-black text-[#1C1C1C] mr-1 uppercase tracking-tight">
-                  {selectedAddress.label}
-                </Text>
-                <ChevronDown size={14} color="#E23744" strokeWidth={3} />
-              </View>
-              <Text numberOfLines={1} className="text-[#93959F] text-[12px] font-medium">
-                {selectedAddress.addressLine1}
-              </Text>
-            </>
-          ) : (
-            <View className="flex-row items-center">
-              <Text className="text-[14px] font-bold text-[#93959F]">
-                Select delivery location
-              </Text>
-              <ChevronDown size={14} color="#93959F" strokeWidth={3} className="ml-1" />
-            </View>
-          )}
+        <View className="w-11 h-11 rounded-full bg-[#1A1A1A] items-center justify-center shadow-sm border-[1.5px] border-[#D4AF37]">
+          <Text className="text-[#D4AF37] font-black text-[16px] tracking-widest">{userInitial}</Text>
         </View>
       </TouchableOpacity>
 
+      {/* CENTER: Address */}
       <TouchableOpacity 
-        onPress={onProfilePress}
-        className="w-9 h-9 rounded-full bg-[#F5F5F5] justify-center items-center border border-[#E9E9EB]"
+        className="flex-row items-center justify-center flex-1 mx-4" 
+        onPress={onAddressPress}
+        activeOpacity={0.7}
       >
-        <User size={18} color="#1C1C1C" />
+        <MapPin size={18} color="#1C1C1C" strokeWidth={2.5} />
+        <Text className="text-[16px] font-semibold text-[#1C1C1C] mx-1" numberOfLines={1}>
+          {locationName}
+        </Text>
+        <ChevronDown size={18} color="#1C1C1C" strokeWidth={2.5} />
+      </TouchableOpacity>
+
+      {/* RIGHT: Cart */}
+      <TouchableOpacity 
+        onPress={() => navigation.navigate("Cart")}
+        activeOpacity={0.8}
+      >
+        <View className="relative w-11 h-11 rounded-full bg-white border border-[#E9E9EB] items-center justify-center shadow-sm">
+          <ShoppingCart size={20} color="#1C1C1C" strokeWidth={2} />
+          {cartItemCount > 0 && (
+            <View className="absolute -top-1.5 -right-1.5 bg-[#E23744] w-5 h-5 rounded-full items-center justify-center border-2 border-white">
+              <Text className="text-white text-[9px] font-black">{cartItemCount}</Text>
+            </View>
+          )}
+        </View>
       </TouchableOpacity>
     </View>
   );

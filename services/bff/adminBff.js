@@ -48,10 +48,15 @@ export const deleteProduct = async (productId) => {
   return response?.data || {};
 };
 
-// ── Refunds ──
+// ── Refunds & COD ──
 
 export const initiateRefund = async (orderId) => {
   const response = await apiClient.post(API_ENDPOINTS.ADMIN_ORDER_REFUND(orderId));
+  return response?.data || {};
+};
+
+export const markCodReceived = async (orderId) => {
+  const response = await apiClient.post(API_ENDPOINTS.ADMIN_ORDER_COD_RECEIVED(orderId));
   return response?.data || {};
 };
 

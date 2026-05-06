@@ -26,6 +26,7 @@ import {
   Settings,
   User,
   LifeBuoy,
+  Leaf,
 } from "lucide-react-native";
 import authFirebase from "@react-native-firebase/auth";
 import { authAtom } from "../../recoil/atoms/authAtom";
@@ -45,6 +46,7 @@ import { clearCachedData, getCachedData, setCachedData } from "../../utils/local
 import OrderDetailScreen from "../Cart/OrderDetailScreen";
 import AddAddressModal from "../Home/AddAddressModal";
 import { useAddress } from "../../hooks/useAddress";
+import AboutPage from "../About/AboutPage";
 
 const ACCOUNT_CACHE_TTL_MS = 2 * 60 * 1000;
 
@@ -540,6 +542,14 @@ const AccountHub = ({ onBack }) => {
       iconBg: "#F3F4F6",
       onPress: () => setSection("preferences"),
     },
+    {
+      title: "About Us",
+      subtitle: "Mission & Founders",
+      icon: Leaf,
+      iconColor: "#5C5F6A",
+      iconBg: "#F3F4F6",
+      onPress: () => setSection("about"),
+    },
   ];
 
   // --- Helper: check if email looks real ---
@@ -836,6 +846,10 @@ const AccountHub = ({ onBack }) => {
         )}
       </ScrollView>
     );
+  }
+
+  if (section === "about") {
+    return <AboutPage onBack={() => setSection("home")} />;
   }
 
   if (section !== "home") {

@@ -109,63 +109,41 @@ const HomePage = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      {/* Address + Search bar always visible */}
-      <View className="px-4 mt-2">
-        <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
-      </View>
-      <View className="px-4 mt-3">
-        <SearchBar />
-      </View>
-
-      {/* Shop Closed Banner */}
-      {!shopStatus.isOpen && (
-        <View className="mx-4 mt-3 rounded-2xl px-4 py-4" style={{ backgroundColor: "#1E1E2E" }}>
-          <View className="flex-row items-center mb-2">
-            <View className="w-8 h-8 rounded-full items-center justify-center mr-2" style={{ backgroundColor: "rgba(239,68,68,0.15)" }}>
-              <Store size={16} color="#F87171" strokeWidth={2.5} />
-            </View>
-            <Text className="text-[15px] font-bold text-white">Shop is currently closed</Text>
-          </View>
-          <Text className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-            {shopStatus.message || "We'll be back soon!"}
-          </Text>
-          {shopStatus.reopenAt ? (
-            <Text className="text-[12px] font-semibold mt-1" style={{ color: "#A5B4FC" }}>
-              Reopen at: {shopStatus.reopenAt}
-            </Text>
-          ) : null}
-        </View>
-      )}
-
-      {/* Background refresh indicator — only show on error reconnect, never during normal polling */}
-      {isRefreshing && error ? (
-        <View className="px-4 mt-2 flex-row items-center">
-          <ActivityIndicator size="small" color="#E23744" />
-          <Text className="ml-2 text-xs text-[#93959F]">Reconnecting catalog...</Text>
-        </View>
-      ) : null}
-
       {isSearching ? (
-        <FlatList
-          data={products}
-          renderItem={renderSearchResult}
-          keyExtractor={keyExtractor}
-          initialNumToRender={5}
-          windowSize={5}
-          maxToRenderPerBatch={5}
-          updateCellsBatchingPeriod={40}
-          removeClippedSubviews={true}
-          contentContainerStyle={{ padding: 16, paddingBottom: 80, flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<SearchEmptyState searchQuery={searchQuery} />}
-          keyboardShouldPersistTaps="handled"
-        />
+        <>
+          <View className="px-5 mt-2">
+            <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
+          </View>
+          <View className="px-5 mb-2">
+            <SearchBar />
+          </View>
+          <FlatList
+            data={products}
+            renderItem={renderSearchResult}
+            keyExtractor={keyExtractor}
+            initialNumToRender={5}
+            windowSize={5}
+            maxToRenderPerBatch={5}
+            updateCellsBatchingPeriod={40}
+            removeClippedSubviews={true}
+            contentContainerStyle={{ padding: 16, paddingBottom: 80, flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={<SearchEmptyState searchQuery={searchQuery} />}
+            keyboardShouldPersistTaps="handled"
+          />
+        </>
       ) : shouldShowSkeleton ? (
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 90 }}
         >
+          <View className="px-5 mt-2">
+            <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
+          </View>
+          <View className="px-5 mb-2">
+            <SearchBar />
+          </View>
           <HomePageSkeleton />
         </ScrollView>
       ) : (
@@ -173,6 +151,7 @@ const HomePage = () => {
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 90 }}
+          stickyHeaderIndices={[2]} // index 2 is CategoriesList wrapper
           refreshControl={
             <RefreshControl
               refreshing={pullRefreshing}
@@ -182,38 +161,83 @@ const HomePage = () => {
             />
           }
         >
-          <View className="mt-4">
-            <Slideshow />
+          {/* Index 0: Header & Search */}
+          <View className="bg-white">
+            <View className="px-5 mt-2">
+              <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
+            </View>
+            <View className="px-5 pb-2">
+              <SearchBar />
+            </View>
           </View>
 
-          <View className="px-4 mt-6">
-            <CategoriesList />
+          {/* Index 1: Slideshow & Shop Status */}
+          <View className="bg-white pb-4">
+            {!shopStatus.isOpen && (
+              <View className="mx-4 mt-3 rounded-2xl px-4 py-4" style={{ backgroundColor: "#1E1E2E" }}>
+                <View className="flex-row items-center mb-2">
+                  <View className="w-8 h-8 rounded-full items-center justify-center mr-2" style={{ backgroundColor: "rgba(239,68,68,0.15)" }}>
+                    <Store size={16} color="#F87171" strokeWidth={2.5} />
+                  </View>
+                  <Text className="text-[15px] font-bold text-white">Shop is currently closed</Text>
+                </View>
+                <Text className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+                  {shopStatus.message || "We'll be back soon!"}
+                </Text>
+                {shopStatus.reopenAt ? (
+                  <Text className="text-[12px] font-semibold mt-1" style={{ color: "#A5B4FC" }}>
+                    Reopen at: {shopStatus.reopenAt}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+
+            {isRefreshing && error ? (
+              <View className="px-4 mt-2 flex-row items-center">
+                <ActivityIndicator size="small" color="#E23744" />
+                <Text className="ml-2 text-xs text-[#93959F]">Reconnecting catalog...</Text>
+              </View>
+            ) : null}
+
+            <View className="mt-4">
+              <Slideshow />
+            </View>
           </View>
 
-          <View className="px-4 mt-6 mb-2">
-            <HomePageBanner />
+          {/* Index 2: Sticky Categories */}
+          <View className="bg-white pt-2 pb-3 shadow-sm z-10 border-b border-gray-50">
+            <View className="px-4">
+              <CategoriesList />
+            </View>
           </View>
-          
-          {/* Personalized Section: Top Picks */}
-          {products && products.length > 0 && (
-            <View className="mt-6 mb-4 bg-[#F8F9FA] pt-6 pb-2">
-              <View className="px-4 mb-4 flex-row justify-between items-center">
-                <View>
-                  <Text className="text-[22px] font-extrabold text-[#1C1C1C]">Top Picks For You</Text>
-                  <Text className="text-xs text-[#93959F] mt-1">Curated based on your preferences</Text>
+
+          {/* Index 3+: Content below categories */}
+          <View className="bg-[#F8F9FA] pt-6">
+            <View className="px-4 mb-2">
+              <HomePageBanner />
+            </View>
+            
+            {/* Personalized Section: Top Picks */}
+            {products && products.length > 0 && (
+              <View className="mt-6 mb-4">
+                <View className="px-5 mb-5 flex-row justify-between items-center">
+                  <View>
+                    <Text className="text-[20px] font-extrabold text-[#1C1C1C] tracking-tight">Top Picks For You</Text>
+                    <Text className="text-[13px] text-[#93959F] mt-1 font-medium">Curated based on your preferences</Text>
+                  </View>
+                </View>
+                <View className="bg-white border-t border-gray-50">
+                  {products.slice(0, 3).map((item) => (
+                    <ProductCard 
+                      key={item.product_id?.toString()} 
+                      product={item} 
+                      onAddToCart={() => {}} 
+                    />
+                  ))}
                 </View>
               </View>
-              <View className="bg-white">
-                {products.slice(0, 3).map((item) => (
-                  <ProductCard 
-                    key={item.product_id?.toString()} 
-                    product={item} 
-                    onAddToCart={() => {}} 
-                  />
-                ))}
-              </View>
-            </View>
-          )}
+            )}
+          </View>
         </ScrollView>
       )}
 

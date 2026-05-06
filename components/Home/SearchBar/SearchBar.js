@@ -38,7 +38,7 @@ const SearchBar = () => {
 
   return (
     <View style={[styles.bar, isFocused && styles.barFocused]}>
-      <Search size={18} color="#686b78" strokeWidth={2.2} style={styles.icon} />
+      <Search size={22} color="#93959F" strokeWidth={2} style={styles.icon} />
         <TextInput
           ref={inputRef}
           value={localQuery}
@@ -53,14 +53,14 @@ const SearchBar = () => {
           onBlur={() => {
             if (!localQuery) setIsFocused(false);
           }}
-        placeholder="Search for chicken, eggs, mutton..."
-        placeholderTextColor="#686b78"
+        placeholder="Search"
+        placeholderTextColor="#93959F"
         style={styles.input}
         returnKeyType="search"
         autoCorrect={false}
-        selectionColor="#E23744"
+        selectionColor="#1C1C1C"
       />
-      {localQuery.length > 0 && (
+      {localQuery.length > 0 ? (
         <TouchableOpacity
           onPress={handleClear}
           activeOpacity={0.6}
@@ -71,6 +71,10 @@ const SearchBar = () => {
             <X size={12} color="#fff" strokeWidth={2.5} />
           </View>
         </TouchableOpacity>
+      ) : (
+        <TouchableOpacity activeOpacity={0.6} style={styles.filterBtn}>
+          {/* <SlidersHorizontal size={20} color="#1C1C1C" strokeWidth={2} /> */}
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -80,39 +84,47 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    height: 44,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: "#E9E9EB",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 30,
+    height: 54,
+    paddingHorizontal: 20,
   },
   barFocused: {
-    borderColor: "#d0d0d0",
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E9E9EB",
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
   icon: {
-    marginRight: 10,
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: "400",
+    fontSize: 16,
+    fontWeight: "500",
     color: "#1c1c1c",
     paddingVertical: 0,
-    height: 44,
+    height: 54,
   },
   clearBtn: {
     marginLeft: 8,
   },
   clearCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#686B78",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#D1D5DB",
     alignItems: "center",
     justifyContent: "center",
   },
+  filterBtn: {
+    marginLeft: 8,
+    padding: 4,
+  }
 });
 
 export default SearchBar;

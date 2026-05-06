@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, ShieldCheck, Truck, Zap } from "lucide-react-native";
+import { ArrowRight, BadgeCheck, ShieldCheck, Truck, Zap, Flame } from "lucide-react-native";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -15,6 +15,7 @@ const HomePageBanner = () => {
   const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -29,7 +30,23 @@ const HomePageBanner = () => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [fadeAnim, slideAnim]);
+
+    // Sleek continuous pulse animation for the Order Now button
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [fadeAnim, slideAnim, pulseAnim]);
 
   const getTextStyles = () => {
     if (width < 360) {
@@ -90,9 +107,16 @@ const HomePageBanner = () => {
               <Text className={`text-white ${getHeaderTextStyles()} font-extrabold mb-2`}>
                 Better Meat, Better Mornings
               </Text>
-              <Text className={`text-white ${getTextStyles()} mb-6 w-1/2`}>
+              <Text className={`text-white ${getTextStyles()} mb-4 w-1/2`}>
                 Naturally raised poultry and farm-fresh eggs. Quality you can trust.
               </Text>
+              
+              {/* Marketing strategy: Scarcity */}
+              <View className="flex-row items-center bg-red-500/20 px-3 py-1 rounded-md self-start mb-6 border border-red-500/30">
+                <Flame size={12} color="#FCA5A5" />
+                <Text className="text-[10px] text-red-200 font-bold ml-1">Only 40 delivery slots left today!</Text>
+              </View>
+              
               <View className="flex-row items-center">
                 <View className="flex-row items-center mr-3">
                   <BadgeCheck size={14} color="#FC8019" />
@@ -108,25 +132,27 @@ const HomePageBanner = () => {
                 </View>
               </View>
             </Animated.View>
-            <Pressable
-              className="bg-[#E23744] py-3 px-5 rounded-full flex-row items-center justify-center self-start"
-              onPress={() => navigation.navigate("Products")}
-              style={({ pressed }) => [
-                {
-                  transform: [{ scale: pressed ? 0.97 : 1 }],
-                  shadowColor: "#E23744",
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 4,
-                },
-              ]}
-            >
-              <Text className="text-white font-bold mr-1">
-                Order Now
-              </Text>
-              <ArrowRight size={18} color="#fff" />
-            </Pressable>
+            <Animated.View style={{ transform: [{ scale: pulseAnim }] }} className="self-start">
+              <Pressable
+                className="bg-[#E23744] py-3 px-6 rounded-full flex-row items-center justify-center self-start"
+                onPress={() => navigation.navigate("Products")}
+                style={({ pressed }) => [
+                  {
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                    shadowColor: "#E23744",
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 12,
+                    elevation: 6,
+                  },
+                ]}
+              >
+                <Text className="text-white font-black text-[15px] mr-2">
+                  ORDER NOW
+                </Text>
+                <ArrowRight size={18} color="#fff" />
+              </Pressable>
+            </Animated.View>
           </View>
         </ImageBackground>
       </View>

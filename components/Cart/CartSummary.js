@@ -1,4 +1,4 @@
-import { ReceiptText } from "lucide-react-native";
+import { ReceiptText, ShieldCheck, Lock, Clock } from "lucide-react-native";
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -16,9 +16,15 @@ const CartSummary = ({
 
   return (
     <View className="p-4 pt-6">
-      <Text className="text-[16px] font-bold text-gray-900 mb-4 px-1">
-        Bill Details
-      </Text>
+      <View className="flex-row justify-between items-center mb-4 px-1">
+        <Text className="text-[16px] font-bold text-gray-900">
+          Bill Details
+        </Text>
+        <View className="flex-row items-center bg-orange-50 px-2 py-1 rounded-md">
+          <Clock size={12} color="#EA580C" />
+          <Text className="text-[10px] text-orange-600 font-bold ml-1 uppercase">High Demand</Text>
+        </View>
+      </View>
       
       <View className="bg-white rounded-2xl border border-gray-100 p-4">
         <View className="flex-row justify-between items-center mb-3">
@@ -70,6 +76,18 @@ const CartSummary = ({
           </Text>
         </View>
       )}
+
+      {/* Trust and Security Badges */}
+      <View className="flex-row items-center justify-center mt-6 bg-gray-50 p-3 rounded-xl">
+        <View className="flex-row items-center mr-5">
+          <ShieldCheck size={16} color="#059669" />
+          <Text className="text-[11px] text-gray-600 font-bold ml-1">Quality Assured</Text>
+        </View>
+        <View className="flex-row items-center">
+          <Lock size={16} color="#059669" />
+          <Text className="text-[11px] text-gray-600 font-bold ml-1">100% Secure Payment</Text>
+        </View>
+      </View>
     </View>
   );
 };

@@ -50,6 +50,7 @@ import AdminOrdersScreen from "../components/bottomNavScreens/AdminOrdersScreen"
 import AdminProductsScreen from "../components/bottomNavScreens/AdminProductsScreen";
 import AdminMoreScreenWrapper from "../components/bottomNavScreens/AdminMoreScreenWrapper";
 
+import Loader from "../components/ResuableComponents/Loader";
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
@@ -453,11 +454,7 @@ function RootNavigator() {
   }, [clearLocalAuth, restoreBackendSessionFromFirebase, setAuthState]);
 
   if (initializing || !authState.isHydrated) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-        <ActivityIndicator size="large" color={BRAND_RED} />
-      </View>
-    );
+    return <Loader />;
   }
 
   // Gatekeeping: If not authenticated, render the premium Auth flow

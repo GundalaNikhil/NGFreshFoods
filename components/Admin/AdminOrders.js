@@ -40,7 +40,7 @@ import {
   ShoppingBag,
   ArrowUpDown,
 } from "lucide-react-native";
-import { fetchAllOrders, updateOrderStatus, initiateRefund } from "../../services/bff/adminBff";
+import { fetchAllOrders, updateOrderStatus, initiateRefund, markCodReceived } from "../../services/bff/adminBff";
 import { ListSkeleton } from "./shared/SkeletonLoader";
 import EmptyState from "./shared/EmptyState";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -106,7 +106,7 @@ const FILTER_LABELS = {
 };
 
 // ── Order Detail Bottom Sheet ──
-const OrderDetailSheet = ({ order, visible, onClose, onStatusChange }) => {
+const OrderDetailSheet = ({ order, visible, onClose, onStatusChange, onCodReceived }) => {
   const [updating, setUpdating] = useState(false);
 
   if (!order) return null;
@@ -423,6 +423,50 @@ const OrderDetailSheet = ({ order, visible, onClose, onStatusChange }) => {
               </View>
             )}
 
+            {/* COD Action */}
+            {order.paymentProvider === "COD" && order.paymentStatus === "PENDING" && order.orderStatus !== "CANCELLED" && (
+              <View style={{ marginTop: 20 }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      "Mark COD Received",
+                      `Are you sure you have received ₹${order.totalAmount?.toLocaleString("en-IN")} in cash for order #${order.orderNumber}?`,
+                      [
+                        { text: "No" },
+                        {
+                          text: "Yes, Cash Received",
+                          onPress: async () => {
+                            setUpdating(true);
+                            try {
+                              await onCodReceived(order.orderId);
+                              onClose();
+                            } finally {
+                              setUpdating(false);
+                            }
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  disabled={updating}
+                  style={{
+                    backgroundColor: "#E8F5E9",
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: updating ? 0.6 : 1,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <CreditCard size={16} color="#2E7D32" strokeWidth={2} />
+                  <Text style={{ color: "#2E7D32", fontSize: 14, fontWeight: "700", marginLeft: 8 }}>Mark COD Received</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Refund Action for Cancelled + Paid Orders */}
             {canRefund(order) && (
               <View style={{ marginTop: 20 }}>
@@ -712,6 +756,21 @@ const AdminOrders = () => {
     }
   };
 
+  const handleCodReceived = async (orderId) => {
+    // Optimistic update
+    queryClient.setQueryData(["adminOrders", "ALL"], (oldData) => {
+      if (!oldData) return [];
+      return oldData.map((o) => (o.orderId === orderId ? { ...o, paymentStatus: "SUCCESS" } : o));
+    });
+
+    try {
+      await markCodReceived(orderId);
+    } catch (e) {
+      refetch();
+      Alert.alert("Error", e?.message || "Failed to mark COD as received");
+    }
+  };
+
   // Status counts for filter badges
   const statusCounts = useMemo(() => {
     const counts = {};
@@ -928,6 +987,7 @@ const AdminOrders = () => {
         visible={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
         onStatusChange={handleStatusChange}
+        onCodReceived={handleCodReceived}
       />
     </View>
   );

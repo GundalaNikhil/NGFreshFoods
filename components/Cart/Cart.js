@@ -324,6 +324,7 @@ const Cart = () => {
       <View className="px-5 py-2 border-b border-[#E9E9EB] bg-white">
         <AddressHeader 
           onAddressPress={() => setShowAddressSheet(true)} 
+          onProfilePress={() => navigation.navigate("Account")}
         />
       </View>
 
