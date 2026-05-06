@@ -39,7 +39,7 @@ const Slideshow = () => {
   }, [fadeAnim]);
 
   return (
-    <View className="h-52 px-4">
+    <View className="h-64 px-1">
       <Animated.View
         className="w-full h-full overflow-hidden rounded-2xl"
         style={{ opacity: fadeAnim, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 }}

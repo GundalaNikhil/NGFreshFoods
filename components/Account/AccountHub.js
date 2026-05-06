@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import {
@@ -233,6 +234,7 @@ const AccountHub = ({ onBack }) => {
   const notificationState = useRecoilValue(notificationAtom);
 
   const [section, setSection] = useState("home");
+  const navigation = useNavigation();
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -366,6 +368,15 @@ const AccountHub = ({ onBack }) => {
       task?.cancel?.();
     };
   }, [loadNotifications, loadOrders, refreshAddresses, section]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("tabPress", (e) => {
+      if (navigation.isFocused()) {
+        resetToHome();
+      }
+    });
+    return unsubscribe;
+  }, [navigation, resetToHome]);
 
   useEffect(() => {
     const intent = notificationState.intent;
