@@ -5,18 +5,15 @@ import { useProducts } from "../../../hooks/useProducts";
 import { getEntityImageUrl } from "../../../utils/imageUrl";
 import { productFoodTypeOptions } from "../../../utils/productClassification";
 import CategoryItem from "./CategoryItem";
+import cloudinaryUrls from "../../../assets/images/cloudinary_urls.json";
 
 const CATEGORY_IMAGE_MAP = {
-  CAT_CHICKEN:
-    "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513962/ffw/Fresh%20Whole%20Chicken/ri4imwvokptjrw6hcqpq.jpg",
-  CAT_DAIRY_EGGS:
-    "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513887/ffw/Farm%20Fresh%20Eggs%20%28Pack%20of%2012%29/qpibhx9rw11ysgpehnza.jpg",
-  CAT_MUTTON:
-    "https://res.cloudinary.com/djv3mrzk2/image/upload/v1737391536/goat-rann-cut_1_fuxtwn.jpg",
+  CAT_CHICKEN: cloudinaryUrls.marketing_images.cat_chicken,
+  CAT_DAIRY_EGGS: cloudinaryUrls.product_images.premium_farm_eggs,
+  CAT_MUTTON: cloudinaryUrls.product_images.premium_raw_mutton,
 };
 
-const FALLBACK_CATEGORY_IMAGE =
-  "https://res.cloudinary.com/djv3mrzk2/image/upload/v1733513962/ffw/Fresh%20Whole%20Chicken/ri4imwvokptjrw6hcqpq.jpg";
+const FALLBACK_CATEGORY_IMAGE = cloudinaryUrls.marketing_images.cat_chicken;
 
 const CategoriesList = () => {
   const navigation = useNavigation();

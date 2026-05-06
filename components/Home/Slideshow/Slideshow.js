@@ -3,7 +3,12 @@ import { Animated, View } from "react-native";
 import { Image } from "expo-image";
 import { normalizeImageUrl } from "../../../utils/imageUrl";
 
+import cloudinaryUrls from "../../../assets/images/cloudinary_urls.json";
+
 const images = [
+  cloudinaryUrls.marketing_images.slideshow_banner_1,
+  cloudinaryUrls.marketing_images.slideshow_banner_2,
+  cloudinaryUrls.marketing_images.slideshow_banner_3,
   "https://res.cloudinary.com/djv3mrzk2/image/upload/v1735914513/Banner1_aosc5m.png",
   "https://res.cloudinary.com/djv3mrzk2/image/upload/v1735914514/Banner2_wftiw1.png",
   "https://res.cloudinary.com/djv3mrzk2/image/upload/v1736013499/xPmFaNUa_mx6jks.jpg",

@@ -1,5 +1,5 @@
 import { ActivityIndicator, FlatList, RefreshControl, SafeAreaView, ScrollView, Text, View, InteractionManager } from "react-native";
-import React, { useState, useEffect, useCallback, memo } from "react";
+import React, { useState, useEffect, useCallback, memo, useRef } from "react";
 import { SearchX, Store } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { fetchShopStatus } from "../../services/bff/shopBff";
@@ -13,6 +13,8 @@ import Slideshow from "./Slideshow/Slideshow";
 import AddressSelectionSheet from "./AddressSelectionSheet";
 import AddAddressModal from "./AddAddressModal";
 import ProductCard from "../Products/ProductCard";
+import { Image } from "expo-image";
+import cloudinaryUrls from "../../assets/images/cloudinary_urls.json";
 
 const SearchEmptyState = ({ searchQuery }) => (
   <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80 }}>
@@ -62,6 +64,8 @@ const HomePage = () => {
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
   const [shopStatus, setShopStatus] = useState({ isOpen: true, message: "" });
   const [pullRefreshing, setPullRefreshing] = useState(false);
+  const [showSearchInput, setShowSearchInput] = useState(false);
+  const searchBarRef = useRef(null);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -111,12 +115,19 @@ const HomePage = () => {
     <SafeAreaView className="flex-1 bg-white">
       {isSearching ? (
         <>
-          <View className="px-5 mt-2">
-            <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
-          </View>
-          <View className="px-5 mb-2">
-            <SearchBar />
-          </View>
+          {showSearchInput || isSearching ? (
+            <View className="px-5 mt-2 mb-2">
+              <SearchBar ref={searchBarRef} onClose={() => setShowSearchInput(false)} />
+            </View>
+          ) : (
+            <View className="px-5 mt-2">
+              <AddressHeader 
+                onAddressPress={() => setShowAddressSheet(true)} 
+                onProfilePress={() => navigation.navigate("Account")} 
+                onSearchPress={() => setShowSearchInput(true)}
+              />
+            </View>
+          )}
           <FlatList
             data={products}
             renderItem={renderSearchResult}
@@ -138,12 +149,19 @@ const HomePage = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 90 }}
         >
-          <View className="px-5 mt-2">
-            <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
-          </View>
-          <View className="px-5 mb-2">
-            <SearchBar />
-          </View>
+          {showSearchInput || isSearching ? (
+            <View className="px-5 mt-2 mb-2">
+              <SearchBar ref={searchBarRef} onClose={() => setShowSearchInput(false)} />
+            </View>
+          ) : (
+            <View className="px-5 mt-2">
+              <AddressHeader 
+                onAddressPress={() => setShowAddressSheet(true)} 
+                onProfilePress={() => navigation.navigate("Account")} 
+                onSearchPress={() => setShowSearchInput(true)}
+              />
+            </View>
+          )}
           <HomePageSkeleton />
         </ScrollView>
       ) : (
@@ -163,12 +181,19 @@ const HomePage = () => {
         >
           {/* Index 0: Header & Search */}
           <View className="bg-white">
-            <View className="px-5 mt-2">
-              <AddressHeader onAddressPress={() => setShowAddressSheet(true)} onProfilePress={() => navigation.navigate("Account")} />
-            </View>
-            <View className="px-5 pb-2">
-              <SearchBar />
-            </View>
+            {showSearchInput || isSearching ? (
+              <View className="px-5 mt-2 pb-2">
+                <SearchBar ref={searchBarRef} onClose={() => setShowSearchInput(false)} />
+              </View>
+            ) : (
+              <View className="px-5 mt-2">
+                <AddressHeader 
+                  onAddressPress={() => setShowAddressSheet(true)} 
+                  onProfilePress={() => navigation.navigate("Account")} 
+                  onSearchPress={() => setShowSearchInput(true)}
+                />
+              </View>
+            )}
           </View>
 
           {/* Index 1: Slideshow & Shop Status */}
@@ -235,6 +260,20 @@ const HomePage = () => {
                     />
                   ))}
                 </View>
+                
+                {/* Top Picks Promotional Banner */}
+                {cloudinaryUrls.marketing_images.top_picks_banner && (
+                  <View className="px-4 mt-6 mb-2">
+                    <View className="rounded-2xl overflow-hidden h-40">
+                      <Image
+                        source={{ uri: cloudinaryUrls.marketing_images.top_picks_banner }}
+                        className="w-full h-full"
+                        contentFit="cover"
+                        transition={300}
+                      />
+                    </View>
+                  </View>
+                )}
               </View>
             )}
           </View>

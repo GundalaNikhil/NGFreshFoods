@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import cloudinaryUrls from "../../assets/images/cloudinary_urls.json";
 
 const HomePageBanner = () => {
   const { width } = useWindowDimensions();
@@ -86,7 +87,7 @@ const HomePageBanner = () => {
       <View className="rounded-2xl overflow-hidden h-80">
         <ImageBackground
           source={{
-            uri: "https://res.cloudinary.com/djv3mrzk2/image/upload/v1735914513/HomePageBanner_boohud.png",
+            uri: cloudinaryUrls.marketing_images.home_banner_1,
           }}
           className="w-full h-full"
           resizeMode="cover"

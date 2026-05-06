@@ -1,66 +1,62 @@
-import { ChevronDown, MapPin, ShoppingCart } from "lucide-react-native";
+import { ChevronDown, MapPin, Search, User } from "lucide-react-native";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { useAddress } from "../../hooks/useAddress";
 import { useRecoilValue } from "recoil";
 import { profileAtom } from "../../recoil/atoms/profileAtom";
 import { useNavigation } from "@react-navigation/native";
-import { useCart } from "../../hooks/useCart";
 
-const AddressHeader = ({ onAddressPress, onProfilePress }) => {
+const AddressHeader = ({ onAddressPress, onProfilePress, onSearchPress }) => {
   const { selectedAddress } = useAddress();
   const profile = useRecoilValue(profileAtom);
   const navigation = useNavigation();
-  const { cart } = useCart();
   
-  const cartItemCount = cart?.length || 0;
-  
-  // Extract the first initial of the user's name
-  const userInitial = profile?.firstName?.charAt(0)?.toUpperCase() || "U";
+  // Extract a premium 2-letter substring for the avatar
+  const userSubstring = profile?.firstName ? profile.firstName.substring(0, 2).toUpperCase() : "U";
 
   const locationName = selectedAddress?.label === "HOME" || selectedAddress?.label === "WORK" || selectedAddress?.label === "OTHER"
     ? selectedAddress.label.charAt(0).toUpperCase() + selectedAddress.label.slice(1).toLowerCase()
-    : selectedAddress?.label || "New York";
+    : selectedAddress?.label || "Select Address";
 
   return (
-    <View className="flex-row items-center justify-between py-2 mb-2">
-      {/* LEFT: Profile */}
+    <View className="flex-row items-center justify-between py-1 mb-2">
+      {/* LEFT: Address */}
       <TouchableOpacity 
-        onPress={onProfilePress}
-        activeOpacity={0.8}
-      >
-        <View className="w-11 h-11 rounded-full bg-[#1A1A1A] items-center justify-center shadow-sm border-[1.5px] border-[#D4AF37]">
-          <Text className="text-[#D4AF37] font-black text-[16px] tracking-widest">{userInitial}</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* CENTER: Address */}
-      <TouchableOpacity 
-        className="flex-row items-center justify-center flex-1 mx-4" 
+        className="flex-row items-center flex-1" 
         onPress={onAddressPress}
         activeOpacity={0.7}
       >
-        <MapPin size={18} color="#1C1C1C" strokeWidth={2.5} />
-        <Text className="text-[16px] font-semibold text-[#1C1C1C] mx-1" numberOfLines={1}>
-          {locationName}
-        </Text>
-        <ChevronDown size={18} color="#1C1C1C" strokeWidth={2.5} />
-      </TouchableOpacity>
-
-      {/* RIGHT: Cart */}
-      <TouchableOpacity 
-        onPress={() => navigation.navigate("Cart")}
-        activeOpacity={0.8}
-      >
-        <View className="relative w-11 h-11 rounded-full bg-white border border-[#E9E9EB] items-center justify-center shadow-sm">
-          <ShoppingCart size={20} color="#1C1C1C" strokeWidth={2} />
-          {cartItemCount > 0 && (
-            <View className="absolute -top-1.5 -right-1.5 bg-[#E23744] w-5 h-5 rounded-full items-center justify-center border-2 border-white">
-              <Text className="text-white text-[9px] font-black">{cartItemCount}</Text>
-            </View>
-          )}
+        <MapPin size={22} color="#E23744" strokeWidth={2.5} />
+        <View className="ml-2 flex-1">
+          <View className="flex-row items-center">
+            <Text className="text-[16px] font-black text-[#1C1C1C] tracking-tight">{locationName}</Text>
+            <ChevronDown size={18} color="#1C1C1C" strokeWidth={2.5} className="ml-1" />
+          </View>
+          <Text className="text-[12px] text-[#686B78] mt-0.5" numberOfLines={1}>
+            {selectedAddress?.street || "Add your delivery address"}
+          </Text>
         </View>
       </TouchableOpacity>
+
+      {/* RIGHT: Search & Profile */}
+      <View className="flex-row items-center">
+        <TouchableOpacity 
+          onPress={onSearchPress}
+          activeOpacity={0.7}
+          className="w-10 h-10 rounded-full bg-[#F5F5F5] items-center justify-center"
+        >
+          <Search size={20} color="#1C1C1C" strokeWidth={2} />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={onProfilePress}
+          activeOpacity={0.7}
+        >
+          <View className="w-10 h-10 rounded-full bg-[#FDF8EE] border border-[#F2E3C6] items-center justify-center ml-3 shadow-sm">
+            <Text className="text-[#C69C6D] font-black text-[15px] tracking-widest">{userSubstring}</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

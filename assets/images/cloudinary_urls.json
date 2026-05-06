@@ -1,0 +1,41 @@
+{
+  "marketing_images": {
+    "cat_chicken": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092652/ffw_v2/marketing_images/cat_chicken_1778086858829.jpg",
+    "home_banner_1": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092654/ffw_v2/marketing_images/home_banner_1_1778085328879.jpg",
+    "home_banner_2": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092655/ffw_v2/marketing_images/home_banner_2_1778085343504.jpg",
+    "slideshow_banner_1": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092656/ffw_v2/marketing_images/slideshow_banner_1_1778085987775.jpg",
+    "slideshow_banner_2": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092658/ffw_v2/marketing_images/slideshow_banner_2_1778086016702.jpg",
+    "slideshow_banner_3": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092659/ffw_v2/marketing_images/slideshow_banner_3_1778086033009.jpg",
+    "top_picks_banner": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1735914513/HomePageBanner_boohud.png"
+  },
+  "product_images": {
+    "prd_chk_10001": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092660/ffw_v2/product_images/prd_chk_10001_1778084588151.jpg",
+    "prd_chk_10002": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092662/ffw_v2/product_images/prd_chk_10002_1778084607280.jpg",
+    "prd_chk_10003": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092664/ffw_v2/product_images/prd_chk_10003_1778084622444.jpg",
+    "prd_chk_10004": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092665/ffw_v2/product_images/prd_chk_10004_1778084639380.jpg",
+    "prd_chk_10005": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092666/ffw_v2/product_images/prd_chk_10005_1778084656171.jpg",
+    "prd_chk_10006": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092667/ffw_v2/product_images/prd_chk_10006_1778084683789.jpg",
+    "prd_chk_10007": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092669/ffw_v2/product_images/prd_chk_10007_1778084700537.jpg",
+    "prd_chk_10008": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092670/ffw_v2/product_images/prd_chk_10008_1778084719217.jpg",
+    "prd_chk_10009": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092671/ffw_v2/product_images/prd_chk_10009_1778084960763.jpg",
+    "prd_chk_10010": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092672/ffw_v2/product_images/prd_chk_10010_1778084993704.jpg",
+    "prd_chk_10011": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092673/ffw_v2/product_images/prd_chk_10011_1778085009456.jpg",
+    "prd_de_20001": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092676/ffw_v2/product_images/prd_de_20001_1778085025909.jpg",
+    "prd_de_20002": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092678/ffw_v2/product_images/prd_de_20002_1778085044096.jpg",
+    "prd_de_20003": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092679/ffw_v2/product_images/prd_de_20003_1778085063181.jpg",
+    "prd_de_20004": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092680/ffw_v2/product_images/prd_de_20004_1778085096515.jpg",
+    "prd_mut_30001": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092681/ffw_v2/product_images/prd_mut_30001_1778085110057.jpg",
+    "prd_mut_30002": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092683/ffw_v2/product_images/prd_mut_30002_1778085125862.jpg",
+    "prd_mut_30003": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092684/ffw_v2/product_images/prd_mut_30003_1778085141091.jpg",
+    "prd_mut_30004": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092686/ffw_v2/product_images/prd_mut_30004_1778085160306.jpg",
+    "premium_biryani_cut": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092688/ffw_v2/product_images/premium_biryani_cut_1778084401794.jpg",
+    "premium_chicken_drumsticks": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092689/ffw_v2/product_images/premium_chicken_drumsticks_1778084328829.jpg",
+    "premium_chicken_liver": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092690/ffw_v2/product_images/premium_chicken_liver_1778084381222.jpg",
+    "premium_chicken_sausages": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092691/ffw_v2/product_images/premium_chicken_sausages_1778084366632.jpg",
+    "premium_farm_eggs": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092692/ffw_v2/product_images/premium_farm_eggs_1778084023855.jpg",
+    "premium_fresh_vegetables": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092693/ffw_v2/product_images/premium_fresh_vegetables_1778084053231.jpg",
+    "premium_mutton_keema": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092695/ffw_v2/product_images/premium_mutton_keema_1778084349168.jpg",
+    "premium_raw_chicken": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092696/ffw_v2/product_images/premium_raw_chicken_1778083998290.jpg",
+    "premium_raw_mutton": "https://res.cloudinary.com/djv3mrzk2/image/upload/v1778092697/ffw_v2/product_images/premium_raw_mutton_1778084079706.jpg"
+  }
+}

@@ -1,5 +1,5 @@
-import { Search, X } from "lucide-react-native";
-import React, { useRef, useState, useCallback, useEffect } from "react";
+import { Search, X, ArrowLeft } from "lucide-react-native";
+import React, { useRef, useState, useCallback, useEffect, forwardRef, useImperativeHandle, memo } from "react";
 import {
   TextInput,
   TouchableOpacity,
@@ -9,9 +9,13 @@ import {
 } from "react-native";
 import { useProducts } from "../../../hooks/useProducts";
 
-const SearchBar = () => {
+const SearchBar = forwardRef((props, ref) => {
   const { searchQuery, setSearchQuery, setSelectedCategory } = useProducts();
   const inputRef = useRef(null);
+  
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus()
+  }));
   const [isFocused, setIsFocused] = useState(false);
   const [localQuery, setLocalQuery] = useState(searchQuery);
 
@@ -38,7 +42,13 @@ const SearchBar = () => {
 
   return (
     <View style={[styles.bar, isFocused && styles.barFocused]}>
-      <Search size={22} color="#93959F" strokeWidth={2} style={styles.icon} />
+      {props.onClose ? (
+        <TouchableOpacity onPress={props.onClose} style={styles.backBtn} activeOpacity={0.7}>
+          <ArrowLeft size={22} color="#1C1C1C" strokeWidth={2.5} />
+        </TouchableOpacity>
+      ) : (
+        <Search size={22} color="#93959F" strokeWidth={2} style={styles.icon} />
+      )}
         <TextInput
           ref={inputRef}
           value={localQuery}
@@ -51,13 +61,17 @@ const SearchBar = () => {
           setSelectedCategory("ALL");
           }}
           onBlur={() => {
-            if (!localQuery) setIsFocused(false);
+            if (!localQuery) {
+              setIsFocused(false);
+              props.onClose?.();
+            }
           }}
         placeholder="Search"
         placeholderTextColor="#93959F"
         style={styles.input}
         returnKeyType="search"
         autoCorrect={false}
+        autoFocus={true}
         selectionColor="#1C1C1C"
       />
       {localQuery.length > 0 ? (
@@ -78,7 +92,7 @@ const SearchBar = () => {
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   bar: {
@@ -98,6 +112,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 12,
     elevation: 3,
+  },
+  backBtn: {
+    marginRight: 10,
   },
   icon: {
     marginRight: 12,
@@ -127,4 +144,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default SearchBar;
+export default memo(SearchBar);

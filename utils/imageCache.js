@@ -3,10 +3,17 @@ import { getEntityImageUrl, normalizeImageUrl } from "./imageUrl";
 
 const prefetchedUrls = new Set();
 
+import cloudinaryUrls from "../assets/images/cloudinary_urls.json";
+
 const toImageUrl = (item) =>
   typeof item === "string" ? normalizeImageUrl(item) : getEntityImageUrl(item);
 
 export const getCachedImageSource = (item, fallbackUrl) => {
+  // Use new Cloudinary URL if available in JSON
+  if (item && item.product_id && cloudinaryUrls.product_images[item.product_id.toLowerCase()]) {
+    return { uri: cloudinaryUrls.product_images[item.product_id.toLowerCase()] };
+  }
+  
   const uri = toImageUrl(item) || normalizeImageUrl(fallbackUrl);
   return uri ? { uri } : undefined;
 };
