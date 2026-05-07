@@ -3,12 +3,12 @@ import {
   Animated,
   Dimensions,
   Image,
-  SafeAreaView,
   StatusBar,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight, Clock, Home } from "lucide-react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");

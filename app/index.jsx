@@ -2,6 +2,17 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import React, { useEffect, useRef, useState } from "react";
+
+// Monkey-patch for Recoil in React 19
+if (!React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED) {
+  React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
+    ReactCurrentDispatcher: {
+      current: { useSyncExternalStore: React.useSyncExternalStore },
+    },
+    ReactCurrentOwner: { current: null },
+  };
+}
+
 import { Dimensions, Pressable, Text, TextInput, View, ActivityIndicator, Platform } from "react-native";
 import Reanimated, {
   useAnimatedStyle,

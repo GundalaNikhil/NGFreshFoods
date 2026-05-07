@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, RefreshControl, SafeAreaView, ScrollView, Text, View, InteractionManager } from "react-native";
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, Text, View, InteractionManager } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState, useEffect, useCallback, memo, useRef } from "react";
 import { SearchX, Store } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";

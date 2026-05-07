@@ -4,11 +4,11 @@ import {
   Dimensions,
   ImageBackground,
   ScrollView,
-  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {

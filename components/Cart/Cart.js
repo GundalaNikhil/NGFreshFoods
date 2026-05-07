@@ -1,6 +1,7 @@
 /* global setTimeout, clearTimeout */
 import React, { useEffect, useRef, useState } from "react";
-import { SafeAreaView, ScrollView, Text, TouchableOpacity, View, Alert } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { useCart } from "../../hooks/useCart";

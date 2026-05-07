@@ -1,5 +1,6 @@
 import React, { useState, memo } from "react";
-import { ActivityIndicator, SafeAreaView, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useProducts } from "../../hooks/useProducts";
 import ProductFilter from "./ProductFilter";
 import ProductList from "./ProductList";
