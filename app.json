@@ -7,15 +7,16 @@
     "scheme": "ngfreshfoods",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/images/icon.png",
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification"]
       },
       "splash": {
-        "image": "./assets/images/user_splash_v9.png",
+        "image": "./assets/images/ngfreshfoods_final_splash_v10.png",
         "resizeMode": "cover",
-        "backgroundColor": "#d9dcb9"
+        "backgroundColor": "#151515"
       },
       "bundleIdentifier": "com.nick.ngfreshfoods",
       "googleServicesFile": "./GoogleService-Info.plist"
@@ -23,16 +24,17 @@
     "android": {
       "package": "com.nick.ngfreshfoods",
       "googleServicesFile": "./google-services.json",
+      "backgroundColor": "#151515",
       "versionCode": 18,
       "permissions": ["POST_NOTIFICATIONS"],
       "splash": {
-        "image": "./assets/images/user_splash_v9.png",
+        "image": "./assets/images/ngfreshfoods_final_splash_v10.png",
         "resizeMode": "cover",
-        "backgroundColor": "#d9dcb9"
+        "backgroundColor": "#151515"
       },
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/transparent_1x1.png",
-        "backgroundColor": "#d9dcb9"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#151515"
       }
     },
     "web": {
@@ -41,9 +43,9 @@
       "favicon": "https://res.cloudinary.com/djv3mrzk2/image/upload/c_crop,ar_9:16/v1737137430/SS7_pkphek.jpg"
     },
     "splash": {
-      "image": "./assets/images/user_splash_v9.png",
+      "image": "./assets/images/ngfreshfoods_final_splash_v10.png",
       "resizeMode": "cover",
-      "backgroundColor": "#d9dcb9"
+      "backgroundColor": "#151515"
     },
     "plugins": [
       [
@@ -58,9 +60,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/user_splash_v9.png",
+          "image": "./assets/images/ngfreshfoods_final_splash_v10.png",
           "resizeMode": "cover",
-          "backgroundColor": "#d9dcb9"
+          "backgroundColor": "#151515"
         }
       ],
       "expo-font",
@@ -74,7 +76,8 @@
             "useLegacyPackaging": true
           }
         }
-      ]
+      ],
+      "./plugins/withFullScreenSplash"
     ],
     "experiments": {
       "typedRoutes": true

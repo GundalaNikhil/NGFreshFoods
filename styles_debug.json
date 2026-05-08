@@ -1,0 +1,54 @@
+[
+  {
+    "$": {
+      "name": "AppTheme",
+      "parent": "Theme.AppCompat.DayNight.NoActionBar"
+    },
+    "item": [
+      {
+        "_": "@drawable/rn_edit_text_material",
+        "$": {
+          "name": "android:editTextBackground"
+        }
+      },
+      {
+        "$": {
+          "name": "colorPrimary"
+        },
+        "_": "@color/colorPrimary"
+      },
+      {
+        "$": {
+          "name": "android:statusBarColor"
+        },
+        "_": "@android:color/transparent"
+      },
+      {
+        "$": {
+          "name": "android:navigationBarColor"
+        },
+        "_": "@android:color/transparent"
+      },
+      {
+        "$": {
+          "name": "android:windowBackground"
+        },
+        "_": "@color/activityBackground"
+      }
+    ]
+  },
+  {
+    "$": {
+      "name": "Theme.App.SplashScreen",
+      "parent": "AppTheme"
+    },
+    "item": [
+      {
+        "_": "@drawable/splashscreen_logo",
+        "$": {
+          "name": "android:windowBackground"
+        }
+      }
+    ]
+  }
+]

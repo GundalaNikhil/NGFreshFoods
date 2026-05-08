@@ -108,6 +108,7 @@ const classifyPaymentError = (error) => {
 
   if (
     error?.code === "PAYMENT_CANCELLED" ||
+    error?.code === 0 ||
     error?.code === 2 ||
     haystack.includes("cancelled") ||
     haystack.includes("canceled") ||
@@ -264,10 +265,10 @@ export const usePayment = () => {
    * Detect if a Razorpay error is a user-initiated cancellation.
    */
   const fallbackVerify = useCallback(
-    async (orderId, maxAttempts = 3) => {
+    async (orderId, maxAttempts = 6) => {
       console.log("[usePayment] Starting fallback verification for order:", orderId);
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        await new Promise((r) => setTimeout(r, 2000 * attempt)); // backoff: 2s, 4s, 6s
+        await new Promise((r) => setTimeout(r, 3000 * attempt)); // backoff: 3s, 6s, 9s...
         try {
           const statusResult = await withTimeout(
             getPaymentStatus(orderId),
@@ -508,6 +509,36 @@ export const usePayment = () => {
         );
       }
 
+      const verifyOutcome = resolveStatusOutcome(verifyResult);
+      if (verifyOutcome === "PENDING") {
+        const fallbackResult = await fallbackVerify(order.orderId, 6);
+        if (fallbackResult.outcome === "SUCCESS") {
+          verifyResult = fallbackResult;
+        } else if (fallbackResult.outcome === "FAILED") {
+          const failureReason =
+            fallbackResult.data?.failureReason ||
+            "The bank declined or failed the payment. No charge was confirmed.";
+          throw Object.assign(new Error(failureReason), {
+            paymentKind: PAYMENT_ERROR_KIND.FAILED,
+          });
+        } else {
+          throw Object.assign(
+            new Error("Payment is still being confirmed. Please check your orders before retrying."),
+            { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
+          );
+        }
+      } else if (verifyOutcome === "FAILED") {
+        throw Object.assign(
+          new Error("The bank declined or failed the payment. No successful charge was confirmed."),
+          { paymentKind: PAYMENT_ERROR_KIND.FAILED }
+        );
+      } else if (verifyOutcome !== "SUCCESS") {
+        throw Object.assign(
+          new Error("Payment is still being confirmed. Please check your orders before retrying."),
+          { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
+        );
+      }
+
       // ── Step 4: Success! ──
       finalizeSuccessfulPayment(order, verifyResult.data);
       checkoutSucceeded = true;
@@ -541,7 +572,7 @@ export const usePayment = () => {
           error: null,
           errorKind: classified.kind,
         }));
-        const fallbackResult = await fallbackVerify(lastCreatedOrder.current.orderId, 4);
+        const fallbackResult = await fallbackVerify(lastCreatedOrder.current.orderId, 6);
         if (fallbackResult.outcome === "SUCCESS") {
           finalizeSuccessfulPayment(lastCreatedOrder.current, fallbackResult.data);
           checkoutSucceeded = true;
@@ -670,6 +701,36 @@ export const usePayment = () => {
           );
         }
 
+        const verifyOutcome = resolveStatusOutcome(verifyResult);
+        if (verifyOutcome === "PENDING") {
+          const fallbackResult = await fallbackVerify(order.orderId, 6);
+          if (fallbackResult.outcome === "SUCCESS") {
+            verifyResult = fallbackResult;
+          } else if (fallbackResult.outcome === "FAILED") {
+            const failureReason =
+              fallbackResult.data?.failureReason ||
+              "The bank declined or failed the payment. No charge was confirmed.";
+            throw Object.assign(new Error(failureReason), {
+              paymentKind: PAYMENT_ERROR_KIND.FAILED,
+            });
+          } else {
+            throw Object.assign(
+              new Error("Payment is still being confirmed. Please check your orders before retrying."),
+              { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
+            );
+          }
+        } else if (verifyOutcome === "FAILED") {
+          throw Object.assign(
+            new Error("The bank declined or failed the payment. No successful charge was confirmed."),
+            { paymentKind: PAYMENT_ERROR_KIND.FAILED }
+          );
+        } else if (verifyOutcome !== "SUCCESS") {
+          throw Object.assign(
+            new Error("Payment is still being confirmed. Please check your orders before retrying."),
+            { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
+          );
+        }
+
         finalizeSuccessfulPayment(order, verifyResult.data);
         checkoutSucceeded = true;
         return { success: true, order: { ...order, payment: verifyResult.data } };
@@ -690,7 +751,7 @@ export const usePayment = () => {
             error: null,
             errorKind: classified.kind,
           }));
-          const fallbackResult = await fallbackVerify(order.orderId, 4);
+          const fallbackResult = await fallbackVerify(order.orderId, 6);
           if (fallbackResult.outcome === "SUCCESS") {
             finalizeSuccessfulPayment(order, fallbackResult.data);
             checkoutSucceeded = true;

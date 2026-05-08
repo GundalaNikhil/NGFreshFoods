@@ -33,7 +33,7 @@ const wrap = async (promise) => {
  * Returns razorpayOrderId, razorpayKeyId, amount needed to open Razorpay checkout.
  */
 export const createOrder = async (orderPayload) => {
-  return wrap(apiClient.post(API_ENDPOINTS.ORDER_CREATE, orderPayload));
+  return wrap(apiClient.post(API_ENDPOINTS.ORDER_CREATE, orderPayload, { timeout: 30000 }));
 };
 
 /**
@@ -41,12 +41,12 @@ export const createOrder = async (orderPayload) => {
  * Sends the razorpay payment details for server-side HMAC verification.
  */
 export const verifyPayment = async (verificationPayload) => {
-  return wrap(apiClient.post(API_ENDPOINTS.PAYMENT_VERIFY, verificationPayload));
+  return wrap(apiClient.post(API_ENDPOINTS.PAYMENT_VERIFY, verificationPayload, { timeout: 25000 }));
 };
 
 /**
  * Poll payment status for an order (backup verification).
  */
 export const getPaymentStatus = async (orderId) => {
-  return wrap(apiClient.get(`${API_ENDPOINTS.PAYMENT_STATUS}/${orderId}/status`));
+  return wrap(apiClient.get(`${API_ENDPOINTS.PAYMENT_STATUS}/${orderId}/status`, { timeout: 10000 }));
 };

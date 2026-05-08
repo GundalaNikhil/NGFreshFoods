@@ -59,18 +59,11 @@ const Cart = () => {
   const [isCheckoutInProgress, setIsCheckoutInProgress] = useState(false);
   const [shopStatus, setShopStatus] = useState({ isOpen: true, message: "" });
 
-  // Silent shop status poll every 60s (no loading indicator)
+  // Fetch shop status once on mount (no polling — HomePage already polls)
   useEffect(() => {
-    // Fetch immediately on mount
     fetchShopStatus().then((result) => {
       if (result?.data) setShopStatus(result.data);
     });
-    const pollInterval = setInterval(() => {
-      fetchShopStatus().then((result) => {
-        if (result?.data) setShopStatus(result.data);
-      });
-    }, 60000);
-    return () => clearInterval(pollInterval);
   }, []);
 
   // Get current promo/offer state from cart
@@ -217,11 +210,6 @@ const Cart = () => {
 
   const handlePayOnline = async () => {
     if (isCheckoutInProgress) return;
-    const latestShopStatus = await refreshShopStatus();
-    if (latestShopStatus?.isOpen === false) {
-      setIsCheckoutInProgress(false);
-      return;
-    }
     setIsCheckoutInProgress(true);
     try {
       await startCheckout({
@@ -329,7 +317,7 @@ const Cart = () => {
         />
       </View>
 
-      {cart.length > 0 || checkoutState === "SUCCESS" || isCheckoutInProgress || isPaymentCancelled ? (
+      {cart.length > 0 ? (
         <>
           <ScrollView
             className="flex-1 bg-[#F5F5F5]"
@@ -408,55 +396,9 @@ const Cart = () => {
             itemCount={itemCount}
             onPlaceOrder={handlePlaceOrder}
           />
-
-          <CheckoutSheet
-            visible={isCheckoutVisible}
-            onClose={handleCheckoutClose}
-            onPayOnline={handlePayOnline}
-            onRetry={handleRetryPayment}
-            totalPayable={grandTotal}
-            itemCount={itemCount}
-            checkoutState={checkoutState}
-            error={paymentError}
-            errorKind={paymentErrorKind}
-            paymentMethod={paymentMethod}
-            onSelectMethod={setPaymentMethod}
-            onReset={resetPayment}
-            onViewOrder={handleViewOrder}
-            onViewPendingOrder={handleTrackPendingOrder}
-            currentOrder={currentOrder}
-            selectedAddress={selectedAddress}
-            onSelectAddress={() => setShowAddressSheet(true)}
-            shopStatus={shopStatus}
-          />
-
-          <AddressSelectionSheet
-            visible={showAddressSheet}
-            onClose={() => setShowAddressSheet(false)}
-            onAddPress={() => setShowAddAddressModal(true)}
-          />
-
-          <AddAddressModal
-            visible={showAddAddressModal}
-            onClose={() => setShowAddAddressModal(false)}
-            onAdd={addAddress}
-          />
-
-          <OffersModal
-            visible={isOffersModalVisible}
-            onClose={() => setIsOffersModalVisible(false)}
-            onSelectOffer={handleOfferSelect}
-            selectedOffer={selectedOffer}
-            cartTotal={cartTotal}
-            offers={availableCoupons}
-            loading={couponsLoading}
-            isApplying={isApplyingCoupon}
-            error={couponsError}
-            onReload={() => loadCoupons(true)}
-          />
         </>
       ) : (
-        <View className="flex-1 items-center justify-center p-8">
+        <View className="flex-1 items-center justify-center p-2">
           <Image 
             source={require("../../assets/images/characters/orders/empty.png")} 
             style={{ width: 180, height: 180, marginBottom: 24 }}
@@ -475,6 +417,53 @@ const Cart = () => {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* ── Modals — always mounted, controlled by visible prop ── */}
+      <CheckoutSheet
+        visible={isCheckoutVisible}
+        onClose={handleCheckoutClose}
+        onPayOnline={handlePayOnline}
+        onRetry={handleRetryPayment}
+        totalPayable={grandTotal}
+        itemCount={itemCount}
+        checkoutState={checkoutState}
+        error={paymentError}
+        errorKind={paymentErrorKind}
+        paymentMethod={paymentMethod}
+        onSelectMethod={setPaymentMethod}
+        onReset={resetPayment}
+        onViewOrder={handleViewOrder}
+        onViewPendingOrder={handleTrackPendingOrder}
+        currentOrder={currentOrder}
+        selectedAddress={selectedAddress}
+        onSelectAddress={() => setShowAddressSheet(true)}
+        shopStatus={shopStatus}
+      />
+
+      <AddressSelectionSheet
+        visible={showAddressSheet}
+        onClose={() => setShowAddressSheet(false)}
+        onAddPress={() => setShowAddAddressModal(true)}
+      />
+
+      <AddAddressModal
+        visible={showAddAddressModal}
+        onClose={() => setShowAddAddressModal(false)}
+        onAdd={addAddress}
+      />
+
+      <OffersModal
+        visible={isOffersModalVisible}
+        onClose={() => setIsOffersModalVisible(false)}
+        onSelectOffer={handleOfferSelect}
+        selectedOffer={selectedOffer}
+        cartTotal={cartTotal}
+        offers={availableCoupons}
+        loading={couponsLoading}
+        isApplying={isApplyingCoupon}
+        error={couponsError}
+        onReload={() => loadCoupons(true)}
+      />
     </SafeAreaView>
   );
 };

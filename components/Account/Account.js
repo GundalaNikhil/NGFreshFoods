@@ -1,5 +1,6 @@
 import React from "react";
 import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRecoilValue } from "recoil";
 import { authAtom } from "../../recoil/atoms/authAtom";
 import AuthScreen from "../Login/AuthScreen";
@@ -10,9 +11,11 @@ const Account = () => {
 
   if (auth.isAuthenticated) {
     return (
-      <View className="flex-1 w-full bg-gray-50 p-4">
-        <AccountHub />
-      </View>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }} edges={['top']}>
+        <View className="flex-1 w-full bg-gray-50 p-2">
+          <AccountHub />
+        </View>
+      </SafeAreaView>
     );
   }
 

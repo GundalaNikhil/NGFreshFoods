@@ -13,7 +13,15 @@ if (!React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED) {
   };
 }
 
-import { Dimensions, Pressable, Text, TextInput, View, ActivityIndicator, Platform } from "react-native";
+import { Dimensions, Pressable, Text, TextInput, View, ActivityIndicator, Platform, ImageBackground } from "react-native";
+import * as SplashScreen from 'expo-splash-screen';
+
+// / Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* reloading the app might cause this error, safe to ignore */
+});
+
+const JS_SPLASH_IMAGE = require("../assets/images/ngfreshfoods_final_splash_v10.png");
 import Reanimated, {
   useAnimatedStyle,
   useSharedValue,
@@ -370,30 +378,38 @@ function RootNavigator() {
       const keepExistingSession = options.keepExistingSession !== false;
 
       try {
+        console.log("[Root] Attempting to fetch existing auth status via cookie/header...");
         const statusResponse = await fetchAuthStatus();
         if (statusResponse.success) {
+          console.log("[Root] Auth status fetched successfully, hydrating profile:", statusResponse.data.profile?.email);
           setProfile(statusResponse.data.profile);
           setAuthState({ isAuthenticated: true, isHydrated: true });
           return true;
+        } else {
+          console.log("[Root] Auth status fetch failed:", statusResponse.error?.message);
         }
       } catch (_error) {
-        // Fall through to Firebase-backed session restore.
+        console.log("[Root] Auth status fetch threw error, falling back to Firebase OTP exchange.");
       }
 
       try {
+        console.log("[Root] Fetching fresh Firebase ID Token...");
         const idToken = await firebaseUser.getIdToken(true);
+        console.log("[Root] Exchanging Firebase ID Token with BFF...");
         const loginResponse = await loginWithFirebaseOtpBff({ idToken });
         if (loginResponse.success) {
           if (loginResponse.data.profile.isNewUser) {
-            // New user needs to complete profile, don't set as authenticated yet
+            console.log("[Root] New user detected, requiring profile completion before authentication.");
             return false;
           }
+          console.log("[Root] Firebase OTP exchange successful, hydrating profile.");
           setProfile(loginResponse.data.profile);
           setAuthState({ isAuthenticated: true, isHydrated: true });
           return true;
         }
 
         const status = loginResponse.error?.details?.status || loginResponse.error?.details?.statusCode;
+        console.log("[Root] Firebase OTP exchange failed with status:", status);
         if (status === 401 || status === 403) {
           clearLocalAuth();
           return false;
@@ -464,8 +480,33 @@ function RootNavigator() {
     });
   }, [clearLocalAuth, restoreBackendSessionFromFirebase, setAuthState]);
 
+  // Hide splash screen only when the JS content is actually layout-ready
+  const onSplashLayout = React.useCallback(async () => {
+    try {
+      await SplashScreen.hideAsync();
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
   if (initializing || !authState.isHydrated) {
-    return <Loader />;
+    return (
+      <ImageBackground 
+        source={JS_SPLASH_IMAGE} 
+        style={{ flex: 1, backgroundColor: "#151515" }}
+        resizeMode="cover"
+        onLayout={onSplashLayout}
+      >
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: 'rgba(0,0,0,0.1)' }}>
+           <View style={{ position: 'absolute', bottom: 100 }}>
+             <ActivityIndicator size="large" color={BRAND_RED} />
+             <Text style={{ color: 'white', marginTop: 10, fontSize: 12, fontWeight: '600', opacity: 0.8 }}>
+               Preparing freshness...
+             </Text>
+           </View>
+        </View>
+      </ImageBackground>
+    );
   }
 
   // Gatekeeping: If not authenticated, render the premium Auth flow
@@ -550,9 +591,14 @@ function Index() {
 
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-        <ActivityIndicator size="large" color={BRAND_RED} />
-      </View>
+      <ImageBackground 
+        source={JS_SPLASH_IMAGE} 
+        style={{ flex: 1, backgroundColor: "#151515" }}
+        resizeMode="cover"
+        onLayout={() => {
+          SplashScreen.hideAsync().catch(() => {});
+        }}
+      />
     );
   }
 
