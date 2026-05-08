@@ -74,7 +74,7 @@ const AddressHeader = ({ onAddressPress, onProfilePress, onSearchPress }) => {
             className="text-[11.5px] text-[#686B78] mt-0.5"
             numberOfLines={1}
           >
-            {selectedAddress?.street || "Add your delivery address"}
+            {selectedAddress?.addressLine1 || (selectedAddress ? `${selectedAddress.city}, ${selectedAddress.state}` : "Add your delivery address")}
           </Text>
         </View>
       </TouchableOpacity>

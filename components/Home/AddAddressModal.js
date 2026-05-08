@@ -55,8 +55,9 @@ const AddAddressModal = ({ visible, onClose, onAdd }) => {
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
         className="flex-1"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 40}
       >
         <TouchableOpacity activeOpacity={1} onPress={onClose} className="flex-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} />
 
