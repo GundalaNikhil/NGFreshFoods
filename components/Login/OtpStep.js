@@ -61,6 +61,23 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
    * When that happens, Firebase emits an auth state change with a signed-in user.
    * We catch that here and proceed directly.
    */
+  /**
+   * Animate OTP digits filling into the input boxes one by one.
+   * Used during auto-verification to give visual feedback.
+   */
+  const animateOtpFill = useCallback(() => {
+    const dummyDigits = ['•', '•', '•', '•', '•', '•'];
+    dummyDigits.forEach((digit, index) => {
+      setTimeout(() => {
+        setOtp((prev) => {
+          const next = [...prev];
+          next[index] = digit;
+          return next;
+        });
+      }, index * 120); // Cascade 120ms apart
+    });
+  }, []);
+
   useEffect(() => {
     const unsubscribe = authFirebase().onAuthStateChanged(async (user) => {
       if (
@@ -71,25 +88,32 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
         // Play Services auto-verified in the background!
         isProcessingRef.current = true;
         setAutoVerifying(true);
-        setLoading(true);
         setError('');
 
-        try {
-          console.log("Auto-verification detected via onAuthStateChanged. Proceeding automatically.");
-          const token = await user.getIdToken();
-          await completeLoginWithToken(token);
-        } catch (err) {
-          console.log("Auto-verification backend error:", err);
-          // Don't block the user — they can still verify manually
-          isProcessingRef.current = false;
-          setAutoVerifying(false);
-          setLoading(false);
-        }
+        // Visually fill in the OTP boxes with a cascading animation
+        animateOtpFill();
+
+        // Wait for the visual fill to complete before proceeding
+        setTimeout(async () => {
+          setLoading(true);
+          try {
+            console.log("Auto-verification detected via onAuthStateChanged. Proceeding automatically.");
+            const token = await user.getIdToken();
+            await completeLoginWithToken(token);
+          } catch (err) {
+            console.log("Auto-verification backend error:", err);
+            // Don't block the user — they can still verify manually
+            setOtp(['', '', '', '', '', '']);
+            isProcessingRef.current = false;
+            setAutoVerifying(false);
+            setLoading(false);
+          }
+        }, 6 * 120 + 200); // Wait for animation to finish + small buffer
       }
     });
 
     return () => unsubscribe();
-  }, [phoneNumber, completeLoginWithToken]);
+  }, [phoneNumber, completeLoginWithToken, animateOtpFill]);
 
   // Handle Resend Countdown
   useEffect(() => {
@@ -128,7 +152,28 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
     if (isProcessingRef.current) return; // Already auto-verifying
     
     const code = typeof overrideCode === 'string' ? overrideCode : otp.join('');
+
+    // If user hasn't entered all 6 digits, check if Firebase already auto-verified
     if (code.length < 6) {
+      const currentUser = authFirebase().currentUser;
+      if (
+        currentUser &&
+        normalizePhone(currentUser.phoneNumber) === normalizePhone(phoneNumber)
+      ) {
+        // Firebase already verified — proceed with the existing session
+        isProcessingRef.current = true;
+        setLoading(true);
+        setError('');
+        try {
+          const token = await currentUser.getIdToken();
+          await completeLoginWithToken(token);
+          return;
+        } catch (err) {
+          console.log("Auto-verified session failed, requiring full OTP:", err);
+          isProcessingRef.current = false;
+          setLoading(false);
+        }
+      }
       setError('Please enter the full 6-digit OTP');
       return;
     }
@@ -277,11 +322,11 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
         )}
       </View>
 
-      {/* Sticky Bottom Verify Button */}
+      {/* Sticky Bottom Verify Button — enabled even with partial OTP if auto-verified */}
       <TouchableOpacity 
-        style={[styles.mainButton, loading || otp.join('').length < 6 ? styles.buttonDisabled : null]}
+        style={[styles.mainButton, loading ? styles.buttonDisabled : null]}
         onPress={handleVerifyOtp}
-        disabled={loading || otp.join('').length < 6}
+        disabled={loading}
         activeOpacity={0.8}
       >
         {loading ? (
@@ -289,7 +334,7 @@ const OtpStep = ({ phoneNumber, confirmationResult, onBack, onResend, onRequires
         ) : (
           <>
             <CheckCircle2 color="#FFFFFF" size={20} strokeWidth={3} />
-            <Text style={styles.mainButtonText}>Verify & Proceed</Text>
+            <Text style={styles.mainButtonText}>{autoVerifying ? 'Verifying...' : 'Verify & Proceed'}</Text>
           </>
         )}
       </TouchableOpacity>

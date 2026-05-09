@@ -83,10 +83,29 @@ const PushNotificationsManager = () => {
         intentUpdatedAt: new Date().toISOString(),
       }));
 
+      // Determine toast type and emoji based on notification template
+      const templateCode = remoteMessage?.data?.templateCode || '';
+      const emojiMap = {
+        ORDER_CONFIRMED: '✅',
+        ORDER_PREPARING: '👨‍🍳',
+        ORDER_OUT_FOR_DELIVERY: '🚀',
+        ORDER_DELIVERED: '🎊',
+        ORDER_CANCELLED: '❌',
+        PAYMENT_FAILED: '⚠️',
+        PROMO_GENERAL: '🔥',
+        CART_REMINDER: '🛒',
+        ADMIN_BROADCAST: '📢',
+      };
+      const isPromo = ['PROMO_GENERAL', 'CART_REMINDER', 'ADMIN_BROADCAST'].includes(templateCode);
+      const toastType = isPromo ? 'promo' : templateCode ? 'order_update' : 'success';
+      const emoji = emojiMap[templateCode] || (isPromo ? '🔥' : '📦');
+
       Toast.show({
-        type: "success",
+        type: toastType,
         text1: intent.title || "Fresh update",
         text2: remoteMessage?.notification?.body || "Check your notifications for details.",
+        props: { emoji },
+        visibilityTime: 4000,
       });
     });
 

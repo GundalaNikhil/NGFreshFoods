@@ -602,12 +602,64 @@ function Index() {
     );
   }
 
+  // ── Custom Toast configurations for rich, colorful notifications ──
+  const toastConfig = {
+    order_update: ({ text1, text2, props }) => (
+      <View style={{
+        width: '92%',
+        backgroundColor: '#1E2A21',
+        borderRadius: 14,
+        padding: 14,
+        paddingLeft: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderLeftWidth: 4,
+        borderLeftColor: '#4ADE80',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 8,
+      }}>
+        <Text style={{ fontSize: 22, marginRight: 10 }}>{props?.emoji || '📦'}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#4ADE80', fontSize: 14, fontWeight: '800', fontFamily: 'Poppins_700Bold', marginBottom: 2 }}>{text1}</Text>
+          {text2 ? <Text style={{ color: '#B8E6C8', fontSize: 12, fontWeight: '500', fontFamily: 'Poppins_500Medium', lineHeight: 17 }}>{text2}</Text> : null}
+        </View>
+      </View>
+    ),
+    promo: ({ text1, text2, props }) => (
+      <View style={{
+        width: '92%',
+        backgroundColor: '#2A1E10',
+        borderRadius: 14,
+        padding: 14,
+        paddingLeft: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderLeftWidth: 4,
+        borderLeftColor: '#FC8019',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 8,
+      }}>
+        <Text style={{ fontSize: 22, marginRight: 10 }}>{props?.emoji || '🔥'}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#FCA64B', fontSize: 14, fontWeight: '800', fontFamily: 'Poppins_700Bold', marginBottom: 2 }}>{text1}</Text>
+          {text2 ? <Text style={{ color: '#F5D5B0', fontSize: 12, fontWeight: '500', fontFamily: 'Poppins_500Medium', lineHeight: 17 }}>{text2}</Text> : null}
+        </View>
+      </View>
+    ),
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <RecoilRoot>
         <RootNavigator />
       </RecoilRoot>
-      <Toast />
+      <Toast config={toastConfig} />
     </QueryClientProvider>
   );
 }
