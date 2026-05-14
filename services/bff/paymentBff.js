@@ -50,3 +50,11 @@ export const verifyPayment = async (verificationPayload) => {
 export const getPaymentStatus = async (orderId) => {
   return wrap(apiClient.get(`${API_ENDPOINTS.PAYMENT_STATUS}/${orderId}/status`, { timeout: 10000 }));
 };
+
+/**
+ * Retry a failed payment for an existing order.
+ * Returns the same razorpay order ID so checkout can be reopened.
+ */
+export const retryPayment = async (orderId) => {
+  return wrap(apiClient.post(API_ENDPOINTS.PAYMENT_RETRY(orderId), {}, { timeout: 15000 }));
+};

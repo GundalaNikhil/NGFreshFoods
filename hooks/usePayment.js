@@ -5,7 +5,7 @@ import { Alert } from "react-native";
 import { paymentAtom } from "../recoil/atoms/paymentAtom";
 import { profileAtom } from "../recoil/atoms/profileAtom";
 import { useCart } from "./useCart";
-import { createOrder, verifyPayment, getPaymentStatus } from "../services/bff/paymentBff";
+import { createOrder, verifyPayment, getPaymentStatus, retryPayment } from "../services/bff/paymentBff";
 
 const getRazorpayModule = () => {
   try {
@@ -614,12 +614,14 @@ export const usePayment = () => {
   }, [buildOrderPayload, setPayment, clearCart, fallbackVerify, profile, applyFailureState, applyPendingConfirmationState, finalizeSuccessfulPayment]);
 
   /**
-   * Retry checkout — reuses the existing order if same items.
-   * If the order was already created, just re-opens Razorpay.
+   * Retry checkout — calls the backend retry endpoint first to reset
+   * the payment state (new idempotency key, increment retry count),
+   * then reopens Razorpay with the same Razorpay order ID.
+   * Falls back to full fresh checkout if no existing order is available.
    */
   const retryCheckout = useCallback(async () => {
-    // If we have a previous order that hasn't been paid, skip creation
-    if (lastCreatedOrder.current?.razorPayOrderId) {
+    // If we have a previous order that hasn't been paid, call backend retry first
+    if (lastCreatedOrder.current?.orderId) {
       const order = lastCreatedOrder.current;
       console.log("[usePayment] Retrying with existing order:", order.orderId);
 
@@ -629,20 +631,57 @@ export const usePayment = () => {
       try {
         setPayment((prev) => ({
           ...prev,
+          checkoutState: "CREATING_ORDER", // Show spinner while calling retry endpoint
+          currentOrder: order,
+          error: null,
+          errorKind: PAYMENT_ERROR_KIND.NONE,
+        }));
+
+        // ── Step 1: Call backend retry endpoint ──
+        // This resets payment to PENDING, generates new idempotency key,
+        // and returns the same razorpay_order_id
+        const retryResult = await withTimeout(
+          retryPayment(order.orderId),
+          15000,
+          "Payment retry"
+        );
+
+        if (!retryResult.success) {
+          const errorCode = retryResult.error?.code || "UNKNOWN";
+          const errorMsg = retryResult.error?.message || "Failed to retry payment";
+
+          // Handle specific retry errors
+          if (errorCode === "RETRY_WINDOW_EXPIRED" || errorCode === "MAX_RETRIES_EXCEEDED") {
+            applyFailureState(PAYMENT_ERROR_KIND.FAILED, errorMsg);
+            lastCreatedOrder.current = null; // Clear — can't retry anymore
+            return { success: false, error: errorMsg, retryExpired: true };
+          }
+          throw new Error(errorMsg);
+        }
+
+        // Use the returned payment config (same rzp order ID, but reset state)
+        const retryData = retryResult.data;
+        const razorpayOrderId = retryData?.razorpayOrderId || order.razorPayOrderId;
+        const razorpayKeyId = retryData?.razorpayKeyId || order.razorpayKeyId || order.payment?.razorpayKeyId;
+        const amount = retryData?.amount || order.totalAmount;
+
+        setPayment((prev) => ({
+          ...prev,
           checkoutState: "AWAITING_PAYMENT",
           currentOrder: order,
           error: null,
           errorKind: PAYMENT_ERROR_KIND.NONE,
         }));
 
+        // ── Step 2: Reopen Razorpay Checkout ──
         const rzpOptions = {
           description: "FreshFoods Order",
           image: "https://i.imgur.com/3g7nmJC.png",
           currency: "INR",
-          key: order.razorpayKeyId || order.payment?.razorpayKeyId,
-          amount: Math.round(order.totalAmount * 100),
+          key: razorpayKeyId,
+          amount: Math.round(amount * 100),
           name: "FreshFoods",
-          order_id: order.razorPayOrderId,
+          order_id: razorpayOrderId,
           prefill: {
             email: profile?.email || "",
             contact: profile?.phoneNumber || "",
@@ -659,6 +698,7 @@ export const usePayment = () => {
 
         const rzpResponse = await RazorpayCheckout.open(rzpOptions);
 
+        // ── Step 3: Verify payment ──
         setPayment((prev) => ({ ...prev, checkoutState: "VERIFYING" }));
 
         let verifyResult;

@@ -56,6 +56,8 @@ export const API_ENDPOINTS = {
   // Payments
   PAYMENT_VERIFY: `${API_BASE_URL}/api/${API_VERSION}/payments/confirmPayment`,
   PAYMENT_STATUS: `${API_BASE_URL}/api/${API_VERSION}/payments`,
+  PAYMENT_RETRY: (orderId) =>
+    `${API_BASE_URL}/api/${API_VERSION}/payments/${orderId}/retry`,
 
   // Coupons
   COUPONS_ACTIVE: `${API_BASE_URL}/api/${API_VERSION}/coupons/active`,

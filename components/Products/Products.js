@@ -1,27 +1,27 @@
 import React, { useState, memo } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProducts } from "../../hooks/useProducts";
 import ProductFilter from "./ProductFilter";
 import ProductList from "./ProductList";
-import ProductModal from "./ProductModal";
 import ProductSearchBar from "./ProductSearchBar";
 
 const ProductListSkeleton = memo(function ProductListSkeleton() {
   return (
-  <View className="px-4 pt-3">
-    {[0, 1, 2, 3].map((item) => (
-      <View key={item} className="mb-4 flex-row rounded-2xl bg-white p-4">
-        <View className="mr-4 flex-1">
-          <View className="h-4 w-2/3 rounded-full bg-[#E9E9EB]" />
-          <View className="mt-3 h-4 w-1/3 rounded-full bg-[#E9E9EB]" />
-          <View className="mt-3 h-3 w-full rounded-full bg-[#F5F5F5]" />
-          <View className="mt-2 h-3 w-5/6 rounded-full bg-[#F5F5F5]" />
+    <View style={styles.skeletonContainer}>
+      {[0, 1, 2, 3].map((item) => (
+        <View key={item} style={styles.skeletonCard}>
+          <View style={styles.skeletonLeft}>
+            <View style={[styles.skeletonLine, { width: '65%', height: 14 }]} />
+            <View style={[styles.skeletonLine, { width: '35%', height: 14, marginTop: 12 }]} />
+            <View style={[styles.skeletonLine, { width: '100%', height: 10, marginTop: 12 }]} />
+            <View style={[styles.skeletonLine, { width: '80%', height: 10, marginTop: 8 }]} />
+          </View>
+          <View style={styles.skeletonImage} />
         </View>
-        <View className="h-28 w-28 rounded-2xl bg-[#E9E9EB]" />
-      </View>
-    ))}
-  </View>
+      ))}
+    </View>
   );
 });
 
@@ -38,46 +38,108 @@ const Products = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 bg-[#F5F5F5]">
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={['#FAF5F0', '#F0EBF4', '#EAF2F8', '#F5F0FA']}
+        locations={[0, 0.35, 0.7, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.mainContainer}
+      >
         <>
           <ProductSearchBar />
           {isRefreshing ? (
-            <View className="px-4 pt-2 flex-row items-center bg-white">
+            <View style={styles.refreshBar}>
               <ActivityIndicator size="small" color="#E23744" />
-              <Text className="ml-2 text-xs text-[#93959F]">
+              <Text style={styles.refreshText}>
                 {error ? "Reconnecting catalog..." : "Refreshing products..."}
               </Text>
             </View>
           ) : null}
           {!isSearching && categories.length > 0 && <ProductFilter />}
           {isBootstrapping && products.length === 0 ? (
-            <View className="flex-1">
+            <View style={styles.flex1}>
               <ProductListSkeleton />
             </View>
           ) : (
             <ProductList products={products} onAddToCart={handleAddToCart} />
           )}
           {loading && products.length === 0 && !isBootstrapping ? (
-            <View className="px-4 py-4">
-              <Text className="text-sm text-[#93959F]">
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>
                 {error ? "Reconnecting to server..." : "Fetching fresh farm foods..."}
               </Text>
             </View>
           ) : null}
         </>
-      </View>
-      <ProductModal
-        visible={modalVisible}
-        product={selectedProduct}
-        onClose={() => setModalVisible(false)}
-        onAddToCart={(product) => {
-          console.log("Added to cart:", product);
-          setModalVisible(false);
-        }}
-      />
+      </LinearGradient>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FAF5F0',
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  refreshBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  refreshText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: '#93959F',
+    fontWeight: '500',
+  },
+  flex1: {
+    flex: 1,
+  },
+  loadingContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#93959F',
+    fontWeight: '500',
+  },
+  skeletonContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+  },
+  skeletonCard: {
+    marginBottom: 12,
+    flexDirection: 'row',
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  skeletonLeft: {
+    flex: 1,
+    marginRight: 16,
+  },
+  skeletonLine: {
+    borderRadius: 8,
+    backgroundColor: '#E9E9EB',
+  },
+  skeletonImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 16,
+    backgroundColor: '#E9E9EB',
+  },
+});
 
 export default Products;

@@ -1,6 +1,8 @@
+/* global setTimeout, clearTimeout, clearInterval, setInterval */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   RefreshControl,
   ScrollView,
@@ -12,12 +14,26 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import {
+  AlertTriangle,
   ChevronLeft,
   Clock,
   CreditCard,
   Phone,
+  RefreshCw,
 } from "lucide-react-native";
 import { fetchOrderById } from "../../services/bff/accountBff";
+import { retryPayment, verifyPayment } from "../../services/bff/paymentBff";
+import { useRecoilValue } from "recoil";
+import { profileAtom } from "../../recoil/atoms/profileAtom";
+
+const getRazorpayModule = () => {
+  try {
+    const mod = require("react-native-razorpay");
+    return mod?.default || mod;
+  } catch (e) {
+    return null;
+  }
+};
 
 // ── Pixar 3D illustrations for each timeline step ──
 const TIMELINE_IMAGES = {
@@ -77,9 +93,46 @@ const isPaymentPendingOrder = (order) => {
 };
 
 /**
+ * Determines if this order's payment is retryable (FAILED + window open + retries left).
+ */
+const isPaymentRetryable = (order) => {
+  const payment = order?.payment;
+  if (!payment) return false;
+  const paymentStatus = String(payment.paymentStatus || "").toUpperCase();
+  if (paymentStatus !== "FAILED") return false;
+  // Backend sends retryAvailable flag
+  if (payment.retryAvailable === true) return true;
+  // Fallback: check manually if retry metadata exists
+  if (payment.retryExpiresAt) {
+    const expiresAt = new Date(payment.retryExpiresAt);
+    const now = new Date();
+    const retriesLeft = (payment.maxRetryCount || 3) - (payment.retryCount || 0);
+    return now < expiresAt && retriesLeft > 0;
+  }
+  return false;
+};
+
+/**
+ * Calculates remaining seconds until retry window expires.
+ */
+const getRetryTimeRemaining = (retryExpiresAt) => {
+  if (!retryExpiresAt) return 0;
+  const expiresAt = new Date(retryExpiresAt);
+  const now = new Date();
+  return Math.max(0, Math.floor((expiresAt - now) / 1000));
+};
+
+const formatTimeRemaining = (totalSeconds) => {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
+/**
  * OrderDetailScreen – Premium order detail with Pixar 3D timeline.
  */
 const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
+  const profile = useRecoilValue(profileAtom);
   const [order, setOrder] = useState(initialOrder || null);
   const [loading, setLoading] = useState(!initialOrder);
   const [refreshing, setRefreshing] = useState(false);
@@ -87,6 +140,136 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
   
   // Refresh cooldown for payment pending state
   const [refreshCooldown, setRefreshCooldown] = useState(60);
+
+  // ── Retry Payment State ──
+  const [retryState, setRetryState] = useState("IDLE"); // IDLE | RETRYING | AWAITING_PAYMENT | VERIFYING | SUCCESS | ERROR
+  const [retryError, setRetryError] = useState(null);
+  const [retryTimeLeft, setRetryTimeLeft] = useState(0);
+
+  // Countdown timer for retry window
+  useEffect(() => {
+    const expiresAt = order?.payment?.retryExpiresAt;
+    if (!expiresAt || !isPaymentRetryable(order)) {
+      setRetryTimeLeft(0);
+      return;
+    }
+    setRetryTimeLeft(getRetryTimeRemaining(expiresAt));
+    const interval = setInterval(() => {
+      const remaining = getRetryTimeRemaining(expiresAt);
+      setRetryTimeLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+        loadOrder(true); // Refresh to get updated status (likely cancelled)
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [order?.payment?.retryExpiresAt, order?.payment?.paymentStatus]);
+
+  // ── Retry Payment Handler ──
+  const handleRetryPayment = useCallback(async () => {
+    const currentOrderId = order?.orderId;
+    if (!currentOrderId || retryState !== "IDLE") return;
+
+    setRetryState("RETRYING");
+    setRetryError(null);
+
+    try {
+      // Step 1: Call backend retry endpoint
+      const result = await retryPayment(currentOrderId);
+
+      if (!result.success) {
+        const errorCode = result.error?.code || "UNKNOWN";
+        const errorMsg = result.error?.message || "Failed to retry payment";
+        if (errorCode === "RETRY_WINDOW_EXPIRED" || errorCode === "MAX_RETRIES_EXCEEDED") {
+          Alert.alert("Cannot Retry", errorMsg, [{ text: "OK" }]);
+          setRetryState("IDLE");
+          loadOrder(true); // Refresh to show updated (likely cancelled) status
+          return;
+        }
+        throw new Error(errorMsg);
+      }
+
+      const retryData = result.data;
+      const razorpayOrderId = retryData?.razorpayOrderId;
+      const razorpayKeyId = retryData?.razorpayKeyId;
+      const amount = retryData?.amount || order?.totalAmount || 0;
+
+      if (!razorpayOrderId || !razorpayKeyId) {
+        throw new Error("Payment configuration missing from retry response.");
+      }
+
+      // Step 2: Open Razorpay Checkout
+      setRetryState("AWAITING_PAYMENT");
+
+      const RazorpayCheckout = getRazorpayModule();
+      if (!RazorpayCheckout || typeof RazorpayCheckout.open !== "function") {
+        throw new Error("Payment module not available. Please rebuild the app.");
+      }
+
+      const rzpOptions = {
+        description: "FreshFoods Order",
+        image: "https://i.imgur.com/3g7nmJC.png",
+        currency: "INR",
+        key: razorpayKeyId,
+        amount: Math.round(amount * 100),
+        name: "FreshFoods",
+        order_id: razorpayOrderId,
+        prefill: {
+          email: profile?.email || "",
+          contact: profile?.phoneNumber || "",
+          name: profile?.fullName || profile?.firstName || "",
+        },
+        theme: { color: "#16A34A" },
+        retry: { enabled: true, max_count: 3 },
+      };
+
+      const rzpResponse = await RazorpayCheckout.open(rzpOptions);
+
+      // Step 3: Verify payment
+      setRetryState("VERIFYING");
+
+      const verifyResult = await verifyPayment({
+        orderId: currentOrderId,
+        razorpayOrderId: rzpResponse.razorpay_order_id,
+        razorpayPaymentId: rzpResponse.razorpay_payment_id,
+        razorpaySignature: rzpResponse.razorpay_signature,
+      });
+
+      if (verifyResult.success) {
+        setRetryState("SUCCESS");
+        // Reload order to reflect new confirmed status
+        setTimeout(() => {
+          loadOrder(true);
+          setRetryState("IDLE");
+        }, 1500);
+      } else {
+        throw new Error(verifyResult.error?.message || "Payment verification failed.");
+      }
+    } catch (err) {
+      const msg = err?.message || "";
+      const isCancelled =
+        msg.toLowerCase().includes("cancelled") ||
+        msg.toLowerCase().includes("canceled") ||
+        msg.toLowerCase().includes("dismissed") ||
+        err?.code === 0 ||
+        err?.code === 2;
+
+      if (isCancelled) {
+        // User dismissed Razorpay — not an error, just go back to idle
+        setRetryState("IDLE");
+        return;
+      }
+
+      setRetryError(msg || "Something went wrong. Please try again.");
+      setRetryState("ERROR");
+      // Auto-reset error state after 5 seconds
+      setTimeout(() => {
+        setRetryState("IDLE");
+        setRetryError(null);
+        loadOrder(true);
+      }, 5000);
+    }
+  }, [order, retryState, profile]);
 
   useEffect(() => {
     let timer = null;
@@ -326,7 +509,139 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
           )}
         </View>
 
-        {paymentPending && (
+        {/* ── Retry Payment Banner (FAILED + retryAvailable) ── */}
+        {isPaymentRetryable(order) && !isCancelled && (
+          <View
+            style={{
+              marginHorizontal: 16,
+              marginTop: 14,
+              backgroundColor: "#FEF2F2",
+              borderRadius: 18,
+              padding: 18,
+              borderWidth: 1.5,
+              borderColor: "#FECACA",
+            }}
+          >
+            {/* Header Row */}
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  backgroundColor: "#FEE2E2",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <AlertTriangle size={20} color="#DC2626" strokeWidth={2.5} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: "900", color: "#991B1B" }}>
+                  Payment Failed
+                </Text>
+                <Text style={{ fontSize: 11, color: "#B91C1C", fontWeight: "600", marginTop: 1 }}>
+                  {order.payment?.failureReason || "Your payment could not be completed."}
+                </Text>
+              </View>
+            </View>
+
+            {/* Retry Info Pills */}
+            <View style={{ flexDirection: "row", marginBottom: 14, gap: 8 }}>
+              {retryTimeLeft > 0 && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: "#FEE2E2",
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 10,
+                  }}
+                >
+                  <Clock size={12} color="#DC2626" strokeWidth={2.5} />
+                  <Text style={{ fontSize: 11, fontWeight: "800", color: "#DC2626", marginLeft: 4 }}>
+                    {formatTimeRemaining(retryTimeLeft)} left
+                  </Text>
+                </View>
+              )}
+              <View
+                style={{
+                  backgroundColor: "#FEE2E2",
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 10,
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: "800", color: "#DC2626" }}>
+                  {(order.payment?.maxRetryCount || 3) - (order.payment?.retryCount || 0)} retries left
+                </Text>
+              </View>
+            </View>
+
+            {/* Retry CTA Button */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: retryState !== "IDLE" ? "#9CA3AF" : "#DC2626",
+                borderRadius: 14,
+                paddingVertical: 14,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                shadowColor: "#DC2626",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: retryState !== "IDLE" ? 0 : 0.25,
+                shadowRadius: 8,
+                elevation: retryState !== "IDLE" ? 0 : 4,
+              }}
+              disabled={retryState !== "IDLE"}
+              onPress={handleRetryPayment}
+              activeOpacity={0.85}
+            >
+              {retryState === "RETRYING" || retryState === "VERIFYING" ? (
+                <>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text style={{ color: "#fff", fontWeight: "800", fontSize: 14, marginLeft: 8 }}>
+                    {retryState === "VERIFYING" ? "Verifying Payment..." : "Preparing Retry..."}
+                  </Text>
+                </>
+              ) : retryState === "AWAITING_PAYMENT" ? (
+                <>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text style={{ color: "#fff", fontWeight: "800", fontSize: 14, marginLeft: 8 }}>
+                    Complete Payment in Razorpay...
+                  </Text>
+                </>
+              ) : retryState === "SUCCESS" ? (
+                <Text style={{ color: "#fff", fontWeight: "900", fontSize: 15 }}>
+                  ✓ Payment Successful!
+                </Text>
+              ) : (
+                <>
+                  <RefreshCw size={16} color="#fff" strokeWidth={2.5} />
+                  <Text style={{ color: "#fff", fontWeight: "900", fontSize: 15, marginLeft: 8 }}>
+                    Retry Payment
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {/* Error message from retry attempt */}
+            {retryState === "ERROR" && retryError && (
+              <Text style={{ fontSize: 11, color: "#B91C1C", marginTop: 8, textAlign: "center", fontWeight: "600" }}>
+                {retryError}
+              </Text>
+            )}
+
+            {/* Reassurance text */}
+            <Text style={{ fontSize: 11, color: "#9CA3AF", marginTop: 10, textAlign: "center", lineHeight: 16 }}>
+              Your order is safe. Same items, same price — just retry the payment.
+            </Text>
+          </View>
+        )}
+
+        {paymentPending && !isPaymentRetryable(order) && (
           <View
             style={{
               marginHorizontal: 16,
@@ -609,38 +924,57 @@ const OrderDetailScreen = ({ orderId, order: initialOrder, onBack }) => {
                 backgroundColor: "#fff",
                 borderRadius: 18,
                 padding: 16,
-                flexDirection: "row",
-                alignItems: "center",
                 borderWidth: 1,
                 borderColor: "#E5E7EB",
               }}
             >
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  backgroundColor: "#ECFDF5",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 14,
-                }}
-              >
-                <CreditCard size={22} color="#16A34A" strokeWidth={2} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>
-                  {order.payment.paymentMethod || order.payment.transactionType || "Online Payment"}
-                </Text>
-                <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>
-                  Status: {order.payment.paymentStatus || "—"}
-                </Text>
-                {order.payment.transactionId && (
-                  <Text style={{ fontSize: 11, color: "#9CA3AF", marginTop: 2 }}>
-                    Txn: {order.payment.transactionId}
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
+                    backgroundColor: order.payment.paymentStatus === "FAILED" ? "#FEF2F2" : "#ECFDF5",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 14,
+                  }}
+                >
+                  <CreditCard size={22} color={order.payment.paymentStatus === "FAILED" ? "#DC2626" : "#16A34A"} strokeWidth={2} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>
+                    {order.payment.paymentMethod || order.payment.transactionType || "Online Payment"}
                   </Text>
-                )}
+                  <Text style={{ fontSize: 12, color: order.payment.paymentStatus === "FAILED" ? "#DC2626" : "#6B7280", marginTop: 2, fontWeight: order.payment.paymentStatus === "FAILED" ? "700" : "400" }}>
+                    Status: {order.payment.paymentStatus || "—"}
+                  </Text>
+                  {order.payment.transactionId && (
+                    <Text style={{ fontSize: 11, color: "#9CA3AF", marginTop: 2 }}>
+                      Txn: {order.payment.transactionId}
+                    </Text>
+                  )}
+                </View>
               </View>
+              {/* Retry metadata — show attempt count if retried */}
+              {(order.payment.retryCount > 0 || order.payment.retryAvailable) && (
+                <View style={{ flexDirection: "row", marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#F3F4F6", gap: 8 }}>
+                  {order.payment.retryCount > 0 && (
+                    <View style={{ backgroundColor: "#F3F4F6", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: "#6B7280" }}>
+                        Attempt {(order.payment.retryCount || 0) + 1} of {(order.payment.maxRetryCount || 3) + 1}
+                      </Text>
+                    </View>
+                  )}
+                  {order.payment.retryAvailable && (
+                    <View style={{ backgroundColor: "#DCFCE7", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: "#16A34A" }}>
+                        Retry Available
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           </View>
         )}

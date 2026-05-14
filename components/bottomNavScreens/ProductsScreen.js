@@ -4,7 +4,7 @@ import Products from "../Products/Products";
 
 const ProductsScreen = () => {
   return (
-    <View className="flex-1 bg-gray-50">
+    <View style={{ flex: 1, backgroundColor: '#F5F5F7' }}>
       <Products />
     </View>
   );

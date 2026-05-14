@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import {
   Bell,
@@ -888,7 +889,14 @@ const AccountHub = ({ onBack }) => {
         </View>
       )}
       {/* ── Greeting Banner ── */}
-      <View className="bg-[#1E1E2E] rounded-2xl p-5 mb-4">
+      <LinearGradient
+        colors={['#1E1B2E', '#2A2240', '#1D2939', '#1E1B2E']}
+        locations={[0, 0.35, 0.7, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        className="rounded-2xl p-5 mb-4"
+        style={{ borderRadius: 16, padding: 20, marginBottom: 16 }}
+      >
         <View className="flex-row items-center">
           <View className="w-14 h-14 rounded-full items-center justify-center mr-4 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)' }}>
             <Image
@@ -932,7 +940,7 @@ const AccountHub = ({ onBack }) => {
             <Text className="text-[11px] ml-2" style={{ color: 'rgba(255,255,255,0.5)' }}>Syncing...</Text>
           </View>
         ) : null}
-      </View>
+      </LinearGradient>
 
       {/* ── Amazon-Style 2x Grid ── */}
       <View className="flex-row flex-wrap justify-between">

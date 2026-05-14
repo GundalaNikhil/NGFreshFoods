@@ -6,6 +6,7 @@ import {
   View,
   StyleSheet,
   Keyboard,
+  Text,
 } from "react-native";
 import { useProducts } from "../../hooks/useProducts";
 
@@ -38,8 +39,12 @@ const ProductSearchBar = () => {
 
   return (
     <View style={styles.wrapper}>
+      {/* Header title */}
+      <Text style={styles.headerTitle}>Fresh Menu</Text>
       <View style={[styles.bar, isFocused && styles.barFocused]}>
-        <Search size={18} color="#686b78" strokeWidth={2.2} style={styles.icon} />
+        <View style={styles.searchIconContainer}>
+          <Search size={18} color={isFocused ? "#E23744" : "#9CA3AF"} strokeWidth={2.2} />
+        </View>
         <TextInput
           ref={inputRef}
           value={localQuery}
@@ -55,7 +60,7 @@ const ProductSearchBar = () => {
             if (!localQuery) setIsFocused(false);
           }}
           placeholder="Search for chicken, eggs, mutton..."
-          placeholderTextColor="#686b78"
+          placeholderTextColor="#9CA3AF"
           style={styles.input}
           returnKeyType="search"
           autoCorrect={false}
@@ -69,7 +74,7 @@ const ProductSearchBar = () => {
             style={styles.clearBtn}
           >
             <View style={styles.clearCircle}>
-              <X size={12} color="#fff" strokeWidth={2.5} />
+              <X size={12} color="#FFFFFF" strokeWidth={2.5} />
             </View>
           </TouchableOpacity>
         )}
@@ -81,43 +86,56 @@ const ProductSearchBar = () => {
 const styles = StyleSheet.create({
   wrapper: {
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 8,
     paddingBottom: 6,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#1A1A2E',
+    letterSpacing: -0.5,
+    marginBottom: 10,
   },
   bar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f2f2f3",
-    borderRadius: 12,
-    height: 44,
+    backgroundColor: "#F5F5F7",
+    borderRadius: 14,
+    height: 46,
     paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: "#f2f2f3",
+    borderWidth: 1.5,
+    borderColor: "#F5F5F7",
   },
   barFocused: {
-    backgroundColor: "#fff",
-    borderColor: "#e0e0e0",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#FECDD3",
+    shadowColor: "#E23744",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  icon: {
+  searchIconContainer: {
     marginRight: 10,
   },
   input: {
     flex: 1,
     fontSize: 15,
-    fontWeight: "400",
-    color: "#1c1c1c",
+    fontWeight: "500",
+    color: "#1A1A2E",
     paddingVertical: 0,
-    height: 44,
+    height: 46,
+    letterSpacing: 0.1,
   },
   clearBtn: {
     marginLeft: 8,
   },
   clearCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#93959f",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#D1D5DB",
     alignItems: "center",
     justifyContent: "center",
   },
