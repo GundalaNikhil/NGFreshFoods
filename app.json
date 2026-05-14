@@ -11,7 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification",
+          "remote-notification"
+        ]
       },
       "splash": {
         "image": "./assets/images/ngfreshfoods_final_splash_v10.png",
@@ -26,7 +29,10 @@
       "googleServicesFile": "./google-services.json",
       "backgroundColor": "#151515",
       "versionCode": 18,
-      "permissions": ["POST_NOTIFICATIONS"],
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "POST_NOTIFICATIONS"
+      ],
       "splash": {
         "image": "./assets/images/ngfreshfoods_final_splash_v10.png",
         "resizeMode": "cover",
@@ -97,6 +103,10 @@
         "messagingSenderId": "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
         "appId": "EXPO_PUBLIC_FIREBASE_APP_ID"
       }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/9bcd6544-2221-42d1-bf0a-58cb225a525c"
     }
   }
 }
