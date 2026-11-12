@@ -1,0 +1,39 @@
+# ════════════════════════════════════════════════════════════════
+# NGFreshFoods Frontend — PROD Environment Variables
+# ════════════════════════════════════════════════════════════════
+# ⚠️  DO NOT COMMIT THIS FILE TO GIT
+#
+# PROD builds use EAS Build (Expo Application Services).
+# Environment secrets are set in the EAS dashboard or eas.json.
+# Go to: https://expo.dev → Project → Secrets
+# ════════════════════════════════════════════════════════════════
+
+# ── Backend API ─────────────────────────────────────────────
+EXPO_PUBLIC_API_BASE_URL: "https://freshfoods-backend-prod-1015203505019.us-central1.run.app"
+EXPO_PUBLIC_API_VERSION: v1
+
+# ── Firebase (same project for dev & prod) ──────────────────
+EXPO_PUBLIC_FIREBASE_API_KEY: AIzaSyCw9S9IzM6TQSVsCL2RSQIvNW4YE79f0Ts
+EXPO_PUBLIC_FIREBASE_APP_ID: "1:88137638130:android:4b2ab8f76c3d05bdbd306b"
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ngfreshfarmfoods.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "88137638130"
+EXPO_PUBLIC_FIREBASE_PROJECT_ID: ngfreshfarmfoods
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: ngfreshfarmfoods.firebasestorage.app
+
+# ── Sentry ──────────────────────────────────────────────────
+EXPO_PUBLIC_SENTRY_DSN: "https://58d125fb1a606c62138705ececc9df86@o4511310490435584.ingest.us.sentry.io/4511310499151872"
+
+# ── EAS Build Settings ──────────────────────────────────────
+# Build profile: "production" (defined in eas.json)
+# Auto-increment: true
+# Channel: production
+# Distribution: store (Google Play / App Store)
+#
+# EAS project ID: 9bcd6544-2221-42d1-bf0a-58cb225a525c
+# OTA Updates URL: https://u.expo.dev/9bcd6544-2221-42d1-bf0a-58cb225a525c
+
+# ── Razorpay Key (exposed to client for checkout) ───────────
+# The Razorpay KEY ID is returned by the backend's /orders/create response
+# (field: razorpayKeyId). The frontend does NOT hardcode it.
+# For prod: ensure the backend's RAZORPAY_KEY_ID is the rzp_live_* key.
+

@@ -45,3 +45,5 @@ yarn-error.*
 app-example
 
 *.md
+!docs/context.md
+

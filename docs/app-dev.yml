@@ -1,0 +1,29 @@
+# ════════════════════════════════════════════════════════════════
+# NGFreshFoods Frontend — DEV Environment Variables
+# ════════════════════════════════════════════════════════════════
+# ⚠️  DO NOT COMMIT THIS FILE TO GIT
+# Copy to .env.local in the NGFreshFoods root directory.
+# Expo reads EXPO_PUBLIC_* vars at build time.
+# ════════════════════════════════════════════════════════════════
+
+# ── Backend API ─────────────────────────────────────────────
+EXPO_PUBLIC_API_BASE_URL: "https://freshfoods-backend-dev-1015203505019.us-central1.run.app"
+EXPO_PUBLIC_API_VERSION: v1
+
+# ── Firebase (Web SDK / Expo config) ────────────────────────
+EXPO_PUBLIC_FIREBASE_API_KEY: AIzaSyCw9S9IzM6TQSVsCL2RSQIvNW4YE79f0Ts
+EXPO_PUBLIC_FIREBASE_APP_ID: "1:88137638130:android:4b2ab8f76c3d05bdbd306b"
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ngfreshfarmfoods.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "88137638130"
+EXPO_PUBLIC_FIREBASE_PROJECT_ID: ngfreshfarmfoods
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: ngfreshfarmfoods.firebasestorage.app
+
+# ── Sentry ──────────────────────────────────────────────────
+EXPO_PUBLIC_SENTRY_DSN: "https://58d125fb1a606c62138705ececc9df86@o4511310490435584.ingest.us.sentry.io/4511310499151872"
+
+# ── Local development override ──────────────────────────────
+# When running locally with __DEV__=true and no EXPO_PUBLIC_API_BASE_URL,
+# the app auto-detects:
+#   Android emulator → http://10.0.2.2:8080
+#   iOS simulator    → http://localhost:8080
+
