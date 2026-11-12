@@ -1,11 +1,10 @@
 /* global setTimeout */
 import { useCallback, useRef } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { Alert } from "react-native";
 import { paymentAtom } from "../recoil/atoms/paymentAtom";
 import { profileAtom } from "../recoil/atoms/profileAtom";
 import { useCart } from "./useCart";
-import { createOrder, verifyPayment, getPaymentStatus, retryPayment } from "../services/bff/paymentBff";
+import { createOrder, verifyPaymentAsync, getPaymentStatus, retryPayment } from "../services/bff/paymentBff";
 
 const getRazorpayModule = () => {
   try {
@@ -208,7 +207,7 @@ const resolveStatusOutcome = (statusResult) => {
 export const usePayment = () => {
   const [payment, setPayment] = useRecoilState(paymentAtom);
   const profile = useRecoilValue(profileAtom);
-  const { cart, cartData, cartTotal, cartDiscount, clearCart } = useCart();
+  const { cart, cartData, cartTotal, clearCart } = useCart();
   const isProcessing = useRef(false);
   const lastCreatedOrder = useRef(null); // Track last order to avoid duplicates on retry
 
@@ -265,14 +264,14 @@ export const usePayment = () => {
    * Detect if a Razorpay error is a user-initiated cancellation.
    */
   const fallbackVerify = useCallback(
-    async (orderId, maxAttempts = 6) => {
+    async (orderId, maxAttempts = 2) => {
       console.log("[usePayment] Starting fallback verification for order:", orderId);
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        await new Promise((r) => setTimeout(r, 3000 * attempt)); // backoff: 3s, 6s, 9s...
+        await new Promise((r) => setTimeout(r, 1200 * attempt));
         try {
           const statusResult = await withTimeout(
             getPaymentStatus(orderId),
-            10000,
+            5000,
             "Payment status check"
           );
           if (statusResult.success) {
@@ -456,93 +455,28 @@ export const usePayment = () => {
         hasSignature: !!rzpResponse?.razorpay_signature,
       });
 
-      // ── Step 3: Verify payment on backend ──
-      setPayment((prev) => ({ ...prev, checkoutState: "VERIFYING" }));
+      // ── Step 3: Optimistic Success + Fire-and-Forget Verification ──
+      // Razorpay SDK returned payment_id + signature = payment happened.
+      // Show success immediately — verify asynchronously in the background.
+      // This is the same pattern used by Swiggy/Zomato for instant UX.
 
-      let verifyResult;
-      try {
-        verifyResult = await withTimeout(
-          verifyPayment({
-            orderId: order.orderId,
-            razorpayOrderId: rzpResponse.razorpay_order_id,
-            razorpayPaymentId: rzpResponse.razorpay_payment_id,
-            razorpaySignature: rzpResponse.razorpay_signature,
-          }),
-          20000, // 20s timeout for verification
-          "Payment verification"
-        );
-      } catch (verifyError) {
-        // Verification network error — payment may have succeeded!
-        // Use fallback polling
-        console.warn("[usePayment] Verify call failed, trying fallback:", verifyError.message);
-        setPayment((prev) => ({
-          ...prev,
-          checkoutState: "VERIFYING",
-          error: null, // Don't show error yet, we're still trying
-        }));
-        const fallbackResult = await fallbackVerify(order.orderId);
-        if (fallbackResult.outcome === "SUCCESS") {
-          verifyResult = fallbackResult;
-        } else if (fallbackResult.outcome === "FAILED") {
-          const failureReason =
-            fallbackResult.data?.failureReason ||
-            "The bank declined or failed the payment. No charge was confirmed.";
-          throw Object.assign(new Error(failureReason), {
-            paymentKind: PAYMENT_ERROR_KIND.FAILED,
-          });
-        } else {
-          throw Object.assign(
-            new Error(
-              "We could not confirm the payment yet. If money was debited, it should either appear in your orders shortly or be auto-reversed by your bank."
-            ),
-            { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
-          );
-        }
-      }
+      const verificationPayload = {
+        orderId: order.orderId,
+        razorpayOrderId: rzpResponse.razorpay_order_id,
+        razorpayPaymentId: rzpResponse.razorpay_payment_id,
+        razorpaySignature: rzpResponse.razorpay_signature,
+      };
 
-      if (verifyResult?.success === false) {
-        throw Object.assign(
-          new Error(
-            verifyResult.error?.message || "Payment verification failed. Please check your bank statement."
-          ),
-          { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
-        );
-      }
+      // Fire async verification — don't await, don't block the UI
+      verifyPaymentAsync(verificationPayload).catch((err) => {
+        console.warn("[usePayment] Async verification fire-and-forget failed (webhook will reconcile):", err?.message);
+      });
 
-      const verifyOutcome = resolveStatusOutcome(verifyResult);
-      if (verifyOutcome === "PENDING") {
-        const fallbackResult = await fallbackVerify(order.orderId, 6);
-        if (fallbackResult.outcome === "SUCCESS") {
-          verifyResult = fallbackResult;
-        } else if (fallbackResult.outcome === "FAILED") {
-          const failureReason =
-            fallbackResult.data?.failureReason ||
-            "The bank declined or failed the payment. No charge was confirmed.";
-          throw Object.assign(new Error(failureReason), {
-            paymentKind: PAYMENT_ERROR_KIND.FAILED,
-          });
-        } else {
-          throw Object.assign(
-            new Error("Payment is still being confirmed. Please check your orders before retrying."),
-            { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
-          );
-        }
-      } else if (verifyOutcome === "FAILED") {
-        throw Object.assign(
-          new Error("The bank declined or failed the payment. No successful charge was confirmed."),
-          { paymentKind: PAYMENT_ERROR_KIND.FAILED }
-        );
-      } else if (verifyOutcome !== "SUCCESS") {
-        throw Object.assign(
-          new Error("Payment is still being confirmed. Please check your orders before retrying."),
-          { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
-        );
-      }
-
-      // ── Step 4: Success! ──
-      finalizeSuccessfulPayment(order, verifyResult.data);
+      // ── Step 4: Instant Success! ──
+      console.log("[usePayment] ✓ Optimistic success — verification running in background");
+      finalizeSuccessfulPayment(order);
       checkoutSucceeded = true;
-      return { success: true, order: { ...order, payment: verifyResult.data } };
+      return { success: true, order };
     } catch (error) {
       const classified = error?.paymentKind
         ? {
@@ -572,7 +506,7 @@ export const usePayment = () => {
           error: null,
           errorKind: classified.kind,
         }));
-        const fallbackResult = await fallbackVerify(lastCreatedOrder.current.orderId, 6);
+        const fallbackResult = await fallbackVerify(lastCreatedOrder.current.orderId);
         if (fallbackResult.outcome === "SUCCESS") {
           finalizeSuccessfulPayment(lastCreatedOrder.current, fallbackResult.data);
           checkoutSucceeded = true;
@@ -611,7 +545,7 @@ export const usePayment = () => {
         isProcessing.current = false;
       }
     }
-  }, [buildOrderPayload, setPayment, clearCart, fallbackVerify, profile, applyFailureState, applyPendingConfirmationState, finalizeSuccessfulPayment]);
+  }, [buildOrderPayload, setPayment, fallbackVerify, profile, applyFailureState, applyPendingConfirmationState, finalizeSuccessfulPayment]);
 
   /**
    * Retry checkout — calls the backend retry endpoint first to reset
@@ -698,82 +632,24 @@ export const usePayment = () => {
 
         const rzpResponse = await RazorpayCheckout.open(rzpOptions);
 
-        // ── Step 3: Verify payment ──
-        setPayment((prev) => ({ ...prev, checkoutState: "VERIFYING" }));
+        // ── Step 3: Optimistic Success + Fire-and-Forget Verification ──
+        const verificationPayload = {
+          orderId: order.orderId,
+          razorpayOrderId: rzpResponse.razorpay_order_id,
+          razorpayPaymentId: rzpResponse.razorpay_payment_id,
+          razorpaySignature: rzpResponse.razorpay_signature,
+        };
 
-        let verifyResult;
-        try {
-          verifyResult = await withTimeout(
-            verifyPayment({
-              orderId: order.orderId,
-              razorpayOrderId: rzpResponse.razorpay_order_id,
-              razorpayPaymentId: rzpResponse.razorpay_payment_id,
-              razorpaySignature: rzpResponse.razorpay_signature,
-            }),
-            20000,
-            "Payment verification"
-          );
-        } catch (_verifyError) {
-          const fallbackResult = await fallbackVerify(order.orderId);
-          if (fallbackResult.outcome === "SUCCESS") {
-            verifyResult = fallbackResult;
-          } else if (fallbackResult.outcome === "FAILED") {
-            const failureReason =
-              fallbackResult.data?.failureReason ||
-              "The bank declined or failed the payment. No charge was confirmed.";
-            throw Object.assign(new Error(failureReason), {
-              paymentKind: PAYMENT_ERROR_KIND.FAILED,
-            });
-          } else {
-            throw Object.assign(
-              new Error(
-                "We could not confirm the payment yet. Please check your order history before retrying."
-              ),
-              { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
-            );
-          }
-        }
+        // Fire async verification — don't await, don't block the UI
+        verifyPaymentAsync(verificationPayload).catch((err) => {
+          console.warn("[usePayment] Retry async verification fire-and-forget failed (webhook will reconcile):", err?.message);
+        });
 
-        if (verifyResult?.success === false) {
-          throw Object.assign(
-            new Error(verifyResult.error?.message || "Verification failed"),
-            { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
-          );
-        }
-
-        const verifyOutcome = resolveStatusOutcome(verifyResult);
-        if (verifyOutcome === "PENDING") {
-          const fallbackResult = await fallbackVerify(order.orderId, 6);
-          if (fallbackResult.outcome === "SUCCESS") {
-            verifyResult = fallbackResult;
-          } else if (fallbackResult.outcome === "FAILED") {
-            const failureReason =
-              fallbackResult.data?.failureReason ||
-              "The bank declined or failed the payment. No charge was confirmed.";
-            throw Object.assign(new Error(failureReason), {
-              paymentKind: PAYMENT_ERROR_KIND.FAILED,
-            });
-          } else {
-            throw Object.assign(
-              new Error("Payment is still being confirmed. Please check your orders before retrying."),
-              { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
-            );
-          }
-        } else if (verifyOutcome === "FAILED") {
-          throw Object.assign(
-            new Error("The bank declined or failed the payment. No successful charge was confirmed."),
-            { paymentKind: PAYMENT_ERROR_KIND.FAILED }
-          );
-        } else if (verifyOutcome !== "SUCCESS") {
-          throw Object.assign(
-            new Error("Payment is still being confirmed. Please check your orders before retrying."),
-            { paymentKind: PAYMENT_ERROR_KIND.UNCERTAIN }
-          );
-        }
-
-        finalizeSuccessfulPayment(order, verifyResult.data);
+        // Instant success — same pattern as startCheckout
+        console.log("[usePayment] ✓ Retry optimistic success — verification running in background");
+        finalizeSuccessfulPayment(order);
         checkoutSucceeded = true;
-        return { success: true, order: { ...order, payment: verifyResult.data } };
+        return { success: true, order };
       } catch (error) {
         const classified = error?.paymentKind
           ? {
@@ -791,7 +667,7 @@ export const usePayment = () => {
             error: null,
             errorKind: classified.kind,
           }));
-          const fallbackResult = await fallbackVerify(order.orderId, 6);
+          const fallbackResult = await fallbackVerify(order.orderId);
           if (fallbackResult.outcome === "SUCCESS") {
             finalizeSuccessfulPayment(order, fallbackResult.data);
             checkoutSucceeded = true;

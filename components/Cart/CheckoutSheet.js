@@ -284,7 +284,6 @@ const CheckoutSheet = ({
                 className="bg-[#E23744] rounded-xl py-4 px-8 shadow-sm flex-row items-center"
                 activeOpacity={0.9}
                 onPress={() => {
-                  onReset();
                   if (onRetry) {
                     onRetry();
                   } else {
@@ -326,7 +325,6 @@ const CheckoutSheet = ({
               className="bg-[#E23744] rounded-xl py-4 px-8 shadow-sm"
               activeOpacity={0.9}
               onPress={() => {
-                onReset();
                 if (onRetry) {
                   onRetry();
                 } else {

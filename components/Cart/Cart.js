@@ -36,7 +36,6 @@ const Cart = () => {
     setPaymentMethod,
     clearCartAfterSuccess,
     resetProcessingFlag,
-    isCancelled: isPaymentCancelled,
   } = usePayment();
   const { addAddress, selectedAddress } = useAddress();
 
@@ -212,12 +211,15 @@ const Cart = () => {
     if (isCheckoutInProgress) return;
     setIsCheckoutInProgress(true);
     try {
-      await startCheckout({
+      const result = await startCheckout({
         paymentMethod,
         addressId: selectedAddress?.addressId || null,
       });
+      if (!result?.success) {
+        setIsCheckoutInProgress(false);
+      }
     } finally {
-      // Keep isCheckoutInProgress true until we navigate away or reset
+      // Success keeps the guard until navigation resets it.
     }
   };
 
@@ -225,9 +227,12 @@ const Cart = () => {
     if (isCheckoutInProgress) return;
     setIsCheckoutInProgress(true);
     try {
-      await retryCheckout();
+      const result = await retryCheckout();
+      if (!result?.success) {
+        setIsCheckoutInProgress(false);
+      }
     } finally {
-      // Resets when sheet closes or success
+      // Success keeps the guard until navigation resets it.
     }
   };
 
@@ -271,7 +276,7 @@ const Cart = () => {
     if (checkoutState === "SUCCESS" && currentOrder) {
       const timer = setTimeout(() => {
         handleViewOrder(currentOrder);
-      }, 1800); // Show checkmark briefly in sheet, then navigate
+      }, 400);
       return () => clearTimeout(timer);
     }
   }, [checkoutState, currentOrder]);

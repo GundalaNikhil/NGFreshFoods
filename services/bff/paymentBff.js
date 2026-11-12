@@ -45,6 +45,15 @@ export const verifyPayment = async (verificationPayload) => {
 };
 
 /**
+ * Fire-and-forget async payment verification.
+ * Returns immediately (202) — verification runs in the background.
+ * Used for optimistic success: app shows success instantly, backend verifies async.
+ */
+export const verifyPaymentAsync = async (verificationPayload) => {
+  return wrap(apiClient.post(API_ENDPOINTS.PAYMENT_VERIFY_ASYNC, verificationPayload, { timeout: 5000 }));
+};
+
+/**
  * Poll payment status for an order (backup verification).
  */
 export const getPaymentStatus = async (orderId) => {

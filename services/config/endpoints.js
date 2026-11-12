@@ -55,6 +55,7 @@ export const API_ENDPOINTS = {
 
   // Payments
   PAYMENT_VERIFY: `${API_BASE_URL}/api/${API_VERSION}/payments/confirmPayment`,
+  PAYMENT_VERIFY_ASYNC: `${API_BASE_URL}/api/${API_VERSION}/payments/confirmPaymentAsync`,
   PAYMENT_STATUS: `${API_BASE_URL}/api/${API_VERSION}/payments`,
   PAYMENT_RETRY: (orderId) =>
     `${API_BASE_URL}/api/${API_VERSION}/payments/${orderId}/retry`,
